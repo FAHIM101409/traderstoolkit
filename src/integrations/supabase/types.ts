@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          account_currency: string
+          avatar_url: string | null
+          created_at: string
+          default_risk_pct: number
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          account_currency?: string
+          avatar_url?: string | null
+          created_at?: string
+          default_risk_pct?: number
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          account_currency?: string
+          avatar_url?: string | null
+          created_at?: string
+          default_risk_pct?: number
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
