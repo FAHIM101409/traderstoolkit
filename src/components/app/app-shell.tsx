@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain } from "lucide-react";
+import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -14,8 +14,15 @@ const nav = [
   { to: "/sessions", label: "Sessions", icon: Clock },
   { section: "Journal" as const },
   { to: "/journal", label: "Trade Journal", icon: BookOpen },
-  { section: "Coming soon" as const },
-  { to: "#", label: "AI Reviewer", icon: Brain, disabled: true },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { section: "AI Tools" as const },
+  { to: "/ai-reviewer", label: "AI Reviewer", icon: Brain },
+  { to: "/fundamentals", label: "Fundamentals Bot", icon: Newspaper },
+  { to: "/patterns", label: "Pattern Detection", icon: Sparkles },
+  { section: "Labs" as const },
+  { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical },
+  { to: "/simulator", label: "Prop Simulator", icon: Activity },
+  { to: "/mt5", label: "MT5 Integration", icon: Cable },
 ];
 
 export function AppShell({ children, title }: { children: React.ReactNode; title: string }) {
