@@ -37,25 +37,29 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           <span className="text-sm font-semibold tracking-tight">Smart Trader</span>
         </Link>
         <nav className="flex-1 space-y-1 p-3 text-sm">
-          {nav.map((item, i) =>
-            "section" in item ? (
-              <p key={i} className="mt-4 px-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{item.section}</p>
-            ) : (
-              <Link
-                key={item.to + i}
-                to={item.disabled ? undefined : (item.to as string)}
-                disabled={item.disabled}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground/80 transition",
-                  pathname === item.to && "bg-sidebar-accent text-sidebar-accent-foreground",
-                  !item.disabled && "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  item.disabled && "opacity-40 cursor-not-allowed",
-                )}
-              >
+          {nav.map((item, i) => {
+            if ("section" in item) {
+              return <p key={`s-${i}`} className="mt-4 px-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{item.section}</p>;
+            }
+            const cls = cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground/80 transition",
+              pathname === item.to && "bg-sidebar-accent text-sidebar-accent-foreground",
+              !item.disabled && "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              item.disabled && "opacity-40 cursor-not-allowed",
+            );
+            if (item.disabled) {
+              return (
+                <span key={`d-${i}`} className={cls} aria-disabled="true">
+                  <item.icon className="h-4 w-4" /> {item.label}
+                </span>
+              );
+            }
+            return (
+              <Link key={item.to} to={item.to} className={cls}>
                 <item.icon className="h-4 w-4" /> {item.label}
               </Link>
-            ),
-          )}
+            );
+          })}
         </nav>
         <div className="border-t border-sidebar-border p-3">
           <div className="flex items-center justify-between gap-2">
