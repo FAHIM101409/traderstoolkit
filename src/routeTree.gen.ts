@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSimulatorRouteImport } from './routes/_authenticated/simulator'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
@@ -20,6 +21,7 @@ import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedFundamentalsRouteImport } from './routes/_authenticated/fundamentals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBacktestRouteImport } from './routes/_authenticated/backtest'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
 
@@ -36,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSimulatorRoute = AuthenticatedSimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
   id: '/sessions',
@@ -78,6 +85,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBacktestRoute = AuthenticatedBacktestRouteImport.update({
+  id: '/backtest',
+  path: '/backtest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -94,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/backtest': typeof AuthenticatedBacktestRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -102,12 +115,14 @@ export interface FileRoutesByFullPath {
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
+  '/simulator': typeof AuthenticatedSimulatorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/backtest': typeof AuthenticatedBacktestRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -116,6 +131,7 @@ export interface FileRoutesByTo {
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
+  '/simulator': typeof AuthenticatedSimulatorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +140,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/backtest': typeof AuthenticatedBacktestRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
@@ -132,6 +149,7 @@ export interface FileRoutesById {
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
   '/_authenticated/risk': typeof AuthenticatedRiskRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
+  '/_authenticated/simulator': typeof AuthenticatedSimulatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,6 +158,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/ai-reviewer'
     | '/analytics'
+    | '/backtest'
     | '/dashboard'
     | '/fundamentals'
     | '/journal'
@@ -148,12 +167,14 @@ export interface FileRouteTypes {
     | '/prop-firm'
     | '/risk'
     | '/sessions'
+    | '/simulator'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/ai-reviewer'
     | '/analytics'
+    | '/backtest'
     | '/dashboard'
     | '/fundamentals'
     | '/journal'
@@ -162,6 +183,7 @@ export interface FileRouteTypes {
     | '/prop-firm'
     | '/risk'
     | '/sessions'
+    | '/simulator'
   id:
     | '__root__'
     | '/'
@@ -169,6 +191,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/ai-reviewer'
     | '/_authenticated/analytics'
+    | '/_authenticated/backtest'
     | '/_authenticated/dashboard'
     | '/_authenticated/fundamentals'
     | '/_authenticated/journal'
@@ -177,6 +200,7 @@ export interface FileRouteTypes {
     | '/_authenticated/prop-firm'
     | '/_authenticated/risk'
     | '/_authenticated/sessions'
+    | '/_authenticated/simulator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -207,6 +231,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/simulator': {
+      id: '/_authenticated/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof AuthenticatedSimulatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sessions': {
       id: '/_authenticated/sessions'
@@ -264,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/backtest': {
+      id: '/_authenticated/backtest'
+      path: '/backtest'
+      fullPath: '/backtest'
+      preLoaderRoute: typeof AuthenticatedBacktestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
       path: '/analytics'
@@ -284,6 +322,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiReviewerRoute: typeof AuthenticatedAiReviewerRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedBacktestRoute: typeof AuthenticatedBacktestRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFundamentalsRoute: typeof AuthenticatedFundamentalsRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
@@ -292,11 +331,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
   AuthenticatedRiskRoute: typeof AuthenticatedRiskRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
+  AuthenticatedSimulatorRoute: typeof AuthenticatedSimulatorRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiReviewerRoute: AuthenticatedAiReviewerRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedBacktestRoute: AuthenticatedBacktestRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFundamentalsRoute: AuthenticatedFundamentalsRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
@@ -305,6 +346,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
   AuthenticatedRiskRoute: AuthenticatedRiskRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
+  AuthenticatedSimulatorRoute: AuthenticatedSimulatorRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -318,3 +360,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
