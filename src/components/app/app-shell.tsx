@@ -45,7 +45,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           <span className="text-sm font-semibold tracking-tight">Smart Trader</span>
         </Link>
         <nav className="flex-1 space-y-1 p-3 text-sm">
-          {nav.map((item, i) => {
+          {nav.map((item: any, i) => {
             if ("section" in item) {
               return <p key={`s-${i}`} className="mt-4 px-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{item.section}</p>;
             }
