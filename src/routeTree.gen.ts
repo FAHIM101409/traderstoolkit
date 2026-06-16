@@ -17,6 +17,7 @@ import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/r
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
 import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticated/lot-size'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
+import { Route as AuthenticatedFundamentalsRouteImport } from './routes/_authenticated/fundamentals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
@@ -60,6 +61,12 @@ const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   path: '/journal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFundamentalsRoute =
+  AuthenticatedFundamentalsRouteImport.update({
+    id: '/fundamentals',
+    path: '/fundamentals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -82,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
@@ -94,6 +102,7 @@ export interface FileRoutesByTo {
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
@@ -108,6 +117,7 @@ export interface FileRoutesById {
   '/_authenticated/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/lot-size': typeof AuthenticatedLotSizeRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/ai-reviewer'
     | '/analytics'
     | '/dashboard'
+    | '/fundamentals'
     | '/journal'
     | '/lot-size'
     | '/prop-firm'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/ai-reviewer'
     | '/analytics'
     | '/dashboard'
+    | '/fundamentals'
     | '/journal'
     | '/lot-size'
     | '/prop-firm'
@@ -147,6 +159,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ai-reviewer'
     | '/_authenticated/analytics'
     | '/_authenticated/dashboard'
+    | '/_authenticated/fundamentals'
     | '/_authenticated/journal'
     | '/_authenticated/lot-size'
     | '/_authenticated/prop-firm'
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fundamentals': {
+      id: '/_authenticated/fundamentals'
+      path: '/fundamentals'
+      fullPath: '/fundamentals'
+      preLoaderRoute: typeof AuthenticatedFundamentalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -246,6 +266,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiReviewerRoute: typeof AuthenticatedAiReviewerRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFundamentalsRoute: typeof AuthenticatedFundamentalsRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLotSizeRoute: typeof AuthenticatedLotSizeRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
@@ -257,6 +278,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiReviewerRoute: AuthenticatedAiReviewerRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFundamentalsRoute: AuthenticatedFundamentalsRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLotSizeRoute: AuthenticatedLotSizeRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
