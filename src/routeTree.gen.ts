@@ -19,6 +19,7 @@ import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -69,10 +70,16 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAiReviewerRoute = AuthenticatedAiReviewerRouteImport.update({
+  id: '/ai-reviewer',
+  path: '/ai-reviewer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -84,6 +91,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/ai-reviewer'
     | '/analytics'
     | '/dashboard'
     | '/journal'
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/ai-reviewer'
     | '/analytics'
     | '/dashboard'
     | '/journal'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/ai-reviewer'
     | '/_authenticated/analytics'
     | '/_authenticated/dashboard'
     | '/_authenticated/journal'
@@ -220,10 +232,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ai-reviewer': {
+      id: '/_authenticated/ai-reviewer'
+      path: '/ai-reviewer'
+      fullPath: '/ai-reviewer'
+      preLoaderRoute: typeof AuthenticatedAiReviewerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAiReviewerRoute: typeof AuthenticatedAiReviewerRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
@@ -234,6 +254,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAiReviewerRoute: AuthenticatedAiReviewerRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
