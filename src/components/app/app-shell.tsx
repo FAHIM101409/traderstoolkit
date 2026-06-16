@@ -12,8 +12,9 @@ const nav = [
   { to: "/risk", label: "Risk Manager", icon: Shield },
   { to: "/prop-firm", label: "Prop Firm", icon: Building2 },
   { to: "/sessions", label: "Sessions", icon: Clock },
+  { section: "Journal" as const },
+  { to: "/journal", label: "Trade Journal", icon: BookOpen },
   { section: "Coming soon" as const },
-  { to: "#", label: "Trade Journal", icon: BookOpen, disabled: true },
   { to: "#", label: "AI Reviewer", icon: Brain, disabled: true },
 ];
 

@@ -16,6 +16,7 @@ import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
 import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticated/lot-size'
+import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
 const AuthRoute = AuthRouteImport.update({
@@ -52,6 +53,11 @@ const AuthenticatedLotSizeRoute = AuthenticatedLotSizeRouteImport.update({
   path: '/lot-size',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -62,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/journal': typeof AuthenticatedJournalRoute
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/risk': typeof AuthenticatedRiskRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/journal': typeof AuthenticatedJournalRoute
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/risk': typeof AuthenticatedRiskRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/lot-size': typeof AuthenticatedLotSizeRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
   '/_authenticated/risk': typeof AuthenticatedRiskRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/journal'
     | '/lot-size'
     | '/prop-firm'
     | '/risk'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/journal'
     | '/lot-size'
     | '/prop-firm'
     | '/risk'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/_authenticated/journal'
     | '/_authenticated/lot-size'
     | '/_authenticated/prop-firm'
     | '/_authenticated/risk'
@@ -175,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLotSizeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/journal': {
+      id: '/_authenticated/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof AuthenticatedJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -187,6 +206,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLotSizeRoute: typeof AuthenticatedLotSizeRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
   AuthenticatedRiskRoute: typeof AuthenticatedRiskRoute
@@ -195,6 +215,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLotSizeRoute: AuthenticatedLotSizeRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
   AuthenticatedRiskRoute: AuthenticatedRiskRoute,

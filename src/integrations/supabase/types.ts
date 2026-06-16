@@ -44,6 +44,90 @@ export type Database = {
         }
         Relationships: []
       }
+      trades: {
+        Row: {
+          asset_class: string
+          closed_at: string | null
+          created_at: string
+          direction: Database["public"]["Enums"]["trade_direction"]
+          entry_price: number | null
+          exit_price: number | null
+          id: string
+          lot_size: number | null
+          notes: string | null
+          opened_at: string
+          pair: string
+          pnl: number | null
+          risk_amount: number | null
+          risk_pct: number | null
+          rr_planned: number | null
+          rr_realized: number | null
+          screenshot_url: string | null
+          session: string | null
+          smc_tags: string[]
+          status: Database["public"]["Enums"]["trade_status"]
+          stop_loss: number | null
+          strategy: string | null
+          take_profit: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_class?: string
+          closed_at?: string | null
+          created_at?: string
+          direction: Database["public"]["Enums"]["trade_direction"]
+          entry_price?: number | null
+          exit_price?: number | null
+          id?: string
+          lot_size?: number | null
+          notes?: string | null
+          opened_at?: string
+          pair: string
+          pnl?: number | null
+          risk_amount?: number | null
+          risk_pct?: number | null
+          rr_planned?: number | null
+          rr_realized?: number | null
+          screenshot_url?: string | null
+          session?: string | null
+          smc_tags?: string[]
+          status?: Database["public"]["Enums"]["trade_status"]
+          stop_loss?: number | null
+          strategy?: string | null
+          take_profit?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_class?: string
+          closed_at?: string | null
+          created_at?: string
+          direction?: Database["public"]["Enums"]["trade_direction"]
+          entry_price?: number | null
+          exit_price?: number | null
+          id?: string
+          lot_size?: number | null
+          notes?: string | null
+          opened_at?: string
+          pair?: string
+          pnl?: number | null
+          risk_amount?: number | null
+          risk_pct?: number | null
+          rr_planned?: number | null
+          rr_realized?: number | null
+          screenshot_url?: string | null
+          session?: string | null
+          smc_tags?: string[]
+          status?: Database["public"]["Enums"]["trade_status"]
+          stop_loss?: number | null
+          strategy?: string | null
+          take_profit?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -52,7 +136,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      trade_direction: "long" | "short"
+      trade_status: "open" | "win" | "loss" | "breakeven"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -179,6 +264,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      trade_direction: ["long", "short"],
+      trade_status: ["open", "win", "loss", "breakeven"],
+    },
   },
 } as const
