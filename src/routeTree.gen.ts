@@ -25,6 +25,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBacktestRouteImport } from './routes/_authenticated/backtest'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
+import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -106,6 +107,11 @@ const AuthenticatedAiReviewerRoute = AuthenticatedAiReviewerRouteImport.update({
   path: '/ai-reviewer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicMt5IngestRoute = ApiPublicMt5IngestRouteImport.update({
+  id: '/api/public/mt5/ingest',
+  path: '/api/public/mt5/ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/simulator': typeof AuthenticatedSimulatorRoute
+  '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/simulator': typeof AuthenticatedSimulatorRoute
+  '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/risk': typeof AuthenticatedRiskRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/simulator': typeof AuthenticatedSimulatorRoute
+  '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/risk'
     | '/sessions'
     | '/simulator'
+    | '/api/public/mt5/ingest'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/risk'
     | '/sessions'
     | '/simulator'
+    | '/api/public/mt5/ingest'
   id:
     | '__root__'
     | '/'
@@ -213,12 +224,14 @@ export interface FileRouteTypes {
     | '/_authenticated/risk'
     | '/_authenticated/sessions'
     | '/_authenticated/simulator'
+    | '/api/public/mt5/ingest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicMt5IngestRoute: typeof ApiPublicMt5IngestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -335,6 +348,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAiReviewerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/mt5/ingest': {
+      id: '/api/public/mt5/ingest'
+      path: '/api/public/mt5/ingest'
+      fullPath: '/api/public/mt5/ingest'
+      preLoaderRoute: typeof ApiPublicMt5IngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -377,6 +397,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicMt5IngestRoute: ApiPublicMt5IngestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

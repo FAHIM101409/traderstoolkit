@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      mt5_tokens: {
+        Row: {
+          account_number: string | null
+          broker: string | null
+          created_at: string
+          id: string
+          label: string | null
+          last_seen_at: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          broker?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_seen_at?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string | null
+          broker?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_seen_at?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_currency: string
@@ -54,6 +87,7 @@ export type Database = {
           exit_price: number | null
           id: string
           lot_size: number | null
+          mt5_ticket: string | null
           notes: string | null
           opened_at: string
           pair: string
@@ -65,6 +99,7 @@ export type Database = {
           screenshot_url: string | null
           session: string | null
           smc_tags: string[]
+          source: string
           status: Database["public"]["Enums"]["trade_status"]
           stop_loss: number | null
           strategy: string | null
@@ -81,6 +116,7 @@ export type Database = {
           exit_price?: number | null
           id?: string
           lot_size?: number | null
+          mt5_ticket?: string | null
           notes?: string | null
           opened_at?: string
           pair: string
@@ -92,6 +128,7 @@ export type Database = {
           screenshot_url?: string | null
           session?: string | null
           smc_tags?: string[]
+          source?: string
           status?: Database["public"]["Enums"]["trade_status"]
           stop_loss?: number | null
           strategy?: string | null
@@ -108,6 +145,7 @@ export type Database = {
           exit_price?: number | null
           id?: string
           lot_size?: number | null
+          mt5_ticket?: string | null
           notes?: string | null
           opened_at?: string
           pair?: string
@@ -119,6 +157,7 @@ export type Database = {
           screenshot_url?: string | null
           session?: string | null
           smc_tags?: string[]
+          source?: string
           status?: Database["public"]["Enums"]["trade_status"]
           stop_loss?: number | null
           strategy?: string | null
