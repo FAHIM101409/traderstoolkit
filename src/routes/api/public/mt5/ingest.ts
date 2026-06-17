@@ -73,11 +73,11 @@ export const Route = createFileRoute("/api/public/mt5/ingest")({
           .filter((t) => t && t.ticket != null && t.pair && t.direction)
           .map((t) => {
             const dir = String(t.direction).toLowerCase();
-            const direction = dir === "buy" || dir === "long" ? "long" : "short";
+            const direction: "long" | "short" = dir === "buy" || dir === "long" ? "long" : "short";
             const closed = t.closed_at ? new Date(t.closed_at).toISOString() : null;
             const opened = t.opened_at ? new Date(t.opened_at).toISOString() : new Date().toISOString();
             const pnl = typeof t.pnl === "number" ? t.pnl : null;
-            const status = closed
+            const status: "open" | "win" | "loss" | "breakeven" = closed
               ? pnl != null && pnl > 0
                 ? "win"
                 : pnl != null && pnl < 0
