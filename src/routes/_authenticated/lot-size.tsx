@@ -6,6 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandItem, CommandEmpty, CommandGroup } from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CURRENCIES } from "@/lib/currencies";
 import { INSTRUMENTS } from "@/lib/trading";
 import { Calculator, Wallet, Target, Activity } from "lucide-react";
 
@@ -17,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/lot-size")({
 function LotSizePage() {
   const [balance, setBalance] = useState(10000);
   const [currency, setCurrency] = useState("USD");
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [mode, setMode] = useState<"percent" | "fixed">("percent");
   const [riskPct, setRiskPct] = useState(1);
   const [riskAmt, setRiskAmt] = useState(100);
@@ -48,10 +55,30 @@ function LotSizePage() {
               </div>
               <div>
                 <Label>Account Currency</Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{["USD","EUR","GBP","CAD","AUD"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                </Select>
+                <Popover open={currencyOpen} onOpenChange={setCurrencyOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {(() => { const c = CURRENCIES.find((x) => x.code === currency); return c ? `${c.code} — ${c.name}` : "Select currency"; })()}
+                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search currency (NGN, Japan, Naira…)" />
+                      <CommandList>
+                        <CommandEmpty>No match.</CommandEmpty>
+                        <CommandGroup>
+                          {CURRENCIES.map((c) => (
+                            <CommandItem key={c.code} value={`${c.code} ${c.name}`} onSelect={() => { setCurrency(c.code); setCurrencyOpen(false); }}>
+                              <Check className={cn("mr-2 h-4 w-4", currency === c.code ? "opacity-100" : "opacity-0")} />
+                              <span className="font-medium">{c.code}</span><span className="ml-2 text-muted-foreground">{c.name}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
