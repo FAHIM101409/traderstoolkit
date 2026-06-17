@@ -218,7 +218,8 @@ function ReplayPage() {
     const { error } = await supabase.from("backtest_sessions").insert({
       user_id: user.id, name: `${symbol} replay`, symbol, timeframe: "1h",
       starting_balance: startBalance, ending_balance: stats.bal,
-      trades: trades as unknown as object, stats: stats as unknown as object,
+      trades: JSON.parse(JSON.stringify(trades)),
+      stats: JSON.parse(JSON.stringify(stats)),
     });
     if (error) toast.error(error.message);
     else toast.success("Backtest session saved");
