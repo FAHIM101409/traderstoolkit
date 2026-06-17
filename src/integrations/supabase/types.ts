@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      backtest_sessions: {
+        Row: {
+          created_at: string
+          ending_balance: number
+          id: string
+          name: string
+          notes: string | null
+          starting_balance: number
+          stats: Json
+          symbol: string
+          timeframe: string
+          trades: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ending_balance?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          starting_balance?: number
+          stats?: Json
+          symbol: string
+          timeframe?: string
+          trades?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ending_balance?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          starting_balance?: number
+          stats?: Json
+          symbol?: string
+          timeframe?: string
+          trades?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mt5_tokens: {
         Row: {
           account_number: string | null
@@ -55,6 +100,10 @@ export type Database = {
           default_risk_pct: number
           display_name: string | null
           id: string
+          plan: string
+          plan_renewal_at: string | null
+          plan_status: string
+          timezone: string
           updated_at: string
         }
         Insert: {
@@ -64,6 +113,10 @@ export type Database = {
           default_risk_pct?: number
           display_name?: string | null
           id: string
+          plan?: string
+          plan_renewal_at?: string | null
+          plan_status?: string
+          timezone?: string
           updated_at?: string
         }
         Update: {
@@ -73,6 +126,10 @@ export type Database = {
           default_risk_pct?: number
           display_name?: string | null
           id?: string
+          plan?: string
+          plan_renewal_at?: string | null
+          plan_status?: string
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
