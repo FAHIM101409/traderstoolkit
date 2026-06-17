@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/app-shell";
+import { ProGate } from "@/components/app/pro-gate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ function MT5Page() {
 
   return (
     <AppShell title="MT5 Integration">
+      <ProGate feature="MT5 Auto-Journaling" description="Stream every closed deal from your MetaTrader 5 terminal straight into your journal — pair, lots, entry, exit, P&L. No manual entry, ever.">
       <div className="space-y-6">
         <Card>
           <CardContent className="space-y-4 p-6">
@@ -190,6 +192,7 @@ function MT5Page() {
           </CardContent>
         </Card>
       </div>
+      </ProGate>
     </AppShell>
   );
 }
