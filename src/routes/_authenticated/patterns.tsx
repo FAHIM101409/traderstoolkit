@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app/app-shell";
+import { ProGate } from "@/components/app/pro-gate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +37,7 @@ function PatternsPage() {
 
   return (
     <AppShell title="SMC Pattern Detection">
+      <ProGate feature="SMC Pattern Detection" description="AI-powered detection of Break of Structure, FVGs, order blocks, liquidity sweeps and entry models from any chart context.">
       <div className="space-y-6">
         <Card>
           <CardContent className="space-y-3 p-6">
@@ -56,6 +58,7 @@ function PatternsPage() {
           </Card>
         )}
       </div>
+      </ProGate>
     </AppShell>
   );
 }

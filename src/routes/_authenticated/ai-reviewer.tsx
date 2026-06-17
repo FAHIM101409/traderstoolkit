@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app/app-shell";
+import { ProGate } from "@/components/app/pro-gate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +47,7 @@ function ReviewerPage() {
 
   return (
     <AppShell title="AI Trade Reviewer">
+      <ProGate feature="AI Trade Reviewer" description="Get an elite coach review of every trade — entry quality, structure, risk discipline, exit timing. Unlimited reviews on Pro.">
       <div className="space-y-6">
         <Card>
           <CardContent className="space-y-4 p-6">
@@ -78,6 +80,7 @@ function ReviewerPage() {
           </Card>
         )}
       </div>
+      </ProGate>
     </AppShell>
   );
 }

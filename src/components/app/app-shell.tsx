@@ -1,9 +1,11 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable } from "lucide-react";
+import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable, Settings as SettingsIcon, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { UpgradeDialog } from "./upgrade-dialog";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -21,6 +23,7 @@ const nav = [
   { to: "/patterns", label: "Pattern Detection", icon: Sparkles },
   { section: "Labs" as const },
   { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical },
+  { to: "/replay", label: "Backtesting Station", icon: Play },
   { to: "/simulator", label: "Prop Simulator", icon: Activity },
   { to: "/mt5", label: "MT5 Integration", icon: Cable },
 ];
@@ -28,6 +31,7 @@ const nav = [
 export function AppShell({ children, title }: { children: React.ReactNode; title: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
+  const { isPro } = useProfile();
   const navigate = useNavigate();
 
   async function signOut() {
@@ -70,10 +74,27 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           })}
         </nav>
         <div className="border-t border-sidebar-border p-3">
+          {!isPro && (
+            <UpgradeDialog>
+              <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-primary to-accent px-3 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition hover:opacity-90">
+                <Sparkles className="h-3.5 w-3.5" />
+                Upgrade to Pro · $29/mo
+              </button>
+            </UpgradeDialog>
+          )}
+          <Link
+            to="/settings"
+            className={cn(
+              "mb-2 flex items-center gap-2 rounded-md px-3 py-2 text-xs text-sidebar-foreground/80 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              pathname === "/settings" && "bg-sidebar-accent text-sidebar-accent-foreground",
+            )}
+          >
+            <SettingsIcon className="h-3.5 w-3.5" /> Settings
+          </Link>
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <p className="truncate text-xs font-medium">{user?.email ?? "Trader"}</p>
-              <p className="text-xs text-muted-foreground">Free plan</p>
+              <p className="text-xs text-muted-foreground">{isPro ? "Pro plan" : "Free plan"}</p>
             </div>
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out">
               <LogOut className="h-4 w-4" />

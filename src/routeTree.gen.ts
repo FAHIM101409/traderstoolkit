@@ -13,9 +13,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSimulatorRouteImport } from './routes/_authenticated/simulator'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
+import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated/replay'
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
+import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
 import { Route as AuthenticatedMt5RouteImport } from './routes/_authenticated/mt5'
 import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticated/lot-size'
@@ -46,6 +49,11 @@ const AuthenticatedSimulatorRoute = AuthenticatedSimulatorRouteImport.update({
   path: '/simulator',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
@@ -56,9 +64,19 @@ const AuthenticatedRiskRoute = AuthenticatedRiskRouteImport.update({
   path: '/risk',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReplayRoute = AuthenticatedReplayRouteImport.update({
+  id: '/replay',
+  path: '/replay',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPropFirmRoute = AuthenticatedPropFirmRouteImport.update({
   id: '/prop-firm',
   path: '/prop-firm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
@@ -125,9 +143,12 @@ export interface FileRoutesByFullPath {
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/mt5': typeof AuthenticatedMt5Route
   '/patterns': typeof AuthenticatedPatternsRoute
+  '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
+  '/replay': typeof AuthenticatedReplayRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/simulator': typeof AuthenticatedSimulatorRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -143,9 +164,12 @@ export interface FileRoutesByTo {
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/mt5': typeof AuthenticatedMt5Route
   '/patterns': typeof AuthenticatedPatternsRoute
+  '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
+  '/replay': typeof AuthenticatedReplayRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/simulator': typeof AuthenticatedSimulatorRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -163,9 +187,12 @@ export interface FileRoutesById {
   '/_authenticated/lot-size': typeof AuthenticatedLotSizeRoute
   '/_authenticated/mt5': typeof AuthenticatedMt5Route
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
+  '/_authenticated/pricing': typeof AuthenticatedPricingRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
+  '/_authenticated/replay': typeof AuthenticatedReplayRoute
   '/_authenticated/risk': typeof AuthenticatedRiskRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/simulator': typeof AuthenticatedSimulatorRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -183,9 +210,12 @@ export interface FileRouteTypes {
     | '/lot-size'
     | '/mt5'
     | '/patterns'
+    | '/pricing'
     | '/prop-firm'
+    | '/replay'
     | '/risk'
     | '/sessions'
+    | '/settings'
     | '/simulator'
     | '/api/public/mt5/ingest'
   fileRoutesByTo: FileRoutesByTo
@@ -201,9 +231,12 @@ export interface FileRouteTypes {
     | '/lot-size'
     | '/mt5'
     | '/patterns'
+    | '/pricing'
     | '/prop-firm'
+    | '/replay'
     | '/risk'
     | '/sessions'
+    | '/settings'
     | '/simulator'
     | '/api/public/mt5/ingest'
   id:
@@ -220,9 +253,12 @@ export interface FileRouteTypes {
     | '/_authenticated/lot-size'
     | '/_authenticated/mt5'
     | '/_authenticated/patterns'
+    | '/_authenticated/pricing'
     | '/_authenticated/prop-firm'
+    | '/_authenticated/replay'
     | '/_authenticated/risk'
     | '/_authenticated/sessions'
+    | '/_authenticated/settings'
     | '/_authenticated/simulator'
     | '/api/public/mt5/ingest'
   fileRoutesById: FileRoutesById
@@ -264,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimulatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sessions': {
       id: '/_authenticated/sessions'
       path: '/sessions'
@@ -278,11 +321,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRiskRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/replay': {
+      id: '/_authenticated/replay'
+      path: '/replay'
+      fullPath: '/replay'
+      preLoaderRoute: typeof AuthenticatedReplayRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/prop-firm': {
       id: '/_authenticated/prop-firm'
       path: '/prop-firm'
       fullPath: '/prop-firm'
       preLoaderRoute: typeof AuthenticatedPropFirmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pricing': {
+      id: '/_authenticated/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AuthenticatedPricingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/patterns': {
@@ -368,9 +425,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLotSizeRoute: typeof AuthenticatedLotSizeRoute
   AuthenticatedMt5Route: typeof AuthenticatedMt5Route
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
+  AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
+  AuthenticatedReplayRoute: typeof AuthenticatedReplayRoute
   AuthenticatedRiskRoute: typeof AuthenticatedRiskRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSimulatorRoute: typeof AuthenticatedSimulatorRoute
 }
 
@@ -384,9 +444,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLotSizeRoute: AuthenticatedLotSizeRoute,
   AuthenticatedMt5Route: AuthenticatedMt5Route,
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
+  AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
+  AuthenticatedReplayRoute: AuthenticatedReplayRoute,
   AuthenticatedRiskRoute: AuthenticatedRiskRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSimulatorRoute: AuthenticatedSimulatorRoute,
 }
 
