@@ -16,6 +16,7 @@ import { Route as AuthenticatedSimulatorRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
+import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
 import { Route as AuthenticatedMt5RouteImport } from './routes/_authenticated/mt5'
 import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticated/lot-size'
@@ -59,6 +60,11 @@ const AuthenticatedRiskRoute = AuthenticatedRiskRouteImport.update({
 const AuthenticatedPropFirmRoute = AuthenticatedPropFirmRouteImport.update({
   id: '/prop-firm',
   path: '/prop-firm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/mt5': typeof AuthenticatedMt5Route
   '/patterns': typeof AuthenticatedPatternsRoute
+  '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/mt5': typeof AuthenticatedMt5Route
   '/patterns': typeof AuthenticatedPatternsRoute
+  '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/lot-size': typeof AuthenticatedLotSizeRoute
   '/_authenticated/mt5': typeof AuthenticatedMt5Route
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
+  '/_authenticated/pricing': typeof AuthenticatedPricingRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
   '/_authenticated/risk': typeof AuthenticatedRiskRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/lot-size'
     | '/mt5'
     | '/patterns'
+    | '/pricing'
     | '/prop-firm'
     | '/risk'
     | '/sessions'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/lot-size'
     | '/mt5'
     | '/patterns'
+    | '/pricing'
     | '/prop-firm'
     | '/risk'
     | '/sessions'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lot-size'
     | '/_authenticated/mt5'
     | '/_authenticated/patterns'
+    | '/_authenticated/pricing'
     | '/_authenticated/prop-firm'
     | '/_authenticated/risk'
     | '/_authenticated/sessions'
@@ -283,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/prop-firm'
       fullPath: '/prop-firm'
       preLoaderRoute: typeof AuthenticatedPropFirmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pricing': {
+      id: '/_authenticated/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AuthenticatedPricingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/patterns': {
@@ -368,6 +387,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLotSizeRoute: typeof AuthenticatedLotSizeRoute
   AuthenticatedMt5Route: typeof AuthenticatedMt5Route
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
+  AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
   AuthenticatedRiskRoute: typeof AuthenticatedRiskRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
@@ -384,6 +404,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLotSizeRoute: AuthenticatedLotSizeRoute,
   AuthenticatedMt5Route: AuthenticatedMt5Route,
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
+  AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
   AuthenticatedRiskRoute: AuthenticatedRiskRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
