@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable, Settings as SettingsIcon, Play } from "lucide-react";
+import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable, Settings as SettingsIcon, Play, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -24,6 +24,7 @@ const nav = [
   { section: "Labs" as const },
   { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical },
   { to: "/replay", label: "Backtesting Station", icon: Play },
+  { to: "/news", label: "News Lab", icon: CalendarClock },
   { to: "/simulator", label: "Prop Simulator", icon: Activity },
   { to: "/mt5", label: "MT5 Integration", icon: Cable },
 ];

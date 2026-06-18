@@ -8,6 +8,7 @@ export type Profile = {
   avatar_url: string | null;
   account_currency: string;
   default_risk_pct: number;
+  starting_balance: number;
   plan: "free" | "pro";
   plan_status: string;
   plan_renewal_at: string | null;
