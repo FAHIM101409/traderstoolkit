@@ -103,6 +103,7 @@ export type Database = {
           plan: string
           plan_renewal_at: string | null
           plan_status: string
+          starting_balance: number
           timezone: string
           updated_at: string
         }
@@ -116,6 +117,7 @@ export type Database = {
           plan?: string
           plan_renewal_at?: string | null
           plan_status?: string
+          starting_balance?: number
           timezone?: string
           updated_at?: string
         }
@@ -129,6 +131,7 @@ export type Database = {
           plan?: string
           plan_renewal_at?: string | null
           plan_status?: string
+          starting_balance?: number
           timezone?: string
           updated_at?: string
         }
