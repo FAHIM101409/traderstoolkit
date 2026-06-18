@@ -11,7 +11,7 @@ import { Command, CommandInput, CommandList, CommandItem, CommandEmpty, CommandG
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CURRENCIES } from "@/lib/currencies";
+import { CURRENCIES, fromUsd, formatMoney } from "@/lib/currencies";
 import { INSTRUMENTS } from "@/lib/trading";
 import { Calculator, Wallet, Target, Activity } from "lucide-react";
 
@@ -34,12 +34,15 @@ function LotSizePage() {
   const inst = INSTRUMENTS.find((i) => i.symbol === symbol)!;
 
   const result = useMemo(() => {
-    const dollarRisk = mode === "percent" ? (balance * riskPct) / 100 : riskAmt;
-    const lots = slPips > 0 ? dollarRisk / (slPips * inst.pipValuePerLot) : 0;
-    const reward = tpPips * inst.pipValuePerLot * lots;
+    // balance is already in user's selected currency; convert to USD for sizing math
+    const riskInCurrency = mode === "percent" ? (balance * riskPct) / 100 : riskAmt;
+    const usdRisk = riskInCurrency / (CURRENCIES.find((c) => c.code === currency)?.usdRate ?? 1);
+    const lots = slPips > 0 ? usdRisk / (slPips * inst.pipValuePerLot) : 0;
+    const usdReward = tpPips * inst.pipValuePerLot * lots;
+    const reward = fromUsd(usdReward, currency);
     const rr = slPips > 0 ? tpPips / slPips : 0;
-    return { dollarRisk, lots, reward, rr };
-  }, [balance, mode, riskPct, riskAmt, slPips, tpPips, inst]);
+    return { riskInCurrency, lots, reward, rr };
+  }, [balance, mode, riskPct, riskAmt, slPips, tpPips, inst, currency]);
 
   return (
     <AppShell title="Lot Size Calculator">
@@ -123,8 +126,8 @@ function LotSizePage() {
 
         <div className="lg:col-span-2 space-y-3">
           <ResultCard icon={Calculator} label="Lot Size" value={result.lots.toFixed(2)} sub={`${inst.label} • ${inst.group}`} accent="text-primary" />
-          <ResultCard icon={Wallet} label="Dollar Risk" value={`$${result.dollarRisk.toFixed(2)}`} sub={currency} accent="text-danger" />
-          <ResultCard icon={Target} label="Potential Reward" value={`$${result.reward.toFixed(2)}`} sub={currency} accent="text-success" />
+          <ResultCard icon={Wallet} label="Risk Amount" value={formatMoney(result.riskInCurrency, currency)} sub={currency} accent="text-danger" />
+          <ResultCard icon={Target} label="Potential Reward" value={formatMoney(result.reward, currency)} sub={currency} accent="text-success" />
           <ResultCard icon={Activity} label="Risk : Reward" value={`1 : ${result.rr.toFixed(2)}`} sub="Per trade" accent="text-accent" />
         </div>
       </div>
