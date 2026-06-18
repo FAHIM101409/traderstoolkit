@@ -20,6 +20,7 @@ import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
 import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
+import { Route as AuthenticatedNewsRouteImport } from './routes/_authenticated/news'
 import { Route as AuthenticatedMt5RouteImport } from './routes/_authenticated/mt5'
 import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticated/lot-size'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
@@ -84,6 +85,11 @@ const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
   path: '/patterns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNewsRoute = AuthenticatedNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMt5Route = AuthenticatedMt5RouteImport.update({
   id: '/mt5',
   path: '/mt5',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof AuthenticatedJournalRoute
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/mt5': typeof AuthenticatedMt5Route
+  '/news': typeof AuthenticatedNewsRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/journal': typeof AuthenticatedJournalRoute
   '/lot-size': typeof AuthenticatedLotSizeRoute
   '/mt5': typeof AuthenticatedMt5Route
+  '/news': typeof AuthenticatedNewsRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/lot-size': typeof AuthenticatedLotSizeRoute
   '/_authenticated/mt5': typeof AuthenticatedMt5Route
+  '/_authenticated/news': typeof AuthenticatedNewsRoute
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
   '/_authenticated/pricing': typeof AuthenticatedPricingRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/lot-size'
     | '/mt5'
+    | '/news'
     | '/patterns'
     | '/pricing'
     | '/prop-firm'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/lot-size'
     | '/mt5'
+    | '/news'
     | '/patterns'
     | '/pricing'
     | '/prop-firm'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/_authenticated/journal'
     | '/_authenticated/lot-size'
     | '/_authenticated/mt5'
+    | '/_authenticated/news'
     | '/_authenticated/patterns'
     | '/_authenticated/pricing'
     | '/_authenticated/prop-firm'
@@ -349,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatternsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/news': {
+      id: '/_authenticated/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof AuthenticatedNewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mt5': {
       id: '/_authenticated/mt5'
       path: '/mt5'
@@ -424,6 +443,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLotSizeRoute: typeof AuthenticatedLotSizeRoute
   AuthenticatedMt5Route: typeof AuthenticatedMt5Route
+  AuthenticatedNewsRoute: typeof AuthenticatedNewsRoute
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
   AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
@@ -443,6 +463,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLotSizeRoute: AuthenticatedLotSizeRoute,
   AuthenticatedMt5Route: AuthenticatedMt5Route,
+  AuthenticatedNewsRoute: AuthenticatedNewsRoute,
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
   AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
