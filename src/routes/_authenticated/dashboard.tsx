@@ -4,12 +4,21 @@ import { AppShell } from "@/components/app/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Trophy, Target, Activity, Calendar, Calculator, Shield, Building2, Clock, ArrowRight, Flame, Cable } from "lucide-react";
+import { TrendingUp, TrendingDown, Trophy, Target, Activity, Calendar, Calculator, Shield, Building2, Clock, ArrowRight, Flame, Cable, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandItem, CommandEmpty, CommandGroup } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CURRENCIES, formatMoney } from "@/lib/currencies";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Smart Trader Toolkit" }] }),
@@ -27,13 +36,32 @@ type Trade = { id: string; pair: string; direction: string; pnl: number | null; 
 
 function Dashboard() {
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, refresh } = useProfile();
   const ccy = profile?.account_currency ?? "USD";
+  const startBal = Number(profile?.starting_balance ?? 10000);
   const name = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Trader";
   const [trades, setTrades] = useState<Trade[]>([]);
   const [hasMt5, setHasMt5] = useState(false);
   const [range, setRange] = useState<"30" | "90" | "365">("30");
   const [loaded, setLoaded] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editBal, setEditBal] = useState<number>(startBal);
+  const [editCcy, setEditCcy] = useState<string>(ccy);
+  const [editCcyOpen, setEditCcyOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setEditBal(startBal); setEditCcy(ccy); }, [startBal, ccy]);
+
+  async function saveBalance() {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase.from("profiles").update({ starting_balance: editBal, account_currency: editCcy }).eq("id", user.id);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Starting balance updated");
+    setEditOpen(false);
+    refresh();
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -56,7 +84,7 @@ function Dashboard() {
     const grossWin = pnls.filter((p) => p > 0).reduce((a, b) => a + b, 0);
     const grossLoss = Math.abs(pnls.filter((p) => p < 0).reduce((a, b) => a + b, 0));
     const net = pnls.reduce((a, b) => a + b, 0);
-    const balance = 10000 + net;
+    const balance = startBal + net;
     const rrs = closed.map((t) => t.rr_realized ?? 0).filter((x) => x);
     const avgRR = rrs.length ? rrs.reduce((a, b) => a + b, 0) / rrs.length : 0;
     const winRate = wins + losses ? Math.round((wins / (wins + losses)) * 100) : 0;
@@ -79,19 +107,19 @@ function Dashboard() {
     const days = +range;
     const since = now - days * 86400000;
     const inRange = closed.filter((t) => new Date(t.closed_at ?? t.opened_at).getTime() >= since);
-    let bal = 10000;
+    let bal = startBal;
     const eq = [{ t: "Start", bal }];
     inRange.forEach((tr, i) => {
       bal += tr.pnl ?? 0;
       eq.push({ t: `#${i + 1}`, bal: +bal.toFixed(2) });
     });
     // Drawdown
-    let peak = 10000, dd = 0;
+    let peak = startBal, dd = 0;
     eq.forEach((p) => { peak = Math.max(peak, p.bal); dd = Math.max(dd, ((peak - p.bal) / peak) * 100); });
     return { balance, net, winRate, pf, avgRR, dd, best, worst, weekly, monthly, eq, total: closed.length };
-  }, [trades, range]);
+  }, [trades, range, startBal]);
 
-  const fmt = (n: number) => `${n < 0 ? "-" : ""}${ccy === "USD" ? "$" : ""}${Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}${ccy !== "USD" ? ` ${ccy}` : ""}`;
+  const fmt = (n: number) => formatMoney(n, ccy);
 
   const showConnectMT5 = loaded && !hasMt5 && trades.length === 0;
 
@@ -102,7 +130,57 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">Welcome back,</p>
           <h2 className="text-2xl font-semibold tracking-tight">{name}</h2>
         </div>
-        <Badge variant="outline" className={hasMt5 ? "border-success/40 bg-success/10 text-success" : "border-border/60"}>{hasMt5 ? "MT5 connected" : "MT5 not connected"}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={hasMt5 ? "border-success/40 bg-success/10 text-success" : "border-border/60"}>
+            {hasMt5 ? "Live MT5 Data Connected" : "Journal data"}
+          </Badge>
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2"><Pencil className="h-3.5 w-3.5" /> Edit Starting Balance</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Starting Account Balance</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Amount</Label>
+                  <Input type="number" value={editBal} onChange={(e) => setEditBal(+e.target.value)} />
+                </div>
+                <div>
+                  <Label>Currency</Label>
+                  <Popover open={editCcyOpen} onOpenChange={setEditCcyOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                        {(() => { const c = CURRENCIES.find((x) => x.code === editCcy); return c ? `${c.code} — ${c.name}` : "Select currency"; })()}
+                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[320px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search (NGN, Naira, Euro…)" />
+                        <CommandList>
+                          <CommandEmpty>No match.</CommandEmpty>
+                          <CommandGroup>
+                            {CURRENCIES.map((c) => (
+                              <CommandItem key={c.code} value={`${c.code} ${c.name}`} onSelect={() => { setEditCcy(c.code); setEditCcyOpen(false); }}>
+                                <Check className={cn("mr-2 h-4 w-4", editCcy === c.code ? "opacity-100" : "opacity-0")} />
+                                <span className="font-medium">{c.code}</span><span className="ml-2 text-muted-foreground">{c.name}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <p className="text-xs text-muted-foreground">Preview: <span className="font-medium text-foreground">{formatMoney(editBal, editCcy)}</span></p>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+                <Button onClick={saveBalance} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {showConnectMT5 && (
