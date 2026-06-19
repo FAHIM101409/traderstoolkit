@@ -462,3 +462,119 @@ function fmtNum(v: number | null) { return v == null ? "—" : String(v); }
 function fmtUsd(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 }
+
+function TradingCalendar({ trades, ccy }: { trades: TradeRow[]; ccy: string }) {
+  const [cursor, setCursor] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+
+  const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+  const { byDay, monthStats } = useMemo(() => {
+    const map = new Map<string, { pnl: number; count: number; wins: number; losses: number }>();
+    const inMonth = trades.filter((t) => {
+      const ts = new Date(t.closed_at ?? t.opened_at);
+      return ts.getFullYear() === cursor.getFullYear() && ts.getMonth() === cursor.getMonth() && t.status !== "open";
+    });
+    inMonth.forEach((t) => {
+      const d = new Date(t.closed_at ?? t.opened_at);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const e = map.get(k) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
+      e.pnl += Number(t.pnl) || 0;
+      e.count += 1;
+      if (t.status === "win") e.wins += 1;
+      else if (t.status === "loss") e.losses += 1;
+      map.set(k, e);
+    });
+    const totalPnl = inMonth.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+    const wins = inMonth.filter((t) => t.status === "win").length;
+    const losses = inMonth.filter((t) => t.status === "loss").length;
+    const grossWin = inMonth.filter((t) => (Number(t.pnl) || 0) > 0).reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+    const grossLoss = Math.abs(inMonth.filter((t) => (Number(t.pnl) || 0) < 0).reduce((s, t) => s + (Number(t.pnl) || 0), 0));
+    return {
+      byDay: map,
+      monthStats: {
+        pnl: totalPnl,
+        total: inMonth.length,
+        winRate: wins + losses ? (wins / (wins + losses)) * 100 : 0,
+        pf: grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? Infinity : 0,
+      },
+    };
+  }, [trades, cursor]);
+
+  // Build calendar grid (Sun-first)
+  const firstDay = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+  const leading = firstDay.getDay();
+  const cells: ({ day: number; key: string } | null)[] = [];
+  for (let i = 0; i < leading; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    cells.push({ day: d, key });
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const monthLabel = cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const today = new Date();
+  const isToday = (key: string) => key === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  return (
+    <div className="mt-6 space-y-4">
+      <Card className="border-border/60 bg-card">
+        <CardContent className="p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+              <p className="min-w-[160px] text-center text-sm font-semibold">{monthLabel}</p>
+              <Button variant="outline" size="icon" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" onClick={() => { const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1)); }}>Today</Button>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <Badge variant="outline" className={monthStats.pnl >= 0 ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}>
+                Net: {formatMoney(monthStats.pnl, ccy)}
+              </Badge>
+              <Badge variant="outline">{monthStats.total} trades</Badge>
+              <Badge variant="outline">Win {monthStats.winRate.toFixed(0)}%</Badge>
+              <Badge variant="outline">PF {isFinite(monthStats.pf) ? monthStats.pf.toFixed(2) : "∞"}</Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => <div key={d} className="py-1">{d}</div>)}
+          </div>
+          <div className="mt-1 grid grid-cols-7 gap-1">
+            {cells.map((c, i) => {
+              if (!c) return <div key={i} className="aspect-square rounded-md bg-transparent" />;
+              const day = byDay.get(c.key);
+              const positive = day && day.pnl > 0;
+              const negative = day && day.pnl < 0;
+              return (
+                <div key={c.key} className={cn(
+                  "aspect-square rounded-md border p-1.5 text-left text-[10px] transition",
+                  "border-border/40 bg-card/40",
+                  positive && "border-success/40 bg-success/10",
+                  negative && "border-destructive/40 bg-destructive/10",
+                  isToday(c.key) && "ring-1 ring-primary",
+                )}>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className={cn("text-xs font-semibold", isToday(c.key) && "text-primary")}>{c.day}</span>
+                    {day && <span className="text-[9px]">{day.count}T</span>}
+                  </div>
+                  {day && (
+                    <div className={cn(
+                      "mt-1 truncate text-[11px] font-semibold tabular-nums",
+                      positive ? "text-success" : negative ? "text-destructive" : "text-muted-foreground"
+                    )}>
+                      {positive ? "+" : ""}{formatMoney(day.pnl, ccy)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// classNames util (local)
+function cn(...a: (string | false | null | undefined)[]) { return a.filter(Boolean).join(" "); }
