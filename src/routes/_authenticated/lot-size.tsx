@@ -4,7 +4,6 @@ import { AppShell } from "@/components/app/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty, CommandGroup } from "@/components/ui/command";
@@ -24,6 +23,7 @@ function LotSizePage() {
   const [balance, setBalance] = useState(10000);
   const [currency, setCurrency] = useState("USD");
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [symbolOpen, setSymbolOpen] = useState(false);
   const [mode, setMode] = useState<"percent" | "fixed">("percent");
   const [riskPct, setRiskPct] = useState(1);
   const [riskAmt, setRiskAmt] = useState(100);
@@ -113,12 +113,37 @@ function LotSizePage() {
               </div>
               <div>
                 <Label>Trading Pair</Label>
-                <Select value={symbol} onValueChange={setSymbol}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {INSTRUMENTS.map(i => <SelectItem key={i.symbol} value={i.symbol}>{i.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Popover open={symbolOpen} onOpenChange={setSymbolOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {inst.label}
+                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search (GBP, JPY, XAU, BTC…)" />
+                      <CommandList>
+                        <CommandEmpty>No match.</CommandEmpty>
+                        {(["Forex","Gold","Silver","Indices","Crypto"] as const).map((g) => {
+                          const items = INSTRUMENTS.filter((i) => i.group === g);
+                          if (!items.length) return null;
+                          return (
+                            <CommandGroup key={g} heading={g}>
+                              {items.map((i) => (
+                                <CommandItem key={i.symbol} value={`${i.symbol} ${i.label}`} onSelect={() => { setSymbol(i.symbol); setSymbolOpen(false); }}>
+                                  <Check className={cn("mr-2 h-4 w-4", symbol === i.symbol ? "opacity-100" : "opacity-0")} />
+                                  <span className="font-medium">{i.symbol}</span>
+                                  <span className="ml-2 text-muted-foreground">{i.label}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          );
+                        })}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </CardContent>
