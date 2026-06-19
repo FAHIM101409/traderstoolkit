@@ -51,6 +51,14 @@ function NewsLab() {
   }
 
   useEffect(() => { load("today"); /* eslint-disable-next-line */ }, []);
+  // Auto-refresh every 5 minutes so forecasts/actuals stay current
+  useEffect(() => {
+    const id = setInterval(() => load(range), 5 * 60 * 1000);
+    const onFocus = () => load(range);
+    window.addEventListener("focus", onFocus);
+    return () => { clearInterval(id); window.removeEventListener("focus", onFocus); };
+    // eslint-disable-next-line
+  }, [range]);
 
   async function runAnalysis(ev: CalEvent) {
     setAnalyzing(true);
