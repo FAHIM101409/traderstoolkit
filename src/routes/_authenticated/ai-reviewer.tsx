@@ -2,14 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app/app-shell";
-import { ProGate } from "@/components/app/pro-gate";
+import { UpgradeDialog } from "@/components/app/upgrade-dialog";
+import { useProfile } from "@/hooks/use-profile";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { reviewTrade } from "@/lib/ai.functions";
-import { Brain, Loader2 } from "lucide-react";
+import { Brain, Loader2, Sparkles, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/ai-reviewer")({
@@ -19,11 +21,29 @@ export const Route = createFileRoute("/_authenticated/ai-reviewer")({
 
 function ReviewerPage() {
   const { user } = useAuth();
+  const { isPro } = useProfile();
   const [trades, setTrades] = useState<any[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [review, setReview] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const run = useServerFn(reviewTrade);
+
+  const WEEKLY_LIMIT = 2;
+  // ISO week-year key, resets every Sunday → Monday is start of new ISO week,
+  // but spec says "Reset Every Sunday". We use a Sun-anchored week key.
+  function weekKey() {
+    const d = new Date();
+    const day = d.getDay(); // 0=Sun
+    const sunday = new Date(d);
+    sunday.setDate(d.getDate() - day);
+    return `ai-rev-used-${sunday.toISOString().slice(0, 10)}`;
+  }
+  const [used, setUsed] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return parseInt(window.localStorage.getItem(weekKey()) ?? "0", 10);
+  });
+  const remaining = Math.max(0, WEEKLY_LIMIT - used);
 
   useEffect(() => {
     if (!user) return;
@@ -33,11 +53,17 @@ function ReviewerPage() {
   async function go() {
     const trade = trades.find((t) => t.id === selected);
     if (!trade) return toast.error("Pick a trade first");
+    if (!isPro && remaining <= 0) { setUpgradeOpen(true); return; }
     setLoading(true);
     setReview("");
     try {
       const r = await run({ data: { trade } });
       setReview(r.content);
+      if (!isPro) {
+        const n = used + 1;
+        setUsed(n);
+        window.localStorage.setItem(weekKey(), String(n));
+      }
     } catch (e: any) {
       toast.error(e.message ?? "Review failed");
     } finally {
@@ -47,8 +73,19 @@ function ReviewerPage() {
 
   return (
     <AppShell title="AI Trade Reviewer">
-      <ProGate feature="AI Trade Reviewer" description="Get an elite coach review of every trade — entry quality, structure, risk discipline, exit timing. Unlimited reviews on Pro.">
       <div className="space-y-6">
+        {!isPro ? (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-xs">
+            <span className="text-muted-foreground">Free plan · <span className="font-medium text-foreground">{remaining}</span> of {WEEKLY_LIMIT} reviews remaining this week {remaining === 0 && "· Weekly review limit reached"}</span>
+            <button onClick={() => setUpgradeOpen(true)} className="flex items-center gap-1 font-semibold text-primary hover:underline">
+              <Sparkles className="h-3 w-3" /> Upgrade to Pro for unlimited
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs">
+            <Badge variant="outline" className="border-primary/40 text-primary">Pro · Unlimited Reviews Enabled</Badge>
+          </div>
+        )}
         <Card>
           <CardContent className="space-y-4 p-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -66,7 +103,7 @@ function ReviewerPage() {
                 </SelectContent>
               </Select>
               <Button onClick={go} disabled={loading || !selected}>
-                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Reviewing…</> : "Review trade"}
+                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Reviewing…</> : (!isPro && remaining <= 0 ? <><Lock className="mr-2 h-4 w-4" /> Upgrade to review</> : "Review trade")}
               </Button>
             </div>
           </CardContent>
@@ -80,7 +117,7 @@ function ReviewerPage() {
           </Card>
         )}
       </div>
-      </ProGate>
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </AppShell>
   );
 }

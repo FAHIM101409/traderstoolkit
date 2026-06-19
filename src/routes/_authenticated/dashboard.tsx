@@ -121,7 +121,7 @@ function Dashboard() {
 
   const fmt = (n: number) => formatMoney(n, ccy);
 
-  const showConnectMT5 = loaded && !hasMt5 && trades.length === 0;
+  const showConnectMT5 = loaded && !hasMt5;
 
   return (
     <AppShell title="Dashboard">
@@ -188,8 +188,11 @@ function Dashboard() {
           <CardContent className="flex flex-col items-center gap-3 p-8 text-center sm:flex-row sm:text-left">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/20 text-primary"><Cable className="h-6 w-6" /></div>
             <div className="flex-1">
-              <p className="text-lg font-semibold">Connect your MT5 account</p>
-              <p className="text-sm text-muted-foreground">Stream every closed trade automatically and unlock live analytics here.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-lg font-semibold">Connect your MT5 account</p>
+                <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary text-[10px]">PRO</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">Connect MT5 to unlock automatic trade syncing and live account analytics. Until then, the dashboard tracks your journal entries.</p>
             </div>
             <Button asChild size="lg" className="gap-2"><Link to="/mt5"><Cable className="h-4 w-4" /> Connect MT5</Link></Button>
           </CardContent>

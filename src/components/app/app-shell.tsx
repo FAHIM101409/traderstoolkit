@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable, Settings as SettingsIcon, Play, CalendarClock } from "lucide-react";
+import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable, Settings as SettingsIcon, Play, CalendarClock, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -18,15 +18,15 @@ const nav = [
   { to: "/journal", label: "Trade Journal", icon: BookOpen },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { section: "AI Tools" as const },
-  { to: "/ai-reviewer", label: "AI Reviewer", icon: Brain },
+  { to: "/ai-reviewer", label: "AI Reviewer", icon: Brain, pro: true },
   { to: "/fundamentals", label: "Fundamentals Bot", icon: Newspaper },
-  { to: "/patterns", label: "Pattern Detection", icon: Sparkles },
+  { to: "/patterns", label: "Pattern Detection", icon: Sparkles, pro: true },
   { section: "Labs" as const },
   { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical },
   { to: "/replay", label: "Backtesting Station", icon: Play },
   { to: "/news", label: "News Lab", icon: CalendarClock },
   { to: "/simulator", label: "Prop Simulator", icon: Activity },
-  { to: "/mt5", label: "MT5 Integration", icon: Cable },
+  { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true },
 ];
 
 export function AppShell({ children, title }: { children: React.ReactNode; title: string }) {
@@ -69,7 +69,9 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
             }
             return (
               <Link key={item.to} to={item.to} className={cls}>
-                <item.icon className="h-4 w-4" /> {item.label}
+                <item.icon className="h-4 w-4" />
+                <span className="flex-1">{item.label}</span>
+                {item.pro && !isPro && <Lock className="h-3 w-3 text-muted-foreground/70" />}
               </Link>
             );
           })}
