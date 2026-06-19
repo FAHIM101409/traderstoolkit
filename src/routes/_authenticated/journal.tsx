@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { formatMoney } from "@/lib/currencies";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Image as ImageIcon, Trash2, TrendingUp, TrendingDown, Trophy, Target, Percent, Loader2, X, ChevronLeft, ChevronRight, CalendarDays, List } from "lucide-react";
@@ -575,6 +576,3 @@ function TradingCalendar({ trades, ccy }: { trades: TradeRow[]; ccy: string }) {
     </div>
   );
 }
-
-// classNames util (local)
-function cn(...a: (string | false | null | undefined)[]) { return a.filter(Boolean).join(" "); }
