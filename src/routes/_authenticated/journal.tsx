@@ -13,8 +13,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
+import { formatMoney } from "@/lib/currencies";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Image as ImageIcon, Trash2, TrendingUp, TrendingDown, Trophy, Target, Percent, Loader2, X } from "lucide-react";
+import { Plus, Image as ImageIcon, Trash2, TrendingUp, TrendingDown, Trophy, Target, Percent, Loader2, X, ChevronLeft, ChevronRight, CalendarDays, List } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/journal")({
   head: () => ({ meta: [{ title: "Trade Journal — Smart Trader Toolkit" }] }),
@@ -56,10 +59,13 @@ const ASSET_CLASSES = ["forex", "gold", "crypto", "indices", "stocks"];
 
 function JournalPage() {
   const { user } = useAuth();
+  const { profile } = useProfile();
+  const ccy = profile?.account_currency ?? "USD";
   const [trades, setTrades] = useState<TradeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "open" | "win" | "loss" | "breakeven">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [view, setView] = useState<"list" | "calendar">("list");
 
   async function load() {
     setLoading(true);
@@ -106,9 +112,16 @@ function JournalPage() {
     <AppShell title="Trade Journal">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">Log every setup. Tag your SMC concepts. Review what works.</p>
+          <p className="text-sm text-muted-foreground">Log every setup. Tag your SMC concepts. Review what works. <span className="ml-1 text-xs">All P&amp;L displayed in <span className="font-medium text-foreground">{ccy}</span>.</span></p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="flex items-center gap-2">
+          <Tabs value={view} onValueChange={(v) => setView(v as "list" | "calendar")}>
+            <TabsList>
+              <TabsTrigger value="list" className="gap-1.5"><List className="h-3.5 w-3.5" /> List</TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> Calendar</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90">
               <Plus className="mr-1 h-4 w-4" /> New Trade
@@ -118,39 +131,45 @@ function JournalPage() {
             userId={user?.id}
             onSaved={(t) => { setTrades((arr) => [t, ...arr]); setDialogOpen(false); }}
           />
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard label="Total Trades" value={String(stats.total)} sub={`${stats.open} open`} icon={Target} />
         <StatCard label="Win Rate" value={stats.total ? `${stats.winRate.toFixed(1)}%` : "—"} sub="Closed trades" icon={Trophy} />
-        <StatCard label="Net P&L" value={fmtUsd(stats.pnl)} sub="All closed" icon={stats.pnl >= 0 ? TrendingUp : TrendingDown} accent={stats.pnl >= 0 ? "text-success" : "text-destructive"} />
+        <StatCard label="Net P&L" value={formatMoney(stats.pnl, ccy)} sub="All closed" icon={stats.pnl >= 0 ? TrendingUp : TrendingDown} accent={stats.pnl >= 0 ? "text-success" : "text-destructive"} />
         <StatCard label="Profit Factor" value={isFinite(stats.pf) ? stats.pf.toFixed(2) : "∞"} sub="Gross win / loss" icon={Percent} />
         <StatCard label="Avg RR" value={stats.avgRR ? stats.avgRR.toFixed(2) : "—"} sub="Realized" icon={Target} />
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {(["all", "open", "win", "loss", "breakeven"] as const).map((f) => (
-          <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)} className="capitalize">
-            {f}
-          </Button>
-        ))}
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {loading ? (
-          <div className="grid h-40 place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-        ) : visible.length === 0 ? (
-          <Card className="border-dashed border-border/60 bg-card/40">
-            <CardContent className="grid place-items-center py-12 text-center text-sm text-muted-foreground">
-              <p>No trades {filter !== "all" ? `in "${filter}"` : "yet"}.</p>
-              <p className="text-xs">Click "New Trade" to log your first setup.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          visible.map((t) => <TradeCard key={t.id} trade={t} onDelete={remove} />)
-        )}
-      </div>
+      {view === "list" ? (
+        <>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {(["all", "open", "win", "loss", "breakeven"] as const).map((f) => (
+              <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)} className="capitalize">
+                {f}
+              </Button>
+            ))}
+          </div>
+          <div className="mt-4 space-y-3">
+            {loading ? (
+              <div className="grid h-40 place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : visible.length === 0 ? (
+              <Card className="border-dashed border-border/60 bg-card/40">
+                <CardContent className="grid place-items-center py-12 text-center text-sm text-muted-foreground">
+                  <p>No trades {filter !== "all" ? `in "${filter}"` : "yet"}.</p>
+                  <p className="text-xs">Click "New Trade" to log your first setup.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              visible.map((t) => <TradeCard key={t.id} trade={t} onDelete={remove} ccy={ccy} />)
+            )}
+          </div>
+        </>
+      ) : (
+        <TradingCalendar trades={trades} ccy={ccy} />
+      )}
     </AppShell>
   );
 }
@@ -170,7 +189,7 @@ function StatCard({ label, value, sub, icon: Icon, accent = "text-foreground" }:
   );
 }
 
-function TradeCard({ trade, onDelete }: { trade: TradeRow; onDelete: (id: string) => void }) {
+function TradeCard({ trade, onDelete, ccy }: { trade: TradeRow; onDelete: (id: string) => void; ccy: string }) {
   const [shotUrl, setShotUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!trade.screenshot_url) return;
@@ -215,7 +234,7 @@ function TradeCard({ trade, onDelete }: { trade: TradeRow; onDelete: (id: string
             <span>RR plan: <span className="text-foreground">{fmtNum(trade.rr_planned)}</span></span>
             <span>RR real: <span className="text-foreground">{fmtNum(trade.rr_realized)}</span></span>
             <span>Risk: <span className="text-foreground">{trade.risk_pct ? `${trade.risk_pct}%` : "—"}</span></span>
-            <span>P&L: <span className={Number(trade.pnl) >= 0 ? "text-success" : "text-destructive"}>{trade.pnl != null ? fmtUsd(Number(trade.pnl)) : "—"}</span></span>
+            <span>P&L: <span className={Number(trade.pnl) >= 0 ? "text-success" : "text-destructive"}>{trade.pnl != null ? formatMoney(Number(trade.pnl), ccy) : "—"}</span></span>
           </div>
           {trade.smc_tags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
