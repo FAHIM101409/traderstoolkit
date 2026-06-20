@@ -82,10 +82,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Smart Trader Toolkit — Everything a Trader Needs. One Toolkit." },
       { name: "description", content: "Risk Management, Journaling, Backtesting, Fundamentals and Prop Firm Analytics in One Platform." },
       { name: "author", content: "Smart Trader Toolkit" },
-      { property: "og:title", content: "Smart Trader Toolkit" },
-      { property: "og:description", content: "Everything a trader needs. One toolkit." },
+      { property: "og:title", content: "Smart Trader Toolkit — Everything a Trader Needs. One Toolkit." },
+      { property: "og:description", content: "Risk Management, Journaling, Backtesting, Fundamentals and Prop Firm Analytics in One Platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Smart Trader Toolkit — Everything a Trader Needs. One Toolkit." },
+      { name: "twitter:description", content: "Risk Management, Journaling, Backtesting, Fundamentals and Prop Firm Analytics in One Platform." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/db0098d6-2129-4241-b68d-eb2a3ea032b1/id-preview-c6edeb9a--5ff05887-f0ab-4a9c-92dd-c62f286e3343.lovable.app-1781934442478.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/db0098d6-2129-4241-b68d-eb2a3ea032b1/id-preview-c6edeb9a--5ff05887-f0ab-4a9c-92dd-c62f286e3343.lovable.app-1781934442478.png" },
     ],
     links: [
       {
