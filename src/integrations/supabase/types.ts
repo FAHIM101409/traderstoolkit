@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          duration_days: number
+          id: string
+          max_uses: number | null
+          note: string | null
+          revoked: boolean
+          uses_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          duration_days?: number
+          id?: string
+          max_uses?: number | null
+          note?: string | null
+          revoked?: boolean
+          uses_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          duration_days?: number
+          id?: string
+          max_uses?: number | null
+          note?: string | null
+          revoked?: boolean
+          uses_count?: number
+        }
+        Relationships: []
+      }
       backtest_sessions: {
         Row: {
           created_at: string
@@ -58,6 +94,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      code_redemptions: {
+        Row: {
+          code_id: string
+          expires_at: string
+          id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          expires_at: string
+          id?: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          expires_at?: string
+          id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mt5_tokens: {
         Row: {
@@ -227,14 +295,59 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_list_codes: {
+        Args: never
+        Returns: {
+          code: string
+          created_at: string
+          duration_days: number
+          id: string
+          max_uses: number
+          note: string
+          redemptions: Json
+          revoked: boolean
+          uses_count: number
+        }[]
+      }
+      claim_first_admin: { Args: never; Returns: Json }
+      expire_my_plan_if_due: { Args: never; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      redeem_access_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
+      app_role: "admin" | "user"
       trade_direction: "long" | "short"
       trade_status: "open" | "win" | "loss" | "breakeven"
     }
@@ -364,6 +477,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       trade_direction: ["long", "short"],
       trade_status: ["open", "win", "loss", "breakeven"],
     },

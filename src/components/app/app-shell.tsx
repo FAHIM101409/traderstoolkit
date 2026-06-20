@@ -1,8 +1,9 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable, Settings as SettingsIcon, Play, CalendarClock, Lock } from "lucide-react";
+import { LayoutDashboard, Calculator, Shield, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Activity, Cable, Settings as SettingsIcon, Play, CalendarClock, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
+import { useIsAdmin } from "@/hooks/use-admin";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { UpgradeDialog } from "./upgrade-dialog";
@@ -33,6 +34,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
   const { isPro } = useProfile();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
   async function signOut() {
@@ -94,6 +96,17 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           >
             <SettingsIcon className="h-3.5 w-3.5" /> Settings
           </Link>
+          {isAdmin && (
+            <Link
+              to="/admin-codes"
+              className={cn(
+                "mb-2 flex items-center gap-2 rounded-md px-3 py-2 text-xs text-sidebar-foreground/80 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                pathname === "/admin-codes" && "bg-sidebar-accent text-sidebar-accent-foreground",
+              )}
+            >
+              <KeyRound className="h-3.5 w-3.5" /> Founder Codes
+            </Link>
+          )}
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <p className="truncate text-xs font-medium">{user?.email ?? "Trader"}</p>

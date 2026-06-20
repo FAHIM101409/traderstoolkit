@@ -16,7 +16,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Cable, Check, ChevronsUpDown, Sparkles, User } from "lucide-react";
+import { Cable, Check, ChevronsUpDown, KeyRound, Sparkles, User } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,9 @@ function SettingsPage() {
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [pw, setPw] = useState("");
   const [saving, setSaving] = useState(false);
+  const [redeemCode, setRedeemCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemResult, setRedeemResult] = useState<{ tone: "success" | "error"; message: string; expires?: string } | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -61,6 +64,23 @@ function SettingsPage() {
     const { error } = await supabase.auth.updateUser({ password: pw });
     if (error) toast.error(error.message);
     else { toast.success("Password updated"); setPw(""); }
+  }
+
+  async function redeem() {
+    if (!redeemCode.trim()) return;
+    setRedeeming(true);
+    setRedeemResult(null);
+    const { data, error } = await supabase.rpc("redeem_access_code", { p_code: redeemCode.trim() });
+    setRedeeming(false);
+    if (error) { setRedeemResult({ tone: "error", message: error.message }); return; }
+    const res = data as { status: string; message: string; expires_at?: string };
+    if (res.status === "success") {
+      setRedeemResult({ tone: "success", message: res.message, expires: res.expires_at });
+      setRedeemCode("");
+      refresh();
+    } else {
+      setRedeemResult({ tone: "error", message: res.message });
+    }
   }
 
   const selectedCcy = CURRENCIES.find((c) => c.code === currency);
@@ -116,6 +136,23 @@ function SettingsPage() {
               <Button asChild className="gap-2"><Link to="/pricing"><Sparkles className="h-4 w-4" /> Upgrade to Pro</Link></Button>
             ) : (
               <Button variant="outline" onClick={() => toast.info("Cancel flow coming soon")}>Cancel subscription</Button>
+            )}
+          </CardContent></Card>
+
+          <Card><CardContent className="space-y-4 p-6">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15"><KeyRound className="h-5 w-5 text-primary" /></div>
+              <div><h2 className="font-semibold">Redeem Access Code</h2><p className="text-sm text-muted-foreground">Have a founder code? Activate Pro instantly.</p></div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Input value={redeemCode} onChange={(e) => setRedeemCode(e.target.value.toUpperCase())} placeholder="STK-XXXXXX" className="font-mono uppercase" />
+              <Button onClick={redeem} disabled={redeeming || !redeemCode.trim()}>Redeem</Button>
+            </div>
+            {redeemResult && (
+              <div className={cn("rounded-md border p-3 text-sm", redeemResult.tone === "success" ? "border-primary/40 bg-primary/10 text-primary-foreground" : "border-destructive/40 bg-destructive/10 text-destructive")}>
+                <p className="font-medium">{redeemResult.message}</p>
+                {redeemResult.expires && <p className="mt-1 text-xs opacity-80">Expires: {new Date(redeemResult.expires).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</p>}
+              </div>
             )}
           </CardContent></Card>
         </TabsContent>

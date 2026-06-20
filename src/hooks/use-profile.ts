@@ -26,6 +26,8 @@ export function useProfile() {
       setLoading(false);
       return;
     }
+    // Auto-downgrade if Pro access expired
+    await supabase.rpc("expire_my_plan_if_due");
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     setProfile((data as Profile) ?? null);
     setLoading(false);
@@ -36,6 +38,7 @@ export function useProfile() {
   }, [load]);
 
   const isPro = profile?.plan === "pro";
+  const proExpiresAt = profile?.plan_renewal_at ?? null;
 
-  return { profile, loading, isPro, refresh: load };
+  return { profile, loading, isPro, proExpiresAt, refresh: load };
 }

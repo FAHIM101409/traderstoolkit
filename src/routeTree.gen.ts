@@ -29,6 +29,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBacktestRouteImport } from './routes/_authenticated/backtest'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
+import { Route as AuthenticatedAdminCodesRouteImport } from './routes/_authenticated/admin-codes'
 import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
 const AuthRoute = AuthRouteImport.update({
@@ -131,6 +132,11 @@ const AuthenticatedAiReviewerRoute = AuthenticatedAiReviewerRouteImport.update({
   path: '/ai-reviewer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminCodesRoute = AuthenticatedAdminCodesRouteImport.update({
+  id: '/admin-codes',
+  path: '/admin-codes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicMt5IngestRoute = ApiPublicMt5IngestRouteImport.update({
   id: '/api/public/mt5/ingest',
   path: '/api/public/mt5/ingest',
@@ -140,6 +146,7 @@ const ApiPublicMt5IngestRoute = ApiPublicMt5IngestRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/backtest': typeof AuthenticatedBacktestRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/backtest': typeof AuthenticatedBacktestRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/_authenticated/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/backtest': typeof AuthenticatedBacktestRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
     | '/backtest'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
     | '/backtest'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin-codes'
     | '/_authenticated/ai-reviewer'
     | '/_authenticated/analytics'
     | '/_authenticated/backtest'
@@ -424,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAiReviewerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin-codes': {
+      id: '/_authenticated/admin-codes'
+      path: '/admin-codes'
+      fullPath: '/admin-codes'
+      preLoaderRoute: typeof AuthenticatedAdminCodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/mt5/ingest': {
       id: '/api/public/mt5/ingest'
       path: '/api/public/mt5/ingest'
@@ -435,6 +454,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminCodesRoute: typeof AuthenticatedAdminCodesRoute
   AuthenticatedAiReviewerRoute: typeof AuthenticatedAiReviewerRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBacktestRoute: typeof AuthenticatedBacktestRoute
@@ -455,6 +475,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminCodesRoute: AuthenticatedAdminCodesRoute,
   AuthenticatedAiReviewerRoute: AuthenticatedAiReviewerRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBacktestRoute: AuthenticatedBacktestRoute,
