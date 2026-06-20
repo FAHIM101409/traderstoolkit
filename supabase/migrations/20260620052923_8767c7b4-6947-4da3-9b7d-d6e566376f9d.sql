@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Users manage own mt5 tokens" ON public.mt5_tokens;
+CREATE POLICY "Users manage own mt5 tokens" ON public.mt5_tokens FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
