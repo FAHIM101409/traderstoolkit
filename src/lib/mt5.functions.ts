@@ -156,7 +156,12 @@ export const syncMt5 = createServerFn({ method: "POST" })
     const id = acct.metaapi_account_id;
     if (!id) throw new Error("MetaApi account is not provisioned yet.");
 
-    const updates: Record<string, unknown> = { last_sync_at: new Date().toISOString(), last_error: null };
+    const updates: {
+      last_sync_at: string; last_error: string | null;
+      status?: string; balance?: number | null; equity?: number | null;
+      margin?: number | null; free_margin?: number | null; margin_level?: number | null;
+      currency?: string | null; leverage?: number | null;
+    } = { last_sync_at: new Date().toISOString(), last_error: null };
 
     // Account info
     const infoRes = await metaapi(`/users/current/accounts/${id}/account-information`);
@@ -229,16 +234,16 @@ export const syncMt5 = createServerFn({ method: "POST" })
       }
 
       if (closed.length) {
-        // Upsert each trade keyed by (user_id, external_source, external_id)
         const rows = closed.map((c) => {
           const rrPlanned =
             c.sl && c.entryPrice
               ? +(Math.abs(c.exitPrice && c.tp ? (c.tp - c.entryPrice) / (c.entryPrice - c.sl) : 0)).toFixed(2)
               : null;
+          const status: "win" | "loss" | "breakeven" = c.pnl > 0 ? "win" : c.pnl < 0 ? "loss" : "breakeven";
           return {
             user_id: userId,
             pair: c.symbol,
-            direction: c.direction,
+            direction: c.direction as "long" | "short",
             entry_price: c.entryPrice,
             exit_price: c.exitPrice,
             stop_loss: c.sl ?? null,
@@ -246,7 +251,7 @@ export const syncMt5 = createServerFn({ method: "POST" })
             lot_size: c.volume,
             pnl: c.pnl,
             rr_planned: rrPlanned,
-            status: "closed",
+            status,
             opened_at: c.openedAt,
             closed_at: c.closedAt,
             source: "mt5",
