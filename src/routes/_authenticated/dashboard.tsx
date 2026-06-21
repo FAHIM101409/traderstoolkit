@@ -204,7 +204,10 @@ function Dashboard() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Account Balance" value={fmt(stats.balance)} sub={ccy} icon={Activity} />
+        <StatCard label="Account Balance" value={fmt(liveBalance)} sub={hasMt5 ? "Live MT5" : liveCcy} icon={Activity} />
+        {hasMt5 && <StatCard label="Equity" value={fmt(Number(mt5?.equity ?? 0))} sub="Live MT5" icon={Activity} />}
+        {hasMt5 && <StatCard label="Free Margin" value={fmt(Number(mt5?.free_margin ?? 0))} sub="Live MT5" icon={Shield} />}
+        {hasMt5 && <StatCard label="Used Margin" value={fmt(Number(mt5?.margin ?? 0))} sub="Live MT5" icon={Shield} />}
         <StatCard label="Net P&L" value={fmt(stats.net)} sub="All time" icon={TrendingUp} accent={stats.net >= 0 ? "text-success" : "text-danger"} />
         <StatCard label="Total Trades" value={String(stats.total)} sub={stats.total ? "Closed trades" : "No trades yet"} icon={Target} />
         <StatCard label="Win Rate" value={stats.total ? `${stats.winRate}%` : "—"} sub={stats.total ? `${stats.winRate}% wins` : "Awaiting data"} icon={Trophy} />
