@@ -33,6 +33,7 @@ const tools = [
 ];
 
 type Trade = { id: string; pair: string; direction: string; pnl: number | null; rr_realized: number | null; status: string; opened_at: string; closed_at: string | null; entry_price: number | null; exit_price: number | null; source: string };
+type Mt5Snapshot = { balance: number | null; equity: number | null; free_margin: number | null; margin: number | null; currency: string | null; last_sync_at: string | null } | null;
 
 function Dashboard() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ function Dashboard() {
   const startBal = Number(profile?.starting_balance ?? 10000);
   const name = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Trader";
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [hasMt5, setHasMt5] = useState(false);
+  const [mt5, setMt5] = useState<Mt5Snapshot>(null);
   const [range, setRange] = useState<"30" | "90" | "365">("30");
   const [loaded, setLoaded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -68,10 +69,10 @@ function Dashboard() {
     (async () => {
       const [t, m] = await Promise.all([
         supabase.from("trades").select("id,pair,direction,pnl,rr_realized,status,opened_at,closed_at,entry_price,exit_price,source").eq("user_id", user.id).order("opened_at", { ascending: true }),
-        supabase.from("mt5_tokens").select("id").eq("user_id", user.id).limit(1),
+        supabase.from("mt5_accounts").select("balance,equity,free_margin,margin,currency,last_sync_at").eq("user_id", user.id).maybeSingle(),
       ]);
       setTrades((t.data ?? []) as Trade[]);
-      setHasMt5((m.data ?? []).length > 0);
+      setMt5((m.data as Mt5Snapshot) ?? null);
       setLoaded(true);
     })();
   }, [user]);
@@ -119,9 +120,12 @@ function Dashboard() {
     return { balance, net, winRate, pf, avgRR, dd, best, worst, weekly, monthly, eq, total: closed.length };
   }, [trades, range, startBal]);
 
-  const fmt = (n: number) => formatMoney(n, ccy);
-
+  const hasMt5 = !!mt5;
+  const liveCcy = mt5?.currency || ccy;
+  const fmt = (n: number) => formatMoney(n, liveCcy);
   const showConnectMT5 = loaded && !hasMt5;
+  // When MT5 is connected, prefer live balance/equity for the headline cards.
+  const liveBalance = mt5?.balance != null ? Number(mt5.balance) : stats.balance;
 
   return (
     <AppShell title="Dashboard">
@@ -200,7 +204,10 @@ function Dashboard() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Account Balance" value={fmt(stats.balance)} sub={ccy} icon={Activity} />
+        <StatCard label="Account Balance" value={fmt(liveBalance)} sub={hasMt5 ? "Live MT5" : liveCcy} icon={Activity} />
+        {hasMt5 && <StatCard label="Equity" value={fmt(Number(mt5?.equity ?? 0))} sub="Live MT5" icon={Activity} />}
+        {hasMt5 && <StatCard label="Free Margin" value={fmt(Number(mt5?.free_margin ?? 0))} sub="Live MT5" icon={Shield} />}
+        {hasMt5 && <StatCard label="Used Margin" value={fmt(Number(mt5?.margin ?? 0))} sub="Live MT5" icon={Shield} />}
         <StatCard label="Net P&L" value={fmt(stats.net)} sub="All time" icon={TrendingUp} accent={stats.net >= 0 ? "text-success" : "text-danger"} />
         <StatCard label="Total Trades" value={String(stats.total)} sub={stats.total ? "Closed trades" : "No trades yet"} icon={Target} />
         <StatCard label="Win Rate" value={stats.total ? `${stats.winRate}%` : "—"} sub={stats.total ? `${stats.winRate}% wins` : "Awaiting data"} icon={Trophy} />

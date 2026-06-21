@@ -127,6 +127,78 @@ export type Database = {
           },
         ]
       }
+      mt5_accounts: {
+        Row: {
+          balance: number | null
+          broker: string
+          created_at: string
+          currency: string | null
+          equity: number | null
+          free_margin: number | null
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          leverage: number | null
+          login: string
+          margin: number | null
+          margin_level: number | null
+          metaapi_account_id: string | null
+          name: string | null
+          region: string
+          server: string
+          status: string
+          sync_frequency_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          broker: string
+          created_at?: string
+          currency?: string | null
+          equity?: number | null
+          free_margin?: number | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          leverage?: number | null
+          login: string
+          margin?: number | null
+          margin_level?: number | null
+          metaapi_account_id?: string | null
+          name?: string | null
+          region?: string
+          server: string
+          status?: string
+          sync_frequency_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          broker?: string
+          created_at?: string
+          currency?: string | null
+          equity?: number | null
+          free_margin?: number | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          leverage?: number | null
+          login?: string
+          margin?: number | null
+          margin_level?: number | null
+          metaapi_account_id?: string | null
+          name?: string | null
+          region?: string
+          server?: string
+          status?: string
+          sync_frequency_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mt5_tokens: {
         Row: {
           account_number: string | null
@@ -213,6 +285,8 @@ export type Database = {
           direction: Database["public"]["Enums"]["trade_direction"]
           entry_price: number | null
           exit_price: number | null
+          external_id: string | null
+          external_source: string | null
           id: string
           lot_size: number | null
           mt5_ticket: string | null
@@ -242,6 +316,8 @@ export type Database = {
           direction: Database["public"]["Enums"]["trade_direction"]
           entry_price?: number | null
           exit_price?: number | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           lot_size?: number | null
           mt5_ticket?: string | null
@@ -271,6 +347,8 @@ export type Database = {
           direction?: Database["public"]["Enums"]["trade_direction"]
           entry_price?: number | null
           exit_price?: number | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           lot_size?: number | null
           mt5_ticket?: string | null
