@@ -3,7 +3,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const REGION = "new-york";
-const PROV_BASE = `https://mt-provisioning-api-v1.${REGION}.agiliumtrade.ai`;
+// Provisioning API is global (not regional). Regional hostnames for provisioning
+// return a Cloudflare 526 (invalid SSL cert). Only the client API is regional.
+const PROV_BASE = `https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai`;
 const CLIENT_BASE = `https://mt-client-api-v1.${REGION}.agiliumtrade.ai`;
 
 async function assertPro(supabase: any, userId: string) {
