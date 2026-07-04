@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as BestTradingJournalForMetatraderRouteImport } from './routes/best-trading-journal-for-metatrader'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,12 @@ import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminCodesRouteImport } from './routes/_authenticated/admin-codes'
 import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
+const BestTradingJournalForMetatraderRoute =
+  BestTradingJournalForMetatraderRouteImport.update({
+    id: '/best-trading-journal-for-metatrader',
+    path: '/best-trading-journal-for-metatrader',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -146,6 +153,7 @@ const ApiPublicMt5IngestRoute = ApiPublicMt5IngestRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/best-trading-journal-for-metatrader': typeof BestTradingJournalForMetatraderRoute
   '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -169,6 +177,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/best-trading-journal-for-metatrader': typeof BestTradingJournalForMetatraderRoute
   '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -194,6 +203,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/best-trading-journal-for-metatrader': typeof BestTradingJournalForMetatraderRoute
   '/_authenticated/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/_authenticated/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/best-trading-journal-for-metatrader'
     | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/best-trading-journal-for-metatrader'
     | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
@@ -266,6 +278,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/best-trading-journal-for-metatrader'
     | '/_authenticated/admin-codes'
     | '/_authenticated/ai-reviewer'
     | '/_authenticated/analytics'
@@ -291,11 +304,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BestTradingJournalForMetatraderRoute: typeof BestTradingJournalForMetatraderRoute
   ApiPublicMt5IngestRoute: typeof ApiPublicMt5IngestRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/best-trading-journal-for-metatrader': {
+      id: '/best-trading-journal-for-metatrader'
+      path: '/best-trading-journal-for-metatrader'
+      fullPath: '/best-trading-journal-for-metatrader'
+      preLoaderRoute: typeof BestTradingJournalForMetatraderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -502,6 +523,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BestTradingJournalForMetatraderRoute: BestTradingJournalForMetatraderRoute,
   ApiPublicMt5IngestRoute: ApiPublicMt5IngestRoute,
 }
 export const routeTree = rootRouteImport
