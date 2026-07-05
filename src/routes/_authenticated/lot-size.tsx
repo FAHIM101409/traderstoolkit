@@ -15,7 +15,7 @@ import { INSTRUMENTS } from "@/lib/trading";
 import { Calculator, Wallet, Target, Activity } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/lot-size")({
-  head: () => ({ meta: [{ title: "Lot Size Calculator — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Lot Size Calculator — Traders Toolkit" }] }),
   component: LotSizePage,
 });
 

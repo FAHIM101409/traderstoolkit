@@ -11,7 +11,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 import { Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/backtest")({
-  head: () => ({ meta: [{ title: "Backtesting Lab — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Backtesting Lab — Traders Toolkit" }] }),
   component: BacktestPage,
 });
 

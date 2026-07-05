@@ -21,7 +21,7 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Settings — Traders Toolkit" }] }),
   component: SettingsPage,
 });
 
@@ -98,7 +98,7 @@ function SettingsPage() {
         <TabsContent value="profile" className="space-y-4">
           <Card><CardContent className="space-y-4 p-6">
             <div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15"><User className="h-5 w-5 text-primary" /></div>
-              <div><h2 className="font-semibold">Account profile</h2><p className="text-sm text-muted-foreground">How you show up across Smart Trader.</p></div>
+              <div><h2 className="font-semibold">Account profile</h2><p className="text-sm text-muted-foreground">How you show up across Traders Toolkit.</p></div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label>Username</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" /></div>
@@ -121,7 +121,7 @@ function SettingsPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-semibold">Current plan</h2>
-                <p className="text-sm text-muted-foreground">Manage your Smart Trader subscription.</p>
+                <p className="text-sm text-muted-foreground">Manage your Traders Toolkit subscription.</p>
               </div>
               <Badge className={isPro ? "bg-primary text-primary-foreground" : ""} variant={isPro ? "default" : "outline"}>
                 {isPro ? "Pro" : "Free"}

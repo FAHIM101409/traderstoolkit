@@ -15,7 +15,7 @@ import { Brain, Loader2, Sparkles, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/ai-reviewer")({
-  head: () => ({ meta: [{ title: "AI Trade Reviewer — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "AI Trade Reviewer — Traders Toolkit" }] }),
   component: ReviewerPage,
 });
 

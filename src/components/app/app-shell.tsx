@@ -138,7 +138,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
             <LineChart className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-sm font-semibold tracking-tight">Smart Trader</span>
+          <span className="text-sm font-semibold tracking-tight">Traders Toolkit</span>
         </Link>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3 text-sm">{renderNavItems()}</nav>
         {renderFooter("desktop")}
@@ -160,7 +160,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
                     <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
                       <LineChart className="h-4 w-4 text-primary-foreground" />
                     </div>
-                    <span className="text-sm font-semibold tracking-tight">Smart Trader</span>
+                    <span className="text-sm font-semibold tracking-tight">Traders Toolkit</span>
                   </Link>
                   <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close menu">
                     <X className="h-5 w-5" />

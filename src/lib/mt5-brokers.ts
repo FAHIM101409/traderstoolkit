@@ -26,3 +26,40 @@ export const MT5_BROKERS: BrokerInfo[] = [
   { name: "BlackBull Markets", servers: ["BlackBull-Live", "BlackBull-Demo"] },
   { name: "Hankotrade", servers: ["Hankotrade-Live", "Hankotrade-Demo"] },
 ];
+
+// The list above is only for autocomplete suggestions. The connect form always
+// allows free-text entry, so any MT5 broker worldwide can be entered manually.
+// Below: additional brokers & prop firms commonly used by our traders. Server
+// names differ per region — traders can enter the exact server from MT5.
+MT5_BROKERS.push(
+  { name: "The 5%ers", servers: ["The5ers-Live", "The5ers-Demo"] },
+  { name: "Alpha Capital Group", servers: ["AlphaCapitalGroup-Live", "AlphaCapitalGroup-Demo"] },
+  { name: "Goat Funded Trader", servers: ["GoatFundedTrader-Live", "GoatFundedTrader-Demo"] },
+  { name: "AquaFunded", servers: ["AquaFunded-Live", "AquaFunded-Demo"] },
+  { name: "Blueberry Funded", servers: ["BlueberryFunded-Live", "BlueberryFunded-Demo"] },
+  { name: "City Traders Imperium", servers: ["CityTradersImperium-Live", "CityTradersImperium-Demo"] },
+  { name: "SurgeTrader", servers: ["SurgeTrader-Live", "SurgeTrader-Demo"] },
+  { name: "Lux Trading Firm", servers: ["LuxTradingFirm-Live"] },
+  { name: "SmartProp Trader", servers: ["SmartPropTrader-Live", "SmartPropTrader-Demo"] },
+  { name: "MyFundedFX", servers: ["MyFundedFX-Live", "MyFundedFX-Demo"] },
+  { name: "PipFarm", servers: ["PipFarm-Live", "PipFarm-Demo"] },
+  { name: "For Traders", servers: ["ForTraders-Live", "ForTraders-Demo"] },
+  { name: "Instant Funding", servers: ["InstantFunding-Live", "InstantFunding-Demo"] },
+  { name: "Fusion Markets", servers: ["FusionMarkets-Live", "FusionMarkets-Demo"] },
+  { name: "Forex.com", servers: ["FOREX.com-Live 535", "FOREX.com-Demo 535"] },
+  { name: "RoboForex", servers: ["RoboForex-ECN", "RoboForex-Pro", "RoboForex-Demo"] },
+  { name: "AvaTrade", servers: ["AVATRADE-Real", "AVATRADE-Demo"] },
+  { name: "Axi", servers: ["AxiCorp-Live", "AxiCorp-Demo"] },
+  { name: "Swissquote", servers: ["Swissquote-Server", "Swissquote-Demo"] },
+  { name: "Dukascopy", servers: ["Dukascopy-live-mt5", "Dukascopy-demo-mt5"] },
+  { name: "GO Markets", servers: ["GOMarkets-Live", "GOMarkets-Demo"] },
+  { name: "IG", servers: ["IG-Live", "IG-Demo"] },
+  { name: "CMC Markets", servers: ["CMC-Live", "CMC-Demo"] },
+  { name: "Global Prime", servers: ["GlobalPrime-Live", "GlobalPrime-Demo"] },
+  { name: "TMGM", servers: ["TMGM-Live", "TMGM-Demo"] },
+  { name: "Pip Trader", servers: ["PipTrader-Live", "PipTrader-Demo"] },
+  { name: "Traders With Edge", servers: ["TradersWithEdge-Live", "TradersWithEdge-Demo"] },
+  { name: "Maven Trading", servers: ["MavenTrading-Live", "MavenTrading-Demo"] },
+  { name: "FundedFX", servers: ["FundedFX-Live", "FundedFX-Demo"] },
+  { name: "OspreyFX", servers: ["OspreyFX-Live", "OspreyFX-Demo"] },
+);

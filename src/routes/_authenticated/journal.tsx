@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { Plus, Image as ImageIcon, Trash2, TrendingUp, TrendingDown, Trophy, Target, Percent, Loader2, X, ChevronLeft, ChevronRight, CalendarDays, List } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/journal")({
-  head: () => ({ meta: [{ title: "Trade Journal — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Trade Journal — Traders Toolkit" }] }),
   component: JournalPage,
 });
 

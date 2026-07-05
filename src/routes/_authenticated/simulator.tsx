@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/simulator")({
-  head: () => ({ meta: [{ title: "Prop Firm Simulator — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Prop Firm Simulator — Traders Toolkit" }] }),
   component: SimPage,
 });
 
