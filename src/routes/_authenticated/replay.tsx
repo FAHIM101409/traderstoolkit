@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { UpgradeDialog } from "@/components/app/upgrade-dialog";
 
 export const Route = createFileRoute("/_authenticated/replay")({
-  head: () => ({ meta: [{ title: "Backtesting Station — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Backtesting Station — Traders Toolkit" }] }),
   component: ReplayPage,
 });
 

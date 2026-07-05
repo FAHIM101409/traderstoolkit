@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { LineChart, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Traders Toolkit" }] }),
   component: AuthPage,
 });
 
@@ -64,7 +64,7 @@ function AuthPage() {
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary shadow-glow">
             <LineChart className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-sm font-semibold">Smart Trader Toolkit</span>
+          <span className="text-sm font-semibold">Traders Toolkit</span>
         </Link>
         <Card className="border-border/60 bg-card/90 backdrop-blur">
           <CardContent className="p-6">

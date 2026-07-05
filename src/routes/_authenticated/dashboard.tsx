@@ -21,7 +21,7 @@ import { CURRENCIES, formatMoney } from "@/lib/currencies";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Traders Toolkit" }] }),
   component: Dashboard,
 });
 

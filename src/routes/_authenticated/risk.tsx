@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Shield, Wallet, TrendingDown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/risk")({
-  head: () => ({ meta: [{ title: "Risk Manager — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Risk Manager — Traders Toolkit" }] }),
   component: RiskPage,
 });
 

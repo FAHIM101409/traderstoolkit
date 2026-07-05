@@ -13,7 +13,7 @@ import { getEconomicCalendar, analyzeNewsImpact } from "@/lib/ai.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/news")({
-  head: () => ({ meta: [{ title: "News Lab — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "News Lab — Traders Toolkit" }] }),
   component: NewsLab,
 });
 
@@ -77,7 +77,7 @@ function NewsLab() {
 
   return (
     <AppShell title="News Lab">
-      <p className="mb-6 text-sm text-muted-foreground">Live economic calendar, red-folder events, and AI market-impact analysis — all inside Smart Trader Toolkit.</p>
+      <p className="mb-6 text-sm text-muted-foreground">Live economic calendar, red-folder events, and AI market-impact analysis — all inside Traders Toolkit.</p>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2 border-border/60 bg-card">

@@ -10,7 +10,7 @@ import { PROP_FIRMS } from "@/lib/trading";
 import { Building2, AlertTriangle, ShieldCheck, Target } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/prop-firm")({
-  head: () => ({ meta: [{ title: "Prop Firm Drawdown — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Prop Firm Drawdown — Traders Toolkit" }] }),
   component: PropFirmPage,
 });
 

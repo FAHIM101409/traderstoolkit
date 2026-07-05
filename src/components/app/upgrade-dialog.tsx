@@ -43,7 +43,7 @@ export function UpgradeDialog({ children, open, onOpenChange }: { children?: Rea
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Upgrade to Smart Trader Pro</DialogTitle>
+          <DialogTitle className="text-2xl">Upgrade to Traders Toolkit Pro</DialogTitle>
           <DialogDescription>Unlock the full trading OS — AI, MT5 sync, and the Backtesting Station.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">

@@ -9,20 +9,20 @@ import { SiteFooter } from "@/components/landing/site-footer";
 import dashboardImg from "@/assets/mt5-journal-dashboard.jpg";
 import tradeDetailImg from "@/assets/mt5-journal-trade-detail.jpg";
 
-const CANONICAL = "https://smarttraderstoolkit.lovable.app/best-trading-journal-for-metatrader";
+const CANONICAL = "https://traderstoolkit.lovable.app/best-trading-journal-for-metatrader";
 
 export const Route = createFileRoute("/best-trading-journal-for-metatrader")({
   head: () => ({
     meta: [
       { title: "Best Trading Journal for MetaTrader (MT5 & MT4) in 2026" },
-      { name: "description", content: "Compare the best trading journals for MetaTrader. Auto-sync MT5 & MT4 trades, SMC tagging, AI review and prop firm analytics — see why Smart Trader Toolkit ranks #1." },
+      { name: "description", content: "Compare the best trading journals for MetaTrader. Auto-sync MT5 & MT4 trades, SMC tagging, AI review and prop firm analytics — see why Traders Toolkit ranks #1." },
       { property: "og:title", content: "Best Trading Journal for MetaTrader (MT5 & MT4)" },
       { property: "og:description", content: "Auto-sync MT5/MT4 trades, tag SMC setups, get AI feedback, and pass prop firm challenges. Full comparison vs TraderVue, TradeZella and TraderSync." },
       { property: "og:type", content: "article" },
       { property: "og:url", content: CANONICAL },
-      { property: "og:image", content: `https://smarttraderstoolkit.lovable.app${dashboardImg}` },
+      { property: "og:image", content: `https://traderstoolkit.lovable.app${dashboardImg}` },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: `https://smarttraderstoolkit.lovable.app${dashboardImg}` },
+      { name: "twitter:image", content: `https://traderstoolkit.lovable.app${dashboardImg}` },
     ],
     links: [{ rel: "canonical", href: CANONICAL }],
     scripts: [
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/best-trading-journal-for-metatrader")({
           "@type": "Article",
           headline: "Best Trading Journal for MetaTrader (MT5 & MT4) in 2026",
           description: "Comparison of the best trading journals with MetaTrader integration.",
-          author: { "@type": "Organization", name: "Smart Trader Toolkit" },
+          author: { "@type": "Organization", name: "Traders Toolkit" },
           mainEntityOfPage: CANONICAL,
         }),
       },
@@ -96,7 +96,7 @@ function Page() {
               <span className="block bg-gradient-primary bg-clip-text text-transparent">MT5 & MT4, auto-synced.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-base text-muted-foreground md:text-lg">
-              Most journals ask you to upload a CSV. Smart Trader Toolkit connects directly to MetaTrader 5 with a read-only investor password — every trade, SL, TP and swap lands in your journal the second it fills.
+              Most journals ask you to upload a CSV. Traders Toolkit connects directly to MetaTrader 5 with a read-only investor password — every trade, SL, TP and swap lands in your journal the second it fills.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
@@ -115,7 +115,7 @@ function Page() {
                 src={dashboardImg}
                 width={1600}
                 height={1000}
-                alt="Smart Trader Toolkit trading journal dashboard with MetaTrader 5 auto-synced trades"
+                alt="Traders Toolkit trading journal dashboard with MetaTrader 5 auto-synced trades"
                 className="rounded-xl w-full h-auto"
               />
             </div>
@@ -152,7 +152,7 @@ function Page() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium text-secondary">Head-to-head</p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Smart Trader Toolkit vs TraderVue, TradeZella & TraderSync</h2>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Traders Toolkit vs TraderVue, TradeZella & TraderSync</h2>
             <p className="mt-3 text-muted-foreground">Feature-by-feature, focused on what MetaTrader traders actually need.</p>
           </div>
 
@@ -161,7 +161,7 @@ function Page() {
               <thead>
                 <tr className="border-b border-border/60 bg-background/40">
                   <th className="p-4 text-left font-medium text-muted-foreground">Feature</th>
-                  <th className="p-4 text-center font-semibold text-primary">Smart Trader Toolkit</th>
+                  <th className="p-4 text-center font-semibold text-primary">Traders Toolkit</th>
                   <th className="p-4 text-center font-medium text-muted-foreground">TraderVue</th>
                   <th className="p-4 text-center font-medium text-muted-foreground">TradeZella</th>
                   <th className="p-4 text-center font-medium text-muted-foreground">TraderSync</th>

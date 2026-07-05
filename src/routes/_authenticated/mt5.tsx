@@ -19,7 +19,7 @@ import { MT5_BROKERS } from "@/lib/mt5-brokers";
 import { connectMt5, disconnectMt5, syncMt5, updateMt5Settings } from "@/lib/mt5.functions";
 
 export const Route = createFileRoute("/_authenticated/mt5")({
-  head: () => ({ meta: [{ title: "MT5 Integration — Smart Trader Toolkit" }] }),
+  head: () => ({ meta: [{ title: "MT5 Integration — Traders Toolkit" }] }),
   component: MT5Page,
 });
 
@@ -232,7 +232,7 @@ function ConnectForm({ onConnected }: { onConnected: () => void }) {
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary"><Cable className="h-5 w-5" /></div>
           <div>
             <p className="font-semibold">Connect MT5 with Investor Password</p>
-            <p className="mt-1 text-sm text-muted-foreground">Read-only access — Smart Trader Toolkit can sync your balance, equity, and trade history. It can never place or modify trades.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Read-only access — Traders Toolkit can sync your balance, equity, and trade history. It can never place or modify trades.</p>
           </div>
         </CardContent>
       </Card>
