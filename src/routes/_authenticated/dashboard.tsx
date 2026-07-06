@@ -244,7 +244,7 @@ function Dashboard() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label={hasMt5 ? "Live Balance" : "Account Balance"} value={fmt(stats.balance)} sub={hasMt5 ? "Live MT5" : `Journal · ${liveCcy}`} icon={Activity} />
         {hasMt5 && <StatCard label="Live Equity" value={fmt(equity)} sub="Live MT5" icon={Activity} />}
-        {hasMt5 && <StatCard label="Floating P/L" value={fmt(floating)} sub="Equity − Balance" icon={TrendingUp} accent={floating >= 0 ? "text-success" : "text-danger"} />}
+        {hasMt5 && <StatCard label="Floating P/L" value={fmt(floating)} sub="Live MT5" icon={TrendingUp} accent={floating >= 0 ? "text-success" : "text-danger"} />}
         {hasMt5 && <StatCard label="Free Margin" value={fmt(Number(mt5?.free_margin ?? 0))} sub="Live MT5" icon={Shield} />}
         {hasMt5 && <StatCard label="Used Margin" value={fmt(Number(mt5?.margin ?? 0))} sub="Live MT5" icon={Shield} />}
         {hasMt5 && <StatCard label="Margin Level" value={mt5?.margin_level ? `${Number(mt5.margin_level).toFixed(2)}%` : "—"} sub="Live MT5" icon={Shield} />}
