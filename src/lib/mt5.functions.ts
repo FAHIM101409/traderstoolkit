@@ -38,6 +38,30 @@ async function readErr(res: Response) {
   }
 }
 
+// Translate raw MetaApi errors into user-friendly messages the UI can trust.
+function friendlyMt5Error(raw: string): string {
+  const m = (raw || "").toLowerCase();
+  if (
+    (m.includes("server") && (m.includes("not found") || m.includes("unknown") || m.includes("does not exist"))) ||
+    m.includes("server name") ||
+    m.includes("no such server") ||
+    m.includes("invalid server")
+  ) {
+    return "Broker server not found. Please verify the exact MT5 server name.";
+  }
+  if (
+    m.includes("invalid account") ||
+    m.includes("invalid trading account") ||
+    (m.includes("invalid") && (m.includes("password") || m.includes("login") || m.includes("credential"))) ||
+    m.includes("authoriz") ||
+    m.includes("access denied") ||
+    m.includes("wrong password")
+  ) {
+    return "Invalid MT5 login or investor password.";
+  }
+  return raw;
+}
+
 // ---------- Connect ----------
 export const connectMt5 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
