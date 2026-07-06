@@ -308,7 +308,7 @@ export const syncMt5 = createServerFn({ method: "POST" })
       updates.last_error = `History fetch failed: ${await readErr(dealsRes)}`;
     }
 
-    await supabase.from("mt5_accounts").update(updates).eq("id", acct.id);
+    await supabase.from("mt5_accounts").update(updates as never).eq("id", acct.id);
     return { ok: true, imported };
   });
 
