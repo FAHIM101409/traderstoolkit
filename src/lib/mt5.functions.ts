@@ -186,15 +186,21 @@ export const syncMt5 = createServerFn({ method: "POST" })
       last_sync_at: string; last_error: string | null;
       status?: string; balance?: number | null; equity?: number | null;
       margin?: number | null; free_margin?: number | null; margin_level?: number | null;
-      currency?: string | null; leverage?: number | null;
+      currency?: string | null; leverage?: number | null; floating_profit?: number | null;
     } = { last_sync_at: new Date().toISOString(), last_error: null };
 
     // Account info
     const infoRes = await metaapi(`/users/current/accounts/${id}/account-information`);
     if (!infoRes.ok) {
-      const msg = await readErr(infoRes);
-      await supabase.from("mt5_accounts").update({ last_error: msg, last_sync_at: new Date().toISOString() }).eq("id", acct.id);
-      throw new Error(`MT5 not ready: ${msg}`);
+      const rawMsg = await readErr(infoRes);
+      const msg = friendlyMt5Error(rawMsg);
+      const isProvisioning = /not.*deployed|undeployed|not.*ready|nonexistent|being deployed|still.*starting/i.test(rawMsg);
+      await supabase.from("mt5_accounts").update({
+        last_error: msg,
+        last_sync_at: new Date().toISOString(),
+        status: isProvisioning ? "deploying" : "error",
+      }).eq("id", acct.id);
+      throw new Error(isProvisioning ? "MT5 account is still provisioning. Please wait for deployment to finish." : msg);
     }
     const info = (await infoRes.json()) as Record<string, number | string>;
     Object.assign(updates, {
@@ -206,6 +212,7 @@ export const syncMt5 = createServerFn({ method: "POST" })
       margin_level: info.marginLevel ?? null,
       currency: info.currency ?? null,
       leverage: info.leverage ?? null,
+      floating_profit: typeof info.profit === "number" ? info.profit : null,
     });
 
     // Sync starting balance on profile if user has not customised it (still default 10000)
