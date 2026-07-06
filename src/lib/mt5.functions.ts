@@ -38,6 +38,30 @@ async function readErr(res: Response) {
   }
 }
 
+// Translate raw MetaApi errors into user-friendly messages the UI can trust.
+function friendlyMt5Error(raw: string): string {
+  const m = (raw || "").toLowerCase();
+  if (
+    (m.includes("server") && (m.includes("not found") || m.includes("unknown") || m.includes("does not exist"))) ||
+    m.includes("server name") ||
+    m.includes("no such server") ||
+    m.includes("invalid server")
+  ) {
+    return "Broker server not found. Please verify the exact MT5 server name.";
+  }
+  if (
+    m.includes("invalid account") ||
+    m.includes("invalid trading account") ||
+    (m.includes("invalid") && (m.includes("password") || m.includes("login") || m.includes("credential"))) ||
+    m.includes("authoriz") ||
+    m.includes("access denied") ||
+    m.includes("wrong password")
+  ) {
+    return "Invalid MT5 login or investor password.";
+  }
+  return raw;
+}
+
 // ---------- Connect ----------
 export const connectMt5 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -80,7 +104,7 @@ export const connectMt5 = createServerFn({ method: "POST" })
       },
       PROV_BASE,
     );
-    if (!createRes.ok) throw new Error(`MetaApi: ${await readErr(createRes)}`);
+    if (!createRes.ok) throw new Error(friendlyMt5Error(await readErr(createRes)));
     const created = (await createRes.json()) as { id: string };
 
     // Deploy (start) the account
@@ -162,15 +186,21 @@ export const syncMt5 = createServerFn({ method: "POST" })
       last_sync_at: string; last_error: string | null;
       status?: string; balance?: number | null; equity?: number | null;
       margin?: number | null; free_margin?: number | null; margin_level?: number | null;
-      currency?: string | null; leverage?: number | null;
+      currency?: string | null; leverage?: number | null; floating_profit?: number | null;
     } = { last_sync_at: new Date().toISOString(), last_error: null };
 
     // Account info
     const infoRes = await metaapi(`/users/current/accounts/${id}/account-information`);
     if (!infoRes.ok) {
-      const msg = await readErr(infoRes);
-      await supabase.from("mt5_accounts").update({ last_error: msg, last_sync_at: new Date().toISOString() }).eq("id", acct.id);
-      throw new Error(`MT5 not ready: ${msg}`);
+      const rawMsg = await readErr(infoRes);
+      const msg = friendlyMt5Error(rawMsg);
+      const isProvisioning = /not.*deployed|undeployed|not.*ready|nonexistent|being deployed|still.*starting/i.test(rawMsg);
+      await supabase.from("mt5_accounts").update({
+        last_error: msg,
+        last_sync_at: new Date().toISOString(),
+        status: isProvisioning ? "deploying" : "error",
+      }).eq("id", acct.id);
+      throw new Error(isProvisioning ? "MT5 account is still provisioning. Please wait for deployment to finish." : msg);
     }
     const info = (await infoRes.json()) as Record<string, number | string>;
     Object.assign(updates, {
@@ -182,6 +212,7 @@ export const syncMt5 = createServerFn({ method: "POST" })
       margin_level: info.marginLevel ?? null,
       currency: info.currency ?? null,
       leverage: info.leverage ?? null,
+      floating_profit: typeof info.profit === "number" ? info.profit : null,
     });
 
     // Sync starting balance on profile if user has not customised it (still default 10000)
@@ -277,7 +308,7 @@ export const syncMt5 = createServerFn({ method: "POST" })
       updates.last_error = `History fetch failed: ${await readErr(dealsRes)}`;
     }
 
-    await supabase.from("mt5_accounts").update(updates).eq("id", acct.id);
+    await supabase.from("mt5_accounts").update(updates as never).eq("id", acct.id);
     return { ok: true, imported };
   });
 
@@ -295,4 +326,61 @@ export const updateMt5Settings = createServerFn({ method: "POST" })
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// ---------- Provisioning status polling ----------
+// Returns the current MetaApi deployment + connection phase so the UI can
+// display a progress indicator and only enable Sync after the account is
+// actually CONNECTED to the broker.
+export type Mt5Phase =
+  | "none"
+  | "provisioning"
+  | "deploying"
+  | "connecting"
+  | "connected"
+  | "auth_failed"
+  | "server_invalid"
+  | "error";
+
+export const getMt5Status = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: acct } = await supabase
+      .from("mt5_accounts")
+      .select("id,metaapi_account_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!acct?.metaapi_account_id) return { phase: "none" as Mt5Phase };
+
+    const res = await metaapi(`/users/current/accounts/${acct.metaapi_account_id}`, {}, PROV_BASE);
+    if (!res.ok) {
+      const raw = await readErr(res);
+      const friendly = friendlyMt5Error(raw);
+      const phase: Mt5Phase = friendly.startsWith("Broker server")
+        ? "server_invalid"
+        : friendly.startsWith("Invalid MT5")
+          ? "auth_failed"
+          : "error";
+      await supabase.from("mt5_accounts").update({ status: phase, last_error: friendly }).eq("id", acct.id);
+      return { phase, message: friendly };
+    }
+    const info = (await res.json()) as { state?: string; connectionStatus?: string };
+    const state = (info.state || "").toUpperCase();
+    const conn = (info.connectionStatus || "").toUpperCase();
+
+    let phase: Mt5Phase = "provisioning";
+    if (state === "DEPLOY_FAILED") phase = "error";
+    else if (state === "CREATED") phase = "provisioning";
+    else if (state === "DEPLOYING" || state === "UNDEPLOYING") phase = "deploying";
+    else if (state === "DEPLOYED") {
+      phase = conn === "CONNECTED" ? "connected" : "connecting";
+    }
+
+    await supabase
+      .from("mt5_accounts")
+      .update({ status: phase, last_error: phase === "connected" ? null : undefined })
+      .eq("id", acct.id);
+
+    return { phase, state, connectionStatus: conn };
   });

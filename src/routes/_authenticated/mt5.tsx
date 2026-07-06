@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MT5_BROKERS } from "@/lib/mt5-brokers";
-import { connectMt5, disconnectMt5, syncMt5, updateMt5Settings } from "@/lib/mt5.functions";
+import { connectMt5, disconnectMt5, syncMt5, updateMt5Settings, getMt5Status, type Mt5Phase } from "@/lib/mt5.functions";
 
 export const Route = createFileRoute("/_authenticated/mt5")({
   head: () => ({ meta: [{ title: "MT5 Integration — Traders Toolkit" }] }),
@@ -45,6 +45,9 @@ function MT5Page() {
 function MT5Inner() {
   const [account, setAccount] = useState<Mt5Row | null>(null);
   const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState<Mt5Phase>("none");
+  const [phaseMessage, setPhaseMessage] = useState<string | null>(null);
+  const pollStartRef = useRef<number | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -55,14 +58,56 @@ function MT5Inner() {
 
   useEffect(() => { load(); }, []);
 
+  const statusFn = useServerFn(getMt5Status);
+
+  // Poll deployment status while account is not yet fully CONNECTED.
+  // Retries every 5s and gives up after 2 minutes so the UI never hangs.
+  useEffect(() => {
+    if (!account?.metaapi_account_id) { setPhase("none"); return; }
+    if (phase === "connected") return;
+    if (pollStartRef.current == null) pollStartRef.current = Date.now();
+
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const res = await statusFn();
+        if (cancelled) return;
+        setPhase(res.phase);
+        setPhaseMessage("message" in res ? (res.message ?? null) : null);
+        if (res.phase === "connected") {
+          // Trigger the first live sync automatically once ready.
+          runSync(true);
+          load();
+        } else if (res.phase === "auth_failed" || res.phase === "server_invalid" || res.phase === "error") {
+          return; // stop polling, surface error
+        } else {
+          const elapsed = Date.now() - (pollStartRef.current ?? Date.now());
+          if (elapsed > 120_000) {
+            setPhase("error");
+            setPhaseMessage("Provisioning timed out after 2 minutes. Please try again later.");
+            return;
+          }
+          setTimeout(tick, 5000);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setPhaseMessage((e as Error).message);
+      }
+    };
+    tick();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account?.metaapi_account_id]);
+
   // Auto-sync polling based on saved frequency.
   useEffect(() => {
     if (!account || account.sync_frequency_minutes <= 0) return;
+    if (phase !== "connected") return;
     const ms = account.sync_frequency_minutes * 60 * 1000;
     const id = setInterval(() => { runSync(true); }, ms);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account?.sync_frequency_minutes, account?.id]);
+  }, [account?.sync_frequency_minutes, account?.id, phase]);
 
   const syncFn = useServerFn(syncMt5);
   const settingsFn = useServerFn(updateMt5Settings);
@@ -103,31 +148,61 @@ function MT5Inner() {
   if (!account) return <ConnectForm onConnected={load} />;
 
   const fmt = (n: number | null) => n == null ? "—" : new Intl.NumberFormat(undefined, { style: "currency", currency: account.currency || "USD", maximumFractionDigits: 2 }).format(n);
+  const ready = phase === "connected";
+  const isFailed = phase === "auth_failed" || phase === "server_invalid" || phase === "error";
+  const phaseLabel: Record<Mt5Phase, string> = {
+    none: "Not connected",
+    provisioning: "Connecting…",
+    deploying: "Deploying…",
+    connecting: "Provisioning terminal…",
+    connected: "Connected",
+    auth_failed: "Invalid MT5 login or investor password.",
+    server_invalid: "Broker server not found. Please verify the exact MT5 server name.",
+    error: "Connection error",
+  };
 
   return (
     <div className="space-y-6">
-      <Card className="border-success/30 bg-gradient-to-br from-success/10 via-card to-card">
+      <Card className={cn(
+        "bg-gradient-to-br via-card to-card",
+        ready ? "border-success/30 from-success/10" : isFailed ? "border-destructive/40 from-destructive/10" : "border-primary/30 from-primary/10",
+      )}>
         <CardContent className="p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-success/15 text-success">
-              <span className="text-2xl">🟢</span>
+            <div className={cn(
+              "grid h-12 w-12 place-items-center rounded-2xl",
+              ready ? "bg-success/15 text-success" : isFailed ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary",
+            )}>
+              {ready ? <span className="text-2xl">🟢</span> : isFailed ? <span className="text-2xl">⚠️</span> : <Loader2 className="h-6 w-6 animate-spin" />}
             </div>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-semibold">MT5 Connected</h2>
-                <Badge variant="outline" className="border-success/40 bg-success/10 text-success">{account.status}</Badge>
+                <h2 className="text-lg font-semibold">{ready ? "MT5 Connected" : isFailed ? "MT5 Connection Failed" : "Setting up your MT5 account"}</h2>
+                <Badge variant="outline" className={cn(
+                  ready ? "border-success/40 bg-success/10 text-success" : isFailed ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/40 bg-primary/10 text-primary",
+                )}>
+                  {phaseLabel[phase]}
+                </Badge>
                 {account.last_error && <Badge variant="destructive" className="text-[10px]">Last sync failed</Badge>}
               </div>
               <p className="text-sm text-muted-foreground">
                 {account.broker} · <span className="font-mono">#{account.login}</span> · {account.server}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Last sync: {account.last_sync_at ? new Date(account.last_sync_at).toLocaleString() : "never"}
-              </p>
+              {ready ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Last sync: {account.last_sync_at ? new Date(account.last_sync_at).toLocaleString() : "never"}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {isFailed
+                    ? (phaseMessage || phaseLabel[phase])
+                    : "MetaApi is provisioning your terminal. This typically takes 30–90 seconds after first connect."}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button onClick={() => runSync(false)} disabled={syncing} className="gap-2">
-                <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />{syncing ? "Syncing…" : "Sync now"}
+              <Button onClick={() => runSync(false)} disabled={syncing || !ready} className="gap-2">
+                <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />{syncing ? "Syncing…" : ready ? "Sync now" : "Waiting for deployment…"}
               </Button>
               <Button variant="outline" onClick={doDisconnect} className="gap-2"><Unplug className="h-4 w-4" />Disconnect</Button>
             </div>

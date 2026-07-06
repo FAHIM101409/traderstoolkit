@@ -35,7 +35,7 @@ const tools = [
 ];
 
 type Trade = { id: string; pair: string; direction: string; pnl: number | null; rr_realized: number | null; status: string; opened_at: string; closed_at: string | null; entry_price: number | null; exit_price: number | null; source: string; external_source: string | null };
-type Mt5Snapshot = { balance: number | null; equity: number | null; free_margin: number | null; margin: number | null; margin_level: number | null; currency: string | null; last_sync_at: string | null; status: string | null } | null;
+type Mt5Snapshot = { balance: number | null; equity: number | null; free_margin: number | null; margin: number | null; margin_level: number | null; floating_profit: number | null; currency: string | null; last_sync_at: string | null; status: string | null } | null;
 
 function Dashboard() {
   const { user } = useAuth();
@@ -73,15 +73,18 @@ function Dashboard() {
     (async () => {
       const [t, m] = await Promise.all([
         supabase.from("trades").select("id,pair,direction,pnl,rr_realized,status,opened_at,closed_at,entry_price,exit_price,source,external_source").eq("user_id", user.id).order("opened_at", { ascending: true }),
-        supabase.from("mt5_accounts").select("balance,equity,free_margin,margin,margin_level,currency,last_sync_at,status").eq("user_id", user.id).maybeSingle(),
+        supabase.from("mt5_accounts").select("balance,equity,free_margin,margin,margin_level,floating_profit,currency,last_sync_at,status").eq("user_id", user.id).maybeSingle(),
       ]);
       setTrades((t.data ?? []) as Trade[]);
-      setMt5((m.data as Mt5Snapshot) ?? null);
+      setMt5((m.data as unknown as Mt5Snapshot) ?? null);
       setLoaded(true);
     })();
   }, [user]);
 
-  const hasMt5 = !!mt5;
+  // Only treat MT5 as active when it's actually connected. While provisioning
+  // or deploying, keep showing journal-based stats so the dashboard is never
+  // empty and the values never appear as zeros before the first sync.
+  const hasMt5 = !!mt5 && mt5.status === "connected" && mt5.balance != null;
   // When MT5 is connected the dashboard MUST show live MT5 data only.
   // Journal-only stats when disconnected.
   const sourceTrades = useMemo(() => hasMt5 ? trades.filter((t) => t.external_source === "mt5") : trades, [trades, hasMt5]);
@@ -138,15 +141,17 @@ function Dashboard() {
   const showConnectMT5 = loaded && !hasMt5;
   // Live figures (mt5) vs derived (journal)
   const equity = mt5?.equity != null ? Number(mt5.equity) : stats.balance;
-  const floating = hasMt5 && mt5?.equity != null && mt5?.balance != null ? Number(mt5.equity) - Number(mt5.balance) : 0;
+  // Live floating P/L comes directly from MetaApi's terminalState (info.profit),
+  // never calculated manually.
+  const floating = hasMt5 && mt5?.floating_profit != null ? Number(mt5.floating_profit) : 0;
   const syncedRel = mt5?.last_sync_at ? new Date(mt5.last_sync_at).toLocaleString() : "never";
 
   async function handleSync() {
     setSyncing(true);
     try {
       await runSync();
-      const { data: m } = await supabase.from("mt5_accounts").select("balance,equity,free_margin,margin,margin_level,currency,last_sync_at,status").eq("user_id", user!.id).maybeSingle();
-      setMt5((m as Mt5Snapshot) ?? null);
+      const { data: m } = await supabase.from("mt5_accounts").select("balance,equity,free_margin,margin,margin_level,floating_profit,currency,last_sync_at,status").eq("user_id", user!.id).maybeSingle();
+      setMt5((m as unknown as Mt5Snapshot) ?? null);
       const { data: t } = await supabase.from("trades").select("id,pair,direction,pnl,rr_realized,status,opened_at,closed_at,entry_price,exit_price,source,external_source").eq("user_id", user!.id).order("opened_at", { ascending: true });
       setTrades((t ?? []) as Trade[]);
       toast.success("MT5 synced");
@@ -239,7 +244,7 @@ function Dashboard() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label={hasMt5 ? "Live Balance" : "Account Balance"} value={fmt(stats.balance)} sub={hasMt5 ? "Live MT5" : `Journal · ${liveCcy}`} icon={Activity} />
         {hasMt5 && <StatCard label="Live Equity" value={fmt(equity)} sub="Live MT5" icon={Activity} />}
-        {hasMt5 && <StatCard label="Floating P/L" value={fmt(floating)} sub="Equity − Balance" icon={TrendingUp} accent={floating >= 0 ? "text-success" : "text-danger"} />}
+        {hasMt5 && <StatCard label="Floating P/L" value={fmt(floating)} sub="Live MT5" icon={TrendingUp} accent={floating >= 0 ? "text-success" : "text-danger"} />}
         {hasMt5 && <StatCard label="Free Margin" value={fmt(Number(mt5?.free_margin ?? 0))} sub="Live MT5" icon={Shield} />}
         {hasMt5 && <StatCard label="Used Margin" value={fmt(Number(mt5?.margin ?? 0))} sub="Live MT5" icon={Shield} />}
         {hasMt5 && <StatCard label="Margin Level" value={mt5?.margin_level ? `${Number(mt5.margin_level).toFixed(2)}%` : "—"} sub="Live MT5" icon={Shield} />}
