@@ -104,7 +104,7 @@ export const connectMt5 = createServerFn({ method: "POST" })
       },
       PROV_BASE,
     );
-    if (!createRes.ok) throw new Error(`MetaApi: ${await readErr(createRes)}`);
+    if (!createRes.ok) throw new Error(friendlyMt5Error(await readErr(createRes)));
     const created = (await createRes.json()) as { id: string };
 
     // Deploy (start) the account
