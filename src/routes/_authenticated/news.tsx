@@ -74,6 +74,8 @@ function NewsLab() {
   const [currency, setCurrency] = useState<string>("all");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [totalLoaded, setTotalLoaded] = useState(0);
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
   const [analysis, setAnalysis] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
@@ -86,11 +88,19 @@ function NewsLab() {
 
   async function load(r: RangeKey = range) {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await getCal({ data: { range: r } });
       setEvents(res.events ?? []);
+      setTotalLoaded(res.totalLoaded ?? (res.events?.length ?? 0));
+      if (res.error) setLoadError(res.error);
+      console.log("[NewsLab] load", { range: r, returned: res.events?.length ?? 0, totalLoaded: res.totalLoaded, error: res.error });
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to load calendar");
+      const msg = e?.message ?? "Failed to load calendar";
+      setLoadError(msg);
+      setEvents([]);
+      console.error("[NewsLab] load failed", e);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -106,13 +116,25 @@ function NewsLab() {
   }, [range]);
 
   const filtered = useMemo(() => {
-    return events.filter((e) => {
+    const out = events.filter((e) => {
       if (minImpact === "high" && e.impact !== "high") return false;
       if (minImpact === "medium" && e.impact !== "high" && e.impact !== "medium") return false;
       if (currency !== "all" && e.currency !== currency) return false;
+      // For "today" tab, narrow to the user's selected timezone day
+      if (range === "today") {
+        try {
+          const zone = tz === "local" ? undefined : tz;
+          const d = new Date(e.timeUtc);
+          const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+          const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+          if (dayKey !== todayKey) return false;
+        } catch { /* ignore */ }
+      }
       return true;
     });
-  }, [events, minImpact, currency]);
+    console.log("[NewsLab] filter", { range, minImpact, currency, tz, in: events.length, out: out.length });
+    return out;
+  }, [events, minImpact, currency, range, tz]);
 
   const currencies = useMemo(() => Array.from(new Set(events.map((e) => e.currency).filter(Boolean))).sort(), [events]);
   const highHits = useMemo(() => filtered.filter((e) => e.impact === "high").slice(0, 8), [filtered]);
@@ -180,7 +202,24 @@ function NewsLab() {
             {loading && filtered.length === 0 ? (
               <div className="grid h-48 place-items-center text-sm text-muted-foreground"><Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> Loading calendar…</div>
             ) : filtered.length === 0 ? (
-              <div className="grid h-48 place-items-center text-sm text-muted-foreground">No matching events.</div>
+              <div className="grid h-48 place-items-center gap-3 text-sm text-muted-foreground">
+                {loadError || totalLoaded === 0 ? (
+                  <>
+                    <div className="text-center">
+                      <p className="font-medium text-foreground">Unable to load economic calendar.</p>
+                      <p className="mt-1 text-xs">{loadError ?? "The provider returned no data."}</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => load(range)} disabled={loading} className="gap-1">
+                      {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Retry
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <p>No matching events for the current filters.</p>
+                    <p className="mt-1 text-xs">{totalLoaded} events loaded — try widening impact / currency filters.</p>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
