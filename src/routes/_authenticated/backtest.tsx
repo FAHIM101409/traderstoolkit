@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { INSTRUMENTS } from "@/lib/trading";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Trash2 } from "lucide-react";
+import { TradingViewChart, TV_SYMBOLS, TV_INTERVALS } from "@/components/app/tradingview-chart";
 
 export const Route = createFileRoute("/_authenticated/backtest")({
   head: () => ({ meta: [{ title: "Backtesting Lab — Traders Toolkit" }] }),
@@ -27,6 +28,8 @@ function BacktestPage() {
   const [lots, setLots] = useState("0.10");
   const [outcome, setOutcome] = useState<"tp" | "sl" | "be">("tp");
   const [sims, setSims] = useState<Sim[]>([]);
+  const [tvSymbol, setTvSymbol] = useState("FX:EURUSD");
+  const [tvInterval, setTvInterval] = useState("60");
 
   function add() {
     const inst = INSTRUMENTS.find((i) => i.symbol === pair)!;
@@ -56,6 +59,41 @@ function BacktestPage() {
 
   return (
     <AppShell title="Backtesting Lab">
+      <Card className="mb-6 overflow-hidden">
+        <CardContent className="space-y-3 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Symbol</Label>
+              <Select value={tvSymbol} onValueChange={setTvSymbol}>
+                <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TV_SYMBOLS.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.group} · {s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-1 rounded-md border border-border/60 p-1">
+              {TV_INTERVALS.map((tf) => (
+                <Button
+                  key={tf.value}
+                  size="sm"
+                  variant={tvInterval === tf.value ? "secondary" : "ghost"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setTvInterval(tf.value)}
+                >
+                  {tf.label}
+                </Button>
+              ))}
+            </div>
+            <p className="ml-auto text-xs text-muted-foreground">Powered by TradingView · full drawing tools, indicators & symbol search</p>
+          </div>
+          <div className="overflow-hidden rounded-md border border-border/60 bg-[#0b0b12]">
+            <TradingViewChart symbol={tvSymbol} interval={tvInterval} height="min(70vh, 640px)" />
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <Card>
           <CardContent className="space-y-3 p-6">
