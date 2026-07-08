@@ -1,73 +1,46 @@
-# Traders Toolkit — Refinement Update Plan
+# Backtesting Lab → Professional Trading Simulator
 
-## 1. Universal MT5 broker & server support
+This is a large upgrade. To keep quality high and avoid a monolithic edit that regresses the current lab, I'll ship it in **three phases**. Each phase is independently usable and reviewable. Confirm the phasing (or tell me to compress) before I start.
 
-- Remove the hardcoded broker list as the "only" source. Keep `MT5_BROKERS` as suggestions only.
-- Rework `src/routes/_authenticated/mt5.tsx` connect form:
-  - Broker field → searchable Combobox (Command component). Accepts free text; suggests from expanded local list.
-  - Server field → searchable Combobox that:
-    - Suggests servers for the selected broker (from list).
-    - Also queries MetaApi's public broker-servers lookup server-side (`GET /users/current/servers/mt5` via a new `listMt5Servers` serverFn) filtered client-side.
-    - Always allows manual entry of any custom server name.
-- Expand `src/lib/mt5-brokers.ts` with the additional named brokers (5ers, Alpha Capital, Fusion Markets, Forex.com, RoboForex, etc.) but treat the list as suggestions only.
-- Validation: keep login as 3-15 digits; server accepts any non-empty string up to 80 chars (already OK).
+## Scope reality check
 
-## 2. News Lab — live economic calendar
+A few items in the spec have hard technical limits worth naming up front so we don't over-promise:
 
-Replace the current static/outdated data source with a live feed.
+- **TradingView "full experience"**: the free embeddable widget already includes candlesticks, all timeframes, symbol search, watchlist, drawing tools, indicators, templates, replay, object tree, chart settings, timezone, theme, price/time-scale settings. It does **not** support: saving layouts to the user's account (requires TradingView login inside the iframe), programmatically drawing SL/TP/entry lines on the chart, or reading the replay clock. Charting Library (with drawings API + saved layouts on our backend) requires a signed licence from TradingView — out of scope for beta. **Plan**: use the widget with every supported feature enabled; render SL/TP/entry/P&L as an **overlay panel docked to the chart** (MT5-style "Trade" tab), not as lines drawn inside the TV iframe. Interactive SL/TP dragging happens in that overlay via numeric inputs + quick-adjust buttons.
+- **Fullscreen**: real fullscreen via the Fullscreen API (hides sidebar, header, everything except chart + trade toolbar + replay + trade controls).
+- **Screenshots** of trades: deferred (spec says "optional later").
 
-- New serverFn `getEconomicCalendar` in `src/lib/news.functions.ts`:
-  - Fetches Forex Factory's public weekly JSON (`https://nfs.faireconomy.media/ff_calendar_thisweek.json`) — free, no key, updates continuously.
-  - Also fetches next week's file so "Upcoming" isn't empty near week-end.
-  - Normalizes into `{ id, title, country, currency, impact, timeUtc, previous, forecast, actual, description }`.
-  - Caches for 5 minutes in module memory to reduce load.
-- Rewrite `src/routes/_authenticated/news.tsx`:
-  - Tabs: **Today / This Week / Upcoming High-Impact / Recently Released**.
-  - Timezone selector (reuses `src/lib/timezones.ts`, defaults to profile timezone).
-  - Impact filter (Low/Med/High), currency filter (multi).
-  - Row expands to details: why it matters, markets affected, expected volatility, historical impact (a small mapping keyed by event name; falls back to generic guidance).
-  - Auto-refetch every 60s via react-query.
-- Fundamentals AI (`src/routes/_authenticated/fundamentals.tsx` + `src/lib/ai.functions.ts`):
-  - Before calling the model, fetch today's & this-week's calendar events server-side and inject a compact structured summary into the system prompt.
-  - Prompt instructs the AI to reference actual/forecast/previous and explain impact on XAUUSD, EURUSD, GBPUSD, USDJPY, BTCUSD and correlated assets, and never to invent stale numbers.
+## Phase 1 — Sessions foundation + trading panel (this turn)
 
-## 3. Dashboard: MT5 vs Journal data source
+**DB (migration):**
+- `backtest_sessions` already exists — extend with: `status` (`active|archived`), `starting_balance`, `symbol`, `timeframe`, `notes`, `last_opened_at`.
+- New `backtest_trades` table: session_id, symbol, direction, order_type (`market|limit|stop`), status (`pending|open|closed|cancelled`), entry, sl, tp, exit, exit_reason (`tp|sl|manual|be|cancelled`), lots, risk_pct, risk_amount, rr, pnl, opened_at, closed_at, duration_sec. RLS + GRANTs.
+- Free-plan cap enforced in a server fn (2 active sessions).
 
-- In `src/routes/_authenticated/dashboard.tsx`:
-  - Load MT5 account row (already available) — detect `status === "connected"` and recent `last_sync_at`.
-  - **If not connected**: keep current Journal-based stats. Add a prominent info banner: "You're viewing stats from your Trade Journal. Connect MT5 for live account sync." + **Connect MT5** button linking to `/mt5`.
-  - **If connected**: switch all stat cards to MT5-sourced data.
-    - Live account fields from `mt5_accounts` row (balance, equity, free_margin, margin_level, currency).
-    - Trade-derived stats (win rate, PF, avg RR, equity curve, weekly/monthly P&L, recent trades, drawdown) computed from `trades` where `external_source = 'mt5'` only.
-    - Add a small "Live from MT5 · synced {relative time}" chip; add "Sync now" button that calls `syncMt5`.
-    - Floating P/L = equity − balance. Current drawdown = balance peak − current equity (from equity curve derived from MT5 trades).
-- Journal page: no functional change — still shows all trades incl. MT5-imported, with notes/tags/psychology/setup/screenshots.
+**UI (`/backtest`):**
+- Session picker modal on entry: "Resume existing" (cards with name, trades, win rate, PF, net P&L, last opened) or "Create new" (name, symbol, timeframe, starting balance).
+- Session bar at top: name, balance, equity, floating P&L, "Change session" / rename / duplicate / archive / delete / export JSON.
+- **MT5-style trading toolbar** above the chart: order type buttons (Buy/Sell Market, Buy/Sell Limit, Buy/Sell Stop), lot size, risk %, SL, TP, price (for pendings). Auto-computes lot from risk % using the instrument engine from the Lot Size Calculator.
+- **Positions/Orders dock** beside the chart (tabbed: Open / Pending / History): each row shows entry, SL, TP, floating P&L, and buttons for **Close**, **Close 50%**, **Move to BE**, **Modify SL/TP**, **Cancel** (pendings). All auto-recorded to `backtest_trades`.
+- **Fullscreen button** — real Fullscreen API, hides app shell, keeps chart + toolbar + dock.
+- TradingView widget config maxed: `withdateranges`, `details`, `hotlist`, `calendar`, `hide_side_toolbar:false`, `allow_symbol_change`, `save_image`, `studies_overrides`, `enabled_features: ["header_saveload","use_localstorage_for_settings"]` where supported by the free widget, plus theme/watermark/timezone settings surfaced in a "Chart settings" popover.
 
-## 4. Rebrand: "Smart Traders Toolkit" → "Traders Toolkit"
+## Phase 2 — Session dashboard & analytics (next turn)
 
-Global search-and-replace across:
-- `src/routes/__root.tsx` (title, meta, JSON-LD org name)
-- `src/routes/index.tsx` (landing hero/copy)
-- `src/routes/auth.tsx` (login/register copy)
-- `src/components/landing/site-header.tsx`, `site-footer.tsx`
-- `src/components/app/app-shell.tsx` (sidebar/header brand)
-- `src/components/app/upgrade-dialog.tsx` (rename "Smart Trader Pro" → "Traders Toolkit Pro")
-- `src/routes/best-trading-journal-for-metatrader.tsx` (SEO copy + JSON-LD)
-- `src/routes/_authenticated/*` any inline brand copy (mt5, news, fundamentals, pricing, settings)
-- README / any other visible strings
-- `index.html` if present (title/description)
+- Per-session dashboard route `/backtest/$sessionId`: equity curve, calendar heatmap, win/loss distribution, PF, expectancy, max DD, avg RR, avg hold time, largest win/loss, avg risk %, breakdown by pair / timeframe / day of week / session (London/NY/Asia/Sydney).
+- Sessions list route `/backtest` (when no session selected) with cards + search/filter/archive toggle.
+- Import/export JSON.
 
-I'll grep `Smart Trader` project-wide and replace every hit. The route slugs / file names do not contain the brand so no route renames are required.
+## Phase 3 — Future-proofing hooks (later)
+
+- Interfaces for AI Coach, mistake detection, session comparison, Monte Carlo, strategy scoring. Stubs + typed contracts; no ML work in beta.
 
 ## Technical notes
 
-- Forex Factory JSON is CORS-free from the server side; must be fetched via a serverFn, not the browser.
-- MetaApi server-list endpoint requires the same `METAAPI_AUTH_TOKEN` already configured; no new secret needed.
-- No DB schema changes required. No new migrations.
-- All new server logic in `*.functions.ts` under `src/lib/`, wired through react-query in components (SSR-safe: news page stays under `_authenticated/`).
-- Preserve existing premium UI, mobile responsiveness, and design tokens.
+- Backtest "current price" for filling market orders and floating P&L uses the last symbol quote we can get from a lightweight quote endpoint (server fn hitting a free FX/crypto quote source; falls back to user-entered price if unavailable). Pending order fills are simulated when the user clicks "Fill now at price X" — we do not stream live ticks into the TV iframe (not exposed by the widget).
+- All trade math (pip value, P&L, RR) reuses `src/lib/instruments.ts` for consistency with the Lot Size Calculator.
+- Free-plan gate uses existing `useProfile().isPro`.
 
-## Out of scope for this pass
+## Confirm
 
-- Historical events archive beyond current+next week (noted as future).
-- Custom-domain email templates for the rename (Cloud auth emails will just use the new product name string; SMTP branding untouched).
+Reply "go" to start Phase 1, or tell me to change the split (e.g. "do phases 1+2 in one go", "skip pending orders for now", "keep it single-session only").
