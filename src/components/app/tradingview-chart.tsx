@@ -56,7 +56,6 @@ export function TradingViewChart({
         popup_height: "650",
         save_image: true,
         enabled_features: ["header_saveload", "use_localstorage_for_settings", "study_templates"],
-        studies: [],
         container_id: containerId.current,
         backgroundColor: "rgba(11,11,18,1)",
         gridColor: "rgba(255,255,255,0.06)",
