@@ -27,6 +27,7 @@ import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedFundamentalsRouteImport } from './routes/_authenticated/fundamentals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBacktestRouteImport } from './routes/_authenticated/backtest'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
 import { Route as AuthenticatedAdminCodesRouteImport } from './routes/_authenticated/admin-codes'
@@ -123,6 +124,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBacktestRoute = AuthenticatedBacktestRouteImport.update({
+  id: '/backtest',
+  path: '/backtest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/backtest': typeof AuthenticatedBacktestRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/backtest': typeof AuthenticatedBacktestRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/_authenticated/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/backtest': typeof AuthenticatedBacktestRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/fundamentals': typeof AuthenticatedFundamentalsRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
+    | '/backtest'
     | '/dashboard'
     | '/fundamentals'
     | '/journal'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
+    | '/backtest'
     | '/dashboard'
     | '/fundamentals'
     | '/journal'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin-codes'
     | '/_authenticated/ai-reviewer'
     | '/_authenticated/analytics'
+    | '/_authenticated/backtest'
     | '/_authenticated/dashboard'
     | '/_authenticated/fundamentals'
     | '/_authenticated/journal'
@@ -424,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/backtest': {
+      id: '/_authenticated/backtest'
+      path: '/backtest'
+      fullPath: '/backtest'
+      preLoaderRoute: typeof AuthenticatedBacktestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
       path: '/analytics'
@@ -459,6 +478,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminCodesRoute: typeof AuthenticatedAdminCodesRoute
   AuthenticatedAiReviewerRoute: typeof AuthenticatedAiReviewerRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedBacktestRoute: typeof AuthenticatedBacktestRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFundamentalsRoute: typeof AuthenticatedFundamentalsRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
@@ -479,6 +499,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminCodesRoute: AuthenticatedAdminCodesRoute,
   AuthenticatedAiReviewerRoute: AuthenticatedAiReviewerRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedBacktestRoute: AuthenticatedBacktestRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFundamentalsRoute: AuthenticatedFundamentalsRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
