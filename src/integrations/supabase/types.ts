@@ -55,10 +55,12 @@ export type Database = {
           created_at: string
           ending_balance: number
           id: string
+          last_opened_at: string
           name: string
           notes: string | null
           starting_balance: number
           stats: Json
+          status: string
           symbol: string
           timeframe: string
           trades: Json
@@ -69,11 +71,13 @@ export type Database = {
           created_at?: string
           ending_balance?: number
           id?: string
+          last_opened_at?: string
           name?: string
           notes?: string | null
           starting_balance?: number
           stats?: Json
-          symbol: string
+          status?: string
+          symbol?: string
           timeframe?: string
           trades?: Json
           updated_at?: string
@@ -83,10 +87,12 @@ export type Database = {
           created_at?: string
           ending_balance?: number
           id?: string
+          last_opened_at?: string
           name?: string
           notes?: string | null
           starting_balance?: number
           stats?: Json
+          status?: string
           symbol?: string
           timeframe?: string
           trades?: Json
@@ -94,6 +100,89 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      backtest_trades: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          direction: string
+          duration_sec: number | null
+          entry: number | null
+          exit: number | null
+          exit_reason: string | null
+          id: string
+          lots: number
+          opened_at: string | null
+          order_type: string
+          pnl: number
+          risk_amount: number | null
+          risk_pct: number | null
+          rr: number | null
+          session_id: string
+          sl: number | null
+          status: string
+          symbol: string
+          tp: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          direction: string
+          duration_sec?: number | null
+          entry?: number | null
+          exit?: number | null
+          exit_reason?: string | null
+          id?: string
+          lots: number
+          opened_at?: string | null
+          order_type?: string
+          pnl?: number
+          risk_amount?: number | null
+          risk_pct?: number | null
+          rr?: number | null
+          session_id: string
+          sl?: number | null
+          status?: string
+          symbol: string
+          tp?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          direction?: string
+          duration_sec?: number | null
+          entry?: number | null
+          exit?: number | null
+          exit_reason?: string | null
+          id?: string
+          lots?: number
+          opened_at?: string | null
+          order_type?: string
+          pnl?: number
+          risk_amount?: number | null
+          risk_pct?: number | null
+          rr?: number | null
+          session_id?: string
+          sl?: number | null
+          status?: string
+          symbol?: string
+          tp?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backtest_trades_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "backtest_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       code_redemptions: {
         Row: {
