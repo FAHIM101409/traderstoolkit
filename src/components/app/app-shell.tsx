@@ -32,7 +32,7 @@ const nav = [
   { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true },
 ];
 
-export function AppShell({ children, title }: { children: React.ReactNode; title: string }) {
+export function AppShell({ children, title, fullBleed = false }: { children: React.ReactNode; title: string; fullBleed?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
   const { isPro } = useProfile();
@@ -182,7 +182,11 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
           </Sheet>
           <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight md:text-xl">{title}</h1>
         </header>
-        <div className="container mx-auto w-full max-w-6xl p-4 md:p-6">{children}</div>
+        {fullBleed ? (
+          <div className="w-full flex-1 min-h-0">{children}</div>
+        ) : (
+          <div className="container mx-auto w-full max-w-6xl p-4 md:p-6">{children}</div>
+        )}
       </main>
     </div>
   );
