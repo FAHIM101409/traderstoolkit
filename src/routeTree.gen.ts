@@ -17,6 +17,7 @@ import { Route as AuthenticatedSimulatorRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
+import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated/replay'
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
 import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
@@ -70,6 +71,11 @@ const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
 const AuthenticatedRiskRoute = AuthenticatedRiskRouteImport.update({
   id: '/risk',
   path: '/risk',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReplayRoute = AuthenticatedReplayRouteImport.update({
+  id: '/replay',
+  path: '/replay',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPropFirmRoute = AuthenticatedPropFirmRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
+  '/replay': typeof AuthenticatedReplayRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
+  '/replay': typeof AuthenticatedReplayRoute
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
   '/_authenticated/pricing': typeof AuthenticatedPricingRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
+  '/_authenticated/replay': typeof AuthenticatedReplayRoute
   '/_authenticated/risk': typeof AuthenticatedRiskRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/patterns'
     | '/pricing'
     | '/prop-firm'
+    | '/replay'
     | '/risk'
     | '/sessions'
     | '/settings'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/patterns'
     | '/pricing'
     | '/prop-firm'
+    | '/replay'
     | '/risk'
     | '/sessions'
     | '/settings'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patterns'
     | '/_authenticated/pricing'
     | '/_authenticated/prop-firm'
+    | '/_authenticated/replay'
     | '/_authenticated/risk'
     | '/_authenticated/sessions'
     | '/_authenticated/settings'
@@ -352,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/risk'
       fullPath: '/risk'
       preLoaderRoute: typeof AuthenticatedRiskRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/replay': {
+      id: '/_authenticated/replay'
+      path: '/replay'
+      fullPath: '/replay'
+      preLoaderRoute: typeof AuthenticatedReplayRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/prop-firm': {
@@ -469,6 +488,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
   AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
+  AuthenticatedReplayRoute: typeof AuthenticatedReplayRoute
   AuthenticatedRiskRoute: typeof AuthenticatedRiskRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -489,6 +509,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
   AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
+  AuthenticatedReplayRoute: AuthenticatedReplayRoute,
   AuthenticatedRiskRoute: AuthenticatedRiskRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
