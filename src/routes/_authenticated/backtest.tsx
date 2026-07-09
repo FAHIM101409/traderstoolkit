@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import {
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { TradingViewChart, TV_SYMBOLS, TV_INTERVALS } from "@/components/app/tradingview-chart";
+import { TradingViewChart, TV_INTERVALS } from "@/components/app/tradingview-chart";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -29,20 +29,21 @@ import { toast } from "sonner";
 import {
   Maximize2, Minimize2, TrendingUp, TrendingDown, Plus, MoreVertical,
   Archive, Copy, Trash2, Download, PencilLine, X, Loader2, Sparkles,
+  ChevronDown, ChevronUp, BarChart3, Info,
+  SkipBack, SkipForward, Play, Pause, FastForward, Rewind, CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/backtest")({
   head: () => ({ meta: [
     { title: "Backtesting Lab — Traders Toolkit" },
-    { name: "description", content: "Professional trading simulator with TradingView charts, MT5-style order execution, session tracking and full analytics." },
+    { name: "description", content: "Immersive TradingView workspace with MT5-style order execution, floating trade panel and session-tracked practice." },
   ] }),
   component: BacktestPage,
 });
 
 const FREE_SESSION_LIMIT = 2;
 
-// Map our internal symbols to TradingView tickers.
 const TV_MAP: Record<string, string> = {
   EURUSD: "FX:EURUSD", GBPUSD: "FX:GBPUSD", USDJPY: "FX:USDJPY", USDCHF: "FX:USDCHF",
   USDCAD: "FX:USDCAD", AUDUSD: "FX:AUDUSD", NZDUSD: "FX:NZDUSD",
@@ -53,10 +54,6 @@ const TV_MAP: Record<string, string> = {
 };
 function toTV(symbol: string): string {
   return TV_MAP[symbol] ?? `FX:${symbol}`;
-}
-function fromTV(tv: string): string {
-  const found = Object.entries(TV_MAP).find(([, v]) => v === tv);
-  return found?.[0] ?? tv.split(":").pop()?.replace("USDT", "USD") ?? "EURUSD";
 }
 
 function BacktestPage() {
@@ -75,7 +72,6 @@ function BacktestPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
 
-  // Load sessions
   const loadSessions = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
@@ -86,15 +82,12 @@ function BacktestPage() {
     setSessions((data as BacktestSession[]) ?? []);
     setLoading(false);
   }, [user]);
-
   useEffect(() => { void loadSessions(); }, [loadSessions]);
 
-  // Auto-open picker when no active session
   useEffect(() => {
     if (!loading && !active) setPickerOpen(true);
   }, [loading, active]);
 
-  // Load trades for active session
   const loadTrades = useCallback(async (sessionId: string) => {
     const { data } = await supabase
       .from("backtest_trades")
@@ -114,14 +107,10 @@ function BacktestPage() {
   async function createSession(name: string, symbol: string, timeframe: string, startingBalance: number) {
     if (!user) return;
     const activeCount = sessions.filter((s) => s.status === "active").length;
-    if (!isPro && activeCount >= FREE_SESSION_LIMIT) {
-      setUpgradeOpen(true);
-      return;
-    }
+    if (!isPro && activeCount >= FREE_SESSION_LIMIT) { setUpgradeOpen(true); return; }
     const { data, error } = await supabase.from("backtest_sessions").insert({
       user_id: user.id, name, symbol, timeframe,
-      starting_balance: startingBalance, ending_balance: startingBalance,
-      status: "active",
+      starting_balance: startingBalance, ending_balance: startingBalance, status: "active",
     }).select().single();
     if (error) { toast.error(error.message); return; }
     await loadSessions();
@@ -171,7 +160,6 @@ function BacktestPage() {
     URL.revokeObjectURL(url);
   }
 
-  // Fullscreen
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handler);
@@ -189,56 +177,79 @@ function BacktestPage() {
     : null, [trades, active]);
 
   const body = (
-    <div ref={shellRef} className={cn("space-y-4", isFullscreen && "h-screen w-screen overflow-auto bg-background p-4")}>
-      {active && (
-        <SessionBar
-          session={active}
-          stats={stats}
-          accountCurrency={accountCurrency}
-          isFullscreen={isFullscreen}
-          onToggleFullscreen={toggleFullscreen}
-          onChangeSession={() => setPickerOpen(true)}
-          onRename={() => setRenameOpen(true)}
-          onDuplicate={duplicateSession}
-          onArchive={archiveSession}
-          onDelete={deleteSession}
-          onExport={exportSession}
-        />
+    <div
+      ref={shellRef}
+      className={cn(
+        "relative flex h-[calc(100vh-3.75rem)] w-full flex-col bg-[#0b0b12]",
+        isFullscreen && "h-screen w-screen",
       )}
+    >
+      {active ? (
+        <>
+          <SessionStrip
+            session={active}
+            stats={stats}
+            accountCurrency={accountCurrency}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
+            onChangeSession={() => setPickerOpen(true)}
+            onRename={() => setRenameOpen(true)}
+            onDuplicate={duplicateSession}
+            onArchive={archiveSession}
+            onDelete={deleteSession}
+            onExport={exportSession}
+            onSymbolChanged={async (sym) => {
+              await supabase.from("backtest_sessions").update({ symbol: sym }).eq("id", active.id);
+              setActive({ ...active, symbol: sym });
+            }}
+            onTimeframeChanged={async (tf) => {
+              await supabase.from("backtest_sessions").update({ timeframe: tf }).eq("id", active.id);
+              setActive({ ...active, timeframe: tf });
+            }}
+          />
 
-      {active && (
-        <TradingWorkspace
-          session={active}
-          trades={trades}
-          accountCurrency={accountCurrency}
-          startingBalance={Number(active.starting_balance)}
-          onTradesChanged={() => loadTrades(active.id)}
-          userId={user?.id ?? ""}
-          onSymbolChanged={async (sym) => {
-            await supabase.from("backtest_sessions").update({ symbol: sym }).eq("id", active.id);
-            setActive({ ...active, symbol: sym });
-          }}
-          onTimeframeChanged={async (tf) => {
-            await supabase.from("backtest_sessions").update({ timeframe: tf }).eq("id", active.id);
-            setActive({ ...active, timeframe: tf });
-          }}
-        />
-      )}
+          <div className="relative min-h-0 flex-1">
+            <TradingViewChart
+              symbol={toTV(active.symbol)}
+              interval={active.timeframe}
+              height="100%"
+              className="absolute inset-0"
+            />
 
-      {!active && !loading && (
-        <Card className="border-dashed">
-          <CardContent className="p-10 text-center">
-            <p className="text-muted-foreground">No session selected.</p>
-            <Button className="mt-4" onClick={() => setPickerOpen(true)}>Select or create a session</Button>
-          </CardContent>
-        </Card>
-      )}
+            <FloatingTradeToolbar
+              session={active}
+              trades={trades}
+              accountCurrency={accountCurrency}
+              startingBalance={Number(active.starting_balance)}
+              userId={user?.id ?? ""}
+              onTradesChanged={() => loadTrades(active.id)}
+            />
+
+            <FloatingPositionsDock
+              trades={trades}
+              accountCurrency={accountCurrency}
+              onChanged={() => loadTrades(active.id)}
+            />
+
+            <ReplayControlsBar />
+          </div>
+        </>
+      ) : !loading ? (
+        <div className="grid flex-1 place-items-center">
+          <Card className="border-dashed">
+            <CardContent className="p-10 text-center">
+              <p className="text-muted-foreground">No session selected.</p>
+              <Button className="mt-4" onClick={() => setPickerOpen(true)}>Select or create a session</Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 
   return (
     <>
-      {isFullscreen ? body : <AppShell title="Backtesting Lab">{body}</AppShell>}
+      {isFullscreen ? body : <AppShell title="Backtesting Lab" fullBleed>{body}</AppShell>}
 
       <SessionPickerDialog
         open={pickerOpen}
@@ -272,11 +283,12 @@ function BacktestPage() {
 }
 
 // ============================================================================
-// Session Bar
+// Session strip — slim bar with symbol/timeframe selectors and session menu
 // ============================================================================
-function SessionBar({
+function SessionStrip({
   session, stats, accountCurrency, isFullscreen,
   onToggleFullscreen, onChangeSession, onRename, onDuplicate, onArchive, onDelete, onExport,
+  onSymbolChanged, onTimeframeChanged,
 }: {
   session: BacktestSession;
   stats: ReturnType<typeof computeSessionStats> | null;
@@ -289,69 +301,86 @@ function SessionBar({
   onArchive: () => void;
   onDelete: () => void;
   onExport: () => void;
+  onSymbolChanged: (s: string) => void;
+  onTimeframeChanged: (t: string) => void;
 }) {
   const bal = stats?.endingBalance ?? Number(session.starting_balance);
   const net = stats?.net ?? 0;
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="flex flex-wrap items-center gap-3 p-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-semibold">{session.name}</p>
-            <Badge variant="outline" className="text-[10px]">{session.symbol} · {session.timeframe}</Badge>
-            {session.status === "archived" && <Badge variant="secondary" className="text-[10px]">Archived</Badge>}
-          </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Start {formatMoney(Number(session.starting_balance), accountCurrency)} ·
-            {" "}{stats?.trades ?? 0} trades · WR {stats ? stats.winRate.toFixed(0) : 0}%
-          </p>
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-right text-xs">
-          <Stat l="Balance" v={formatMoney(bal, accountCurrency)} />
-          <Stat l="Net P&L" v={formatMoney(net, accountCurrency)} tone={net >= 0 ? "up" : "down"} />
-          <Stat l="PF" v={stats?.pf ? stats.pf.toFixed(2) : "—"} />
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" onClick={onChangeSession}>Change</Button>
-          <Button variant="outline" size="sm" onClick={onToggleFullscreen} title="Fullscreen">
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm"><MoreVertical className="h-4 w-4" /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onRename}><PencilLine className="mr-2 h-4 w-4" /> Rename</DropdownMenuItem>
-              <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-              <DropdownMenuItem onClick={onExport}><Download className="mr-2 h-4 w-4" /> Export JSON</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onArchive}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-              <DropdownMenuItem onClick={onDelete} className="text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+    <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-background/95 px-2 py-1.5 backdrop-blur">
+      <p className="max-w-[180px] truncate text-xs font-semibold">{session.name}</p>
 
-function Stat({ l, v, tone }: { l: string; v: string; tone?: "up" | "down" }) {
-  return (
-    <div className="rounded-md border border-border/60 bg-card/40 px-2 py-1 text-right">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{l}</p>
-      <p className={cn("text-sm font-semibold", tone === "up" && "text-success", tone === "down" && "text-destructive")}>{v}</p>
+      <Select value={session.symbol} onValueChange={onSymbolChanged}>
+        <SelectTrigger className="h-7 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {INSTRUMENT_SPECS.map((i) => (
+            <SelectItem key={i.symbol} value={i.symbol} className="text-xs">{i.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <div className="hidden items-center gap-0.5 rounded border border-border/60 p-0.5 md:flex">
+        {TV_INTERVALS.map((tf) => (
+          <button
+            key={tf.value}
+            onClick={() => onTimeframeChanged(tf.value)}
+            className={cn(
+              "rounded px-1.5 py-0.5 text-[10px] font-medium transition",
+              session.timeframe === tf.value
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover:bg-muted/40",
+            )}
+          >{tf.label}</button>
+        ))}
+      </div>
+      <Select value={session.timeframe} onValueChange={onTimeframeChanged}>
+        <SelectTrigger className="h-7 w-[80px] text-xs md:hidden"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {TV_INTERVALS.map((t) => (<SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>))}
+        </SelectContent>
+      </Select>
+
+      <div className="ml-auto flex items-center gap-3 text-[11px]">
+        <span className="text-muted-foreground">Bal <span className="font-semibold text-foreground">{formatMoney(bal, accountCurrency)}</span></span>
+        <span className={cn("font-semibold", net >= 0 ? "text-success" : "text-destructive")}>
+          {net >= 0 ? "+" : ""}{formatMoney(net, accountCurrency)}
+        </span>
+        <span className="text-muted-foreground">{stats?.trades ?? 0} trades · WR {stats ? stats.winRate.toFixed(0) : 0}%</span>
+      </div>
+
+      <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={onChangeSession}>Change</Button>
+      <Link to="/replay">
+        <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-xs" title="Backtesting Station">
+          <BarChart3 className="h-3.5 w-3.5" /> Station
+        </Button>
+      </Link>
+      <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={onToggleFullscreen} title="Fullscreen">
+        {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="h-7 w-7 p-0"><MoreVertical className="h-3.5 w-3.5" /></Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onRename}><PencilLine className="mr-2 h-4 w-4" /> Rename</DropdownMenuItem>
+          <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
+          <DropdownMenuItem onClick={onExport}><Download className="mr-2 h-4 w-4" /> Export JSON</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onArchive}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
+          <DropdownMenuItem onClick={onDelete} className="text-destructive">
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
 
 // ============================================================================
-// Trading Workspace (chart + trade panel + positions dock)
+// Floating Trade Toolbar (MT5-style, bottom-right)
 // ============================================================================
-function TradingWorkspace({
-  session, trades, accountCurrency, startingBalance, userId,
-  onTradesChanged, onSymbolChanged, onTimeframeChanged,
+function FloatingTradeToolbar({
+  session, trades, accountCurrency, startingBalance, userId, onTradesChanged,
 }: {
   session: BacktestSession;
   trades: BacktestTrade[];
@@ -359,27 +388,23 @@ function TradingWorkspace({
   startingBalance: number;
   userId: string;
   onTradesChanged: () => void;
-  onSymbolChanged: (s: string) => void;
-  onTimeframeChanged: (t: string) => void;
 }) {
   const spec = getSpec(session.symbol);
+  const stats = computeSessionStats(trades, startingBalance);
+  const currentBalance = stats.endingBalance;
+
+  const [collapsed, setCollapsed] = useState(false);
   const [markPrice, setMarkPrice] = useState<number>(spec.referencePrice);
   useEffect(() => { setMarkPrice(getSpec(session.symbol).referencePrice); }, [session.symbol]);
 
-  const stats = useMemo(() => computeSessionStats(trades, startingBalance), [trades, startingBalance]);
-  const currentBalance = stats.endingBalance;
-
-  // Order form state
-  const [side, setSide] = useState<"long" | "short">("long");
   const [orderType, setOrderType] = useState<"market" | "limit" | "stop">("market");
   const [lots, setLots] = useState<string>("0.10");
   const [riskPct, setRiskPct] = useState<string>("1");
   const [entryPrice, setEntryPrice] = useState<string>("");
   const [sl, setSl] = useState<string>("");
   const [tp, setTp] = useState<string>("");
-  const [sizingMode, setSizingMode] = useState<"lots" | "risk">("lots");
+  const [sizingMode, setSizingMode] = useState<"lots" | "risk">("risk");
 
-  // Auto-compute lots from risk %
   useEffect(() => {
     if (sizingMode !== "risk") return;
     const risk = +riskPct;
@@ -396,20 +421,18 @@ function TradingWorkspace({
     if (res.lots > 0) setLots(res.lots.toFixed(2));
   }, [sizingMode, riskPct, sl, entryPrice, markPrice, orderType, spec, accountCurrency, currentBalance]);
 
-  function place() {
+  function place(side: "long" | "short") {
     const lotsN = +lots;
     const slN = +sl || null;
     const tpN = +tp || null;
     const entryN = orderType === "market" ? markPrice : +entryPrice;
 
-    if (!lotsN || lotsN < spec.minLot) { toast.error(`Lot size must be at least ${spec.minLot}`); return; }
-    if (!entryN) { toast.error("Entry price required"); return; }
-    if (slN && ((side === "long" && slN >= entryN) || (side === "short" && slN <= entryN))) {
-      toast.error("Stop loss on the wrong side of entry"); return;
-    }
-    if (tpN && ((side === "long" && tpN <= entryN) || (side === "short" && tpN >= entryN))) {
-      toast.error("Take profit on the wrong side of entry"); return;
-    }
+    if (!lotsN || lotsN < spec.minLot) return toast.error(`Lot size must be at least ${spec.minLot}`);
+    if (!entryN) return toast.error("Entry price required");
+    if (slN && ((side === "long" && slN >= entryN) || (side === "short" && slN <= entryN)))
+      return toast.error("Stop loss on the wrong side of entry");
+    if (tpN && ((side === "long" && tpN <= entryN) || (side === "short" && tpN >= entryN)))
+      return toast.error("Take profit on the wrong side of entry");
 
     const now = new Date().toISOString();
     const rr = slN && tpN ? computeRR(side, entryN, slN, tpN) : null;
@@ -423,222 +446,195 @@ function TradingWorkspace({
       status: orderType === "market" ? "open" : "pending",
       entry: entryN, sl: slN, tp: tpN, lots: lotsN,
       risk_pct: +riskPct || null,
-      risk_amount: riskAmount,
-      rr,
+      risk_amount: riskAmount, rr,
       opened_at: orderType === "market" ? now : null,
     }).then(({ error }) => {
       if (error) { toast.error(error.message); return; }
-      toast.success(orderType === "market" ? "Position opened" : "Pending order placed");
+      toast.success(`${side === "long" ? "Buy" : "Sell"} ${orderType} placed`);
       setEntryPrice(""); setSl(""); setTp("");
       onTradesChanged();
     });
   }
 
+  return (
+    <div className="pointer-events-auto absolute right-3 top-3 z-20 w-[260px] rounded-lg border border-border/60 bg-background/95 shadow-2xl backdrop-blur">
+      <button
+        onClick={() => setCollapsed((c) => !c)}
+        className="flex w-full items-center justify-between rounded-t-lg border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs font-semibold"
+      >
+        <span>Quick Trade · {session.symbol}</span>
+        {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+      </button>
+
+      {!collapsed && (
+        <div className="space-y-2 p-2.5">
+          <div className="flex items-center gap-1.5">
+            <Select value={orderType} onValueChange={(v) => setOrderType(v as "market" | "limit" | "stop")}>
+              <SelectTrigger className="h-7 flex-1 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="market" className="text-xs">Market</SelectItem>
+                <SelectItem value="limit" className="text-xs">Limit</SelectItem>
+                <SelectItem value="stop" className="text-xs">Stop</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sizingMode} onValueChange={(v) => setSizingMode(v as "lots" | "risk")}>
+              <SelectTrigger className="h-7 flex-1 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="risk" className="text-xs">Auto lot</SelectItem>
+                <SelectItem value="lots" className="text-xs">Fixed lots</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            <FieldMini label="Lots">
+              <Input type="number" step="0.01" value={lots} onChange={(e) => setLots(e.target.value)}
+                disabled={sizingMode === "risk"} className="h-7 text-xs" />
+            </FieldMini>
+            <FieldMini label="Risk %">
+              <Input type="number" step="0.1" value={riskPct} onChange={(e) => setRiskPct(e.target.value)} className="h-7 text-xs" />
+            </FieldMini>
+            {orderType !== "market" && (
+              <FieldMini label="Entry">
+                <Input type="number" step="any" value={entryPrice} onChange={(e) => setEntryPrice(e.target.value)} className="h-7 text-xs" />
+              </FieldMini>
+            )}
+            <FieldMini label="Mark">
+              <Input type="number" step="any" value={markPrice} onChange={(e) => setMarkPrice(+e.target.value)} className="h-7 text-xs" />
+            </FieldMini>
+            <FieldMini label="SL">
+              <Input type="number" step="any" value={sl} onChange={(e) => setSl(e.target.value)} className="h-7 text-xs" />
+            </FieldMini>
+            <FieldMini label="TP">
+              <Input type="number" step="any" value={tp} onChange={(e) => setTp(e.target.value)} className="h-7 text-xs" />
+            </FieldMini>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
+            <Button
+              onClick={() => place("long")}
+              className="h-8 bg-success text-success-foreground hover:bg-success/90"
+            >
+              <TrendingUp className="mr-1 h-3.5 w-3.5" />
+              {orderType === "market" ? "Buy" : `Buy ${orderType}`}
+            </Button>
+            <Button
+              onClick={() => place("short")}
+              className="h-8 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <TrendingDown className="mr-1 h-3.5 w-3.5" />
+              {orderType === "market" ? "Sell" : `Sell ${orderType}`}
+            </Button>
+          </div>
+
+          <p className="pt-1 text-[10px] leading-tight text-muted-foreground">
+            <Info className="mr-1 inline h-3 w-3" />
+            Mark price seeds fills. Update it to match chart price for realistic sim.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FieldMini({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+// ============================================================================
+// Floating Positions Dock (bottom-left)
+// ============================================================================
+function FloatingPositionsDock({
+  trades, accountCurrency, onChanged,
+}: {
+  trades: BacktestTrade[];
+  accountCurrency: string;
+  onChanged: () => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
   const openTrades = trades.filter((t) => t.status === "open");
   const pending = trades.filter((t) => t.status === "pending");
   const history = trades.filter((t) => t.status === "closed" || t.status === "cancelled");
 
-  const floatingPnl = openTrades.reduce(
-    (s, t) => s + (t.entry ? computePnl(getSpec(t.symbol), t.direction, t.entry, markPrice, t.lots, accountCurrency) : 0),
-    0,
-  );
-
   return (
-    <>
-      {/* Trading toolbar */}
-      <Card>
-        <CardContent className="space-y-3 p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Label className="text-xs text-muted-foreground">Instrument</Label>
-            <Select value={session.symbol} onValueChange={onSymbolChanged}>
-              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {INSTRUMENT_SPECS.map((i) => (
-                  <SelectItem key={i.symbol} value={i.symbol}>{i.group} · {i.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-1 rounded-md border border-border/60 p-1">
-              {TV_INTERVALS.map((tf) => (
-                <Button
-                  key={tf.value}
-                  size="sm"
-                  variant={session.timeframe === tf.value ? "secondary" : "ghost"}
-                  className="h-7 px-2 text-xs"
-                  onClick={() => onTimeframeChanged(tf.value)}
-                >{tf.label}</Button>
+    <div className="pointer-events-auto absolute bottom-14 left-3 z-20 w-[340px] max-w-[calc(100vw-1.5rem)] rounded-lg border border-border/60 bg-background/95 shadow-2xl backdrop-blur">
+      <button
+        onClick={() => setCollapsed((c) => !c)}
+        className="flex w-full items-center justify-between rounded-t-lg border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs font-semibold"
+      >
+        <span>Positions · {openTrades.length} open · {pending.length} pending</span>
+        {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+      {!collapsed && (
+        <div className="p-2">
+          <Tabs defaultValue="open">
+            <TabsList className="grid h-8 w-full grid-cols-3">
+              <TabsTrigger value="open" className="text-xs">Open ({openTrades.length})</TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs">Pending ({pending.length})</TabsTrigger>
+              <TabsTrigger value="history" className="text-xs">History ({history.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="open" className="mt-2 max-h-[240px] space-y-1.5 overflow-y-auto">
+              {openTrades.length === 0 && <Empty label="No open positions" />}
+              {openTrades.map((t) => (
+                <OpenTradeRow key={t.id} trade={t} accountCurrency={accountCurrency} onChanged={onChanged} />
               ))}
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground">Mark price</Label>
-              <Input
-                type="number" step="any" value={markPrice}
-                onChange={(e) => setMarkPrice(+e.target.value)}
-                className="h-8 w-32"
-              />
-              <Badge variant={floatingPnl >= 0 ? "default" : "destructive"} className="whitespace-nowrap">
-                Floating {formatMoney(floatingPnl, accountCurrency)}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 items-end gap-2 md:grid-cols-[auto_auto_1fr_1fr_1fr_1fr_auto_auto]">
-            <div>
-              <Label className="text-[11px] text-muted-foreground">Type</Label>
-              <Select value={orderType} onValueChange={(v) => setOrderType(v as any)}>
-                <SelectTrigger className="h-9 w-[110px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="market">Market</SelectItem>
-                  <SelectItem value="limit">Limit</SelectItem>
-                  <SelectItem value="stop">Stop</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-[11px] text-muted-foreground">Sizing</Label>
-              <Select value={sizingMode} onValueChange={(v) => setSizingMode(v as any)}>
-                <SelectTrigger className="h-9 w-[110px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lots">Fixed lots</SelectItem>
-                  <SelectItem value="risk">Auto from risk %</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-[11px] text-muted-foreground">Lots</Label>
-              <Input type="number" step="0.01" value={lots} onChange={(e) => setLots(e.target.value)} disabled={sizingMode === "risk"} className="h-9" />
-            </div>
-            <div>
-              <Label className="text-[11px] text-muted-foreground">Risk %</Label>
-              <Input type="number" step="0.1" value={riskPct} onChange={(e) => setRiskPct(e.target.value)} className="h-9" />
-            </div>
-            {orderType !== "market" && (
-              <div>
-                <Label className="text-[11px] text-muted-foreground">Entry</Label>
-                <Input type="number" step="any" value={entryPrice} onChange={(e) => setEntryPrice(e.target.value)} className="h-9" />
-              </div>
-            )}
-            <div>
-              <Label className="text-[11px] text-muted-foreground">Stop Loss</Label>
-              <Input type="number" step="any" value={sl} onChange={(e) => setSl(e.target.value)} className="h-9" />
-            </div>
-            <div>
-              <Label className="text-[11px] text-muted-foreground">Take Profit</Label>
-              <Input type="number" step="any" value={tp} onChange={(e) => setTp(e.target.value)} className="h-9" />
-            </div>
-            <div className="flex gap-2">
-              <Button className="h-9 bg-success text-success-foreground hover:bg-success/90" onClick={() => { setSide("long"); place(); }}>
-                <TrendingUp className="mr-1 h-4 w-4" /> {orderType === "market" ? "Buy" : `Buy ${orderType}`}
-              </Button>
-              <Button className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { setSide("short"); place(); }}>
-                <TrendingDown className="mr-1 h-4 w-4" /> {orderType === "market" ? "Sell" : `Sell ${orderType}`}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Chart + dock */}
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-        <div className="overflow-hidden rounded-md border border-border/60 bg-[#0b0b12]">
-          <TradingViewChart symbol={toTV(session.symbol)} interval={session.timeframe} height="min(75vh, 720px)" />
+            </TabsContent>
+            <TabsContent value="pending" className="mt-2 max-h-[240px] space-y-1.5 overflow-y-auto">
+              {pending.length === 0 && <Empty label="No pending orders" />}
+              {pending.map((t) => (
+                <PendingRow key={t.id} trade={t} onChanged={onChanged} />
+              ))}
+            </TabsContent>
+            <TabsContent value="history" className="mt-2 max-h-[240px] space-y-1.5 overflow-y-auto">
+              {history.length === 0 && <Empty label="No closed trades yet" />}
+              {history.map((t) => (
+                <HistoryRow key={t.id} trade={t} accountCurrency={accountCurrency} />
+              ))}
+            </TabsContent>
+          </Tabs>
         </div>
-
-        <Card className="overflow-hidden">
-          <CardContent className="p-3">
-            <Tabs defaultValue="open">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="open">Open ({openTrades.length})</TabsTrigger>
-                <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
-                <TabsTrigger value="history">History ({history.length})</TabsTrigger>
-              </TabsList>
-              <TabsContent value="open" className="mt-2 space-y-2">
-                {openTrades.length === 0 && <EmptyDock label="No open positions" />}
-                {openTrades.map((t) => (
-                  <OpenTradeCard
-                    key={t.id} trade={t} spec={getSpec(t.symbol)} markPrice={markPrice}
-                    accountCurrency={accountCurrency} onChanged={onTradesChanged}
-                  />
-                ))}
-              </TabsContent>
-              <TabsContent value="pending" className="mt-2 space-y-2">
-                {pending.length === 0 && <EmptyDock label="No pending orders" />}
-                {pending.map((t) => (
-                  <PendingCard key={t.id} trade={t} accountCurrency={accountCurrency} onChanged={onTradesChanged} markPrice={markPrice} />
-                ))}
-              </TabsContent>
-              <TabsContent value="history" className="mt-2 space-y-2">
-                {history.length === 0 && <EmptyDock label="No closed trades yet" />}
-                {history.map((t) => (
-                  <div key={t.id} className="rounded-md border border-border/60 bg-card/40 p-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold">
-                        {t.direction === "long" ? "▲" : "▼"} {t.symbol} · {t.lots} lots
-                      </span>
-                      <span className={cn("font-semibold", t.pnl >= 0 ? "text-success" : "text-destructive")}>
-                        {formatMoney(t.pnl, accountCurrency)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-muted-foreground">
-                      {t.entry?.toFixed(spec.digits)} → {t.exit?.toFixed(spec.digits)} · {t.exit_reason ?? "manual"}
-                      {t.rr != null && ` · ${t.rr.toFixed(2)}R`}
-                    </p>
-                  </div>
-                ))}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
-
-function EmptyDock({ label }: { label: string }) {
-  return <p className="py-8 text-center text-xs text-muted-foreground">{label}</p>;
+function Empty({ label }: { label: string }) {
+  return <p className="py-6 text-center text-[11px] text-muted-foreground">{label}</p>;
 }
 
-// ============================================================================
-// Open trade card — modify SL/TP, close, close 50%, break even
-// ============================================================================
-function OpenTradeCard({
-  trade, spec, markPrice, accountCurrency, onChanged,
-}: {
-  trade: BacktestTrade;
-  spec: ReturnType<typeof getSpec>;
-  markPrice: number;
-  accountCurrency: string;
-  onChanged: () => void;
-}) {
+function OpenTradeRow({
+  trade, accountCurrency, onChanged,
+}: { trade: BacktestTrade; accountCurrency: string; onChanged: () => void }) {
+  const spec = getSpec(trade.symbol);
   const [sl, setSl] = useState(trade.sl?.toString() ?? "");
   const [tp, setTp] = useState(trade.tp?.toString() ?? "");
+  const [exitPrice, setExitPrice] = useState<string>(trade.entry?.toString() ?? "");
+  const [showModify, setShowModify] = useState(false);
 
-  const pnl = trade.entry
-    ? computePnl(spec, trade.direction, trade.entry, markPrice, trade.lots, accountCurrency)
-    : 0;
+  const exit = +exitPrice || trade.entry || 0;
+  const pnl = trade.entry ? computePnl(spec, trade.direction, trade.entry, exit, trade.lots, accountCurrency) : 0;
 
   async function saveSlTp() {
     await supabase.from("backtest_trades").update({ sl: +sl || null, tp: +tp || null }).eq("id", trade.id);
-    toast.success("SL/TP updated");
-    onChanged();
+    toast.success("SL/TP updated"); onChanged();
   }
-  async function closeAt(exit: number, reason: string, lotsClosed?: number) {
+  async function closeAt(px: number, reason: string, lotsClosed?: number) {
     const lots = lotsClosed ?? trade.lots;
-    const pnlClose = trade.entry
-      ? computePnl(spec, trade.direction, trade.entry, exit, lots, accountCurrency)
-      : 0;
+    const pnlClose = trade.entry ? computePnl(spec, trade.direction, trade.entry, px, lots, accountCurrency) : 0;
     const closed_at = new Date().toISOString();
     const duration = trade.opened_at
-      ? Math.max(0, Math.round((Date.parse(closed_at) - Date.parse(trade.opened_at)) / 1000))
-      : null;
+      ? Math.max(0, Math.round((Date.parse(closed_at) - Date.parse(trade.opened_at)) / 1000)) : null;
     if (lotsClosed && lotsClosed < trade.lots) {
-      // Partial: close portion as new closed trade, reduce original lots
       const remaining = +(trade.lots - lotsClosed).toFixed(2);
       await supabase.from("backtest_trades").insert({
         session_id: trade.session_id, user_id: trade.user_id,
         symbol: trade.symbol, direction: trade.direction, order_type: "market",
         status: "closed", entry: trade.entry, sl: trade.sl, tp: trade.tp,
-        exit, exit_reason: reason, lots: lotsClosed, risk_pct: trade.risk_pct,
+        exit: px, exit_reason: reason, lots: lotsClosed, risk_pct: trade.risk_pct,
         risk_amount: trade.risk_amount, rr: trade.rr, pnl: pnlClose,
         opened_at: trade.opened_at, closed_at, duration_sec: duration,
       });
@@ -646,7 +642,7 @@ function OpenTradeCard({
       toast.success(`Closed ${lotsClosed} lots`);
     } else {
       await supabase.from("backtest_trades").update({
-        status: "closed", exit, exit_reason: reason, pnl: pnlClose,
+        status: "closed", exit: px, exit_reason: reason, pnl: pnlClose,
         closed_at, duration_sec: duration,
       }).eq("id", trade.id);
       toast.success("Position closed");
@@ -657,86 +653,75 @@ function OpenTradeCard({
     if (!trade.entry) return;
     await supabase.from("backtest_trades").update({ sl: trade.entry }).eq("id", trade.id);
     setSl(String(trade.entry));
-    toast.success("Stop moved to break-even");
-    onChanged();
+    toast.success("Stop moved to BE"); onChanged();
   }
 
   return (
-    <div className="rounded-md border border-border/60 bg-card/40 p-2 text-xs">
-      <div className="flex items-center justify-between">
-        <span className="font-semibold">
-          {trade.direction === "long" ? <TrendingUp className="mr-1 inline h-3 w-3 text-success" /> : <TrendingDown className="mr-1 inline h-3 w-3 text-destructive" />}
-          {trade.symbol} · {trade.lots} lots
+    <div className="rounded border border-border/60 bg-card/50 p-1.5 text-[11px]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate font-semibold">
+          {trade.direction === "long"
+            ? <TrendingUp className="mr-1 inline h-3 w-3 text-success" />
+            : <TrendingDown className="mr-1 inline h-3 w-3 text-destructive" />}
+          {trade.symbol} · {trade.lots}
         </span>
         <span className={cn("font-semibold", pnl >= 0 ? "text-success" : "text-destructive")}>
           {formatMoney(pnl, accountCurrency)}
         </span>
       </div>
-      <p className="mt-1 text-muted-foreground">Entry {trade.entry?.toFixed(spec.digits)}</p>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <div>
-          <Label className="text-[10px]">SL</Label>
-          <Input type="number" step="any" value={sl} onChange={(e) => setSl(e.target.value)} className="h-7" />
-        </div>
-        <div>
-          <Label className="text-[10px]">TP</Label>
-          <Input type="number" step="any" value={tp} onChange={(e) => setTp(e.target.value)} className="h-7" />
-        </div>
-      </div>
-      <div className="mt-2 flex flex-wrap gap-1">
-        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={saveSlTp}>Modify</Button>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={moveToBE}>BE</Button>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]"
-          onClick={() => closeAt(markPrice, "manual", +(trade.lots / 2).toFixed(2))}
+      <p className="mt-0.5 text-muted-foreground">
+        Entry {trade.entry?.toFixed(spec.digits)} · SL {trade.sl?.toFixed(spec.digits) ?? "—"} · TP {trade.tp?.toFixed(spec.digits) ?? "—"}
+      </p>
+      <div className="mt-1 flex items-center gap-1">
+        <Input type="number" step="any" value={exitPrice} onChange={(e) => setExitPrice(e.target.value)}
+          placeholder="Exit price" className="h-6 flex-1 text-[11px]" />
+        <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => closeAt(exit, "manual")}>Close</Button>
+        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]"
+          onClick={() => closeAt(exit, "manual", +(trade.lots / 2).toFixed(2))}
           disabled={trade.lots < 0.02}>50%</Button>
-        <Button size="sm" className="h-7 px-2 text-[11px]" onClick={() => closeAt(markPrice, "manual")}>
-          Close
+        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={moveToBE}>BE</Button>
+        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setShowModify((s) => !s)}>
+          <PencilLine className="h-3 w-3" />
         </Button>
       </div>
+      {showModify && (
+        <div className="mt-1 flex items-center gap-1">
+          <Input type="number" step="any" value={sl} onChange={(e) => setSl(e.target.value)} placeholder="SL" className="h-6 text-[11px]" />
+          <Input type="number" step="any" value={tp} onChange={(e) => setTp(e.target.value)} placeholder="TP" className="h-6 text-[11px]" />
+          <Button size="sm" className="h-6 px-2 text-[10px]" onClick={saveSlTp}>Save</Button>
+        </div>
+      )}
     </div>
   );
 }
 
-function PendingCard({
-  trade, accountCurrency, onChanged, markPrice,
-}: {
-  trade: BacktestTrade;
-  accountCurrency: string;
-  onChanged: () => void;
-  markPrice: number;
-}) {
+function PendingRow({ trade, onChanged }: { trade: BacktestTrade; onChanged: () => void }) {
   const spec = getSpec(trade.symbol);
   async function fill() {
-    const now = new Date().toISOString();
     await supabase.from("backtest_trades").update({
-      status: "open", opened_at: now, entry: trade.entry,
+      status: "open", opened_at: new Date().toISOString(), entry: trade.entry,
     }).eq("id", trade.id);
-    toast.success("Order filled");
-    onChanged();
+    toast.success("Order filled"); onChanged();
   }
   async function cancel() {
     await supabase.from("backtest_trades").update({
       status: "cancelled", exit_reason: "cancelled",
     }).eq("id", trade.id);
-    toast.success("Order cancelled");
-    onChanged();
+    toast.success("Order cancelled"); onChanged();
   }
   return (
-    <div className="rounded-md border border-border/60 bg-card/40 p-2 text-xs">
+    <div className="rounded border border-border/60 bg-card/50 p-1.5 text-[11px]">
       <div className="flex items-center justify-between">
         <span className="font-semibold">
-          {trade.direction === "long" ? "▲" : "▼"} {trade.symbol} · {trade.order_type} · {trade.lots} lots
+          {trade.direction === "long" ? "▲" : "▼"} {trade.symbol} · {trade.order_type} · {trade.lots}
         </span>
       </div>
-      <p className="mt-1 text-muted-foreground">
+      <p className="mt-0.5 text-muted-foreground">
         Entry {trade.entry?.toFixed(spec.digits)} · SL {trade.sl?.toFixed(spec.digits) ?? "—"} · TP {trade.tp?.toFixed(spec.digits) ?? "—"}
       </p>
-      <p className="mt-0.5 text-[10px] text-muted-foreground">
-        Mark {markPrice.toFixed(spec.digits)} · {accountCurrency}
-      </p>
-      <div className="mt-2 flex gap-1">
-        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={fill}>Fill now</Button>
-        <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] text-destructive" onClick={cancel}>
+      <div className="mt-1 flex gap-1">
+        <Button size="sm" className="h-6 px-2 text-[10px]" onClick={fill}>Fill now</Button>
+        <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-destructive" onClick={cancel}>
           <X className="mr-1 h-3 w-3" /> Cancel
         </Button>
       </div>
@@ -744,12 +729,102 @@ function PendingCard({
   );
 }
 
+function HistoryRow({ trade, accountCurrency }: { trade: BacktestTrade; accountCurrency: string }) {
+  const spec = getSpec(trade.symbol);
+  return (
+    <div className="rounded border border-border/60 bg-card/50 p-1.5 text-[11px]">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">
+          {trade.direction === "long" ? "▲" : "▼"} {trade.symbol} · {trade.lots}
+        </span>
+        <span className={cn("font-semibold", (trade.pnl ?? 0) >= 0 ? "text-success" : "text-destructive")}>
+          {formatMoney(trade.pnl ?? 0, accountCurrency)}
+        </span>
+      </div>
+      <p className="mt-0.5 text-muted-foreground">
+        {trade.entry?.toFixed(spec.digits)} → {trade.exit?.toFixed(spec.digits) ?? "—"} · {trade.exit_reason ?? "manual"}
+        {trade.rr != null && ` · ${trade.rr.toFixed(2)}R`}
+      </p>
+    </div>
+  );
+}
+
 // ============================================================================
-// Session Picker
+// Replay Controls Bar (bottom media-player strip)
+//
+// The free TradingView widget is an iframe we don't control, so we cannot
+// programmatically step candles. This bar surfaces the controls users expect
+// and, on click, points them to TV's built-in Bar Replay tool in the chart's
+// left toolbar. If we later license the TradingView Charting Library we can
+// wire these buttons to real chart actions.
+// ============================================================================
+function ReplayControlsBar() {
+  const [dismissed, setDismissed] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
+  function nudge() {
+    setShowHint(true);
+    setTimeout(() => setShowHint(false), 3200);
+    toast("Bar Replay lives inside the chart", {
+      description: "Click the ⏵ Replay button on the chart's top toolbar to step bars, pause, and change speed.",
+    });
+  }
+
+  if (dismissed) return null;
+
+  return (
+    <div className="pointer-events-auto absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/60 bg-background/95 px-2 py-1 shadow-xl backdrop-blur">
+      <div className="flex items-center gap-1">
+        <span className="hidden px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:inline">Replay</span>
+        <ReplayBtn icon={<SkipBack className="h-3.5 w-3.5" />} label="Jump back" onClick={nudge} />
+        <ReplayBtn icon={<Rewind className="h-3.5 w-3.5" />} label="Step -1" onClick={nudge} />
+        <ReplayBtn icon={<Play className="h-3.5 w-3.5" />} label="Play" onClick={nudge} />
+        <ReplayBtn icon={<Pause className="h-3.5 w-3.5" />} label="Pause" onClick={nudge} />
+        <ReplayBtn icon={<FastForward className="h-3.5 w-3.5" />} label="Step +1" onClick={nudge} />
+        <ReplayBtn icon={<SkipForward className="h-3.5 w-3.5" />} label="Jump forward" onClick={nudge} />
+        <Select defaultValue="1" onValueChange={nudge}>
+          <SelectTrigger className="h-7 w-[64px] text-[11px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {["0.5","1","2","5","10","20"].map((s) => (
+              <SelectItem key={s} value={s} className="text-xs">{s}×</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <ReplayBtn icon={<CalendarDays className="h-3.5 w-3.5" />} label="Jump to date" onClick={nudge} />
+        <button
+          onClick={() => setDismissed(true)}
+          className="ml-1 rounded p-1 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          aria-label="Hide replay bar"
+          title="Hide"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+      {showHint && (
+        <p className="mt-1 max-w-[420px] px-2 pb-1 text-center text-[10px] leading-tight text-muted-foreground">
+          <Info className="mr-1 inline h-3 w-3" />
+          Use TradingView's built-in Bar Replay on the chart toolbar (top of chart). External replay control needs the paid Charting Library.
+        </p>
+      )}
+    </div>
+  );
+}
+function ReplayBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="grid h-7 w-7 place-items-center rounded text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
+    >{icon}</button>
+  );
+}
+
+// ============================================================================
+// Session Picker + Create + Rename dialogs
 // ============================================================================
 function SessionPickerDialog({
-  open, onOpenChange, sessions, loading, onResume, onCreate,
-  isPro, limit, onUpgrade,
+  open, onOpenChange, sessions, loading, onResume, onCreate, isPro, limit, onUpgrade,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -825,9 +900,6 @@ function SessionPickerDialog({
   );
 }
 
-// ============================================================================
-// Create Session Dialog
-// ============================================================================
 function CreateSessionDialog({
   open, onOpenChange, onCreate, defaultCurrency,
 }: {
@@ -911,6 +983,3 @@ function RenameDialog({
     </Dialog>
   );
 }
-
-// Reference silences unused import warnings for symbol constants
-void TV_SYMBOLS;

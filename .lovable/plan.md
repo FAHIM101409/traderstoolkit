@@ -1,46 +1,99 @@
-# Backtesting Lab → Professional Trading Simulator
 
-This is a large upgrade. To keep quality high and avoid a monolithic edit that regresses the current lab, I'll ship it in **three phases**. Each phase is independently usable and reviewable. Confirm the phasing (or tell me to compress) before I start.
+# Backtesting Lab → Immersive Trading Workspace + Backtesting Station
 
-## Scope reality check
+Before I write code, a hard reality check on what the free TradingView embeddable widget actually allows, because several items in your spec are physically impossible without a licensed **TradingView Charting Library** (signed contract with TradingView, self-hosted JS bundle, own datafeed). I don't want to fake these.
 
-A few items in the spec have hard technical limits worth naming up front so we don't over-promise:
+## What the free TV widget CAN do (we'll surface all of it)
 
-- **TradingView "full experience"**: the free embeddable widget already includes candlesticks, all timeframes, symbol search, watchlist, drawing tools, indicators, templates, replay, object tree, chart settings, timezone, theme, price/time-scale settings. It does **not** support: saving layouts to the user's account (requires TradingView login inside the iframe), programmatically drawing SL/TP/entry lines on the chart, or reading the replay clock. Charting Library (with drawings API + saved layouts on our backend) requires a signed licence from TradingView — out of scope for beta. **Plan**: use the widget with every supported feature enabled; render SL/TP/entry/P&L as an **overlay panel docked to the chart** (MT5-style "Trade" tab), not as lines drawn inside the TV iframe. Interactive SL/TP dragging happens in that overlay via numeric inputs + quick-adjust buttons.
-- **Fullscreen**: real fullscreen via the Fullscreen API (hides sidebar, header, everything except chart + trade toolbar + replay + trade controls).
-- **Screenshots** of trades: deferred (spec says "optional later").
+- Candles, all timeframes, symbol search, indicators, drawing tools, chart settings (candle/wick/border/bg/grid/watermark/timezone/price scale/time scale/sessions/themes), templates, save-image, watchlist, calendar, hotlist, details.
+- Fullscreen chart taking ~90% of viewport.
+- All customization lives inside the TV chart UI (right-click → settings, format menus). We can't rebuild that menu outside the iframe — but everything you listed under "TradingView Customization" is already there.
 
-## Phase 1 — Sessions foundation + trading panel (this turn)
+## What the free TV widget CANNOT do (needs licensed Charting Library)
 
-**DB (migration):**
-- `backtest_sessions` already exists — extend with: `status` (`active|archived`), `starting_balance`, `symbol`, `timeframe`, `notes`, `last_opened_at`.
-- New `backtest_trades` table: session_id, symbol, direction, order_type (`market|limit|stop`), status (`pending|open|closed|cancelled`), entry, sl, tp, exit, exit_reason (`tp|sl|manual|be|cancelled`), lots, risk_pct, risk_amount, rr, pnl, opened_at, closed_at, duration_sec. RLS + GRANTs.
-- Free-plan cap enforced in a server fn (2 active sessions).
+The widget is an **iframe** we don't control. We cannot reach into it. This blocks:
 
-**UI (`/backtest`):**
-- Session picker modal on entry: "Resume existing" (cards with name, trades, win rate, PF, net P&L, last opened) or "Create new" (name, symbol, timeframe, starting balance).
-- Session bar at top: name, balance, equity, floating P&L, "Change session" / rename / duplicate / archive / delete / export JSON.
-- **MT5-style trading toolbar** above the chart: order type buttons (Buy/Sell Market, Buy/Sell Limit, Buy/Sell Stop), lot size, risk %, SL, TP, price (for pendings). Auto-computes lot from risk % using the instrument engine from the Lot Size Calculator.
-- **Positions/Orders dock** beside the chart (tabbed: Open / Pending / History): each row shows entry, SL, TP, floating P&L, and buttons for **Close**, **Close 50%**, **Move to BE**, **Modify SL/TP**, **Cancel** (pendings). All auto-recorded to `backtest_trades`.
-- **Fullscreen button** — real Fullscreen API, hides app shell, keeps chart + toolbar + dock.
-- TradingView widget config maxed: `withdateranges`, `details`, `hotlist`, `calendar`, `hide_side_toolbar:false`, `allow_symbol_change`, `save_image`, `studies_overrides`, `enabled_features: ["header_saveload","use_localstorage_for_settings"]` where supported by the free widget, plus theme/watermark/timezone settings surfaced in a "Chart settings" popover.
+- **Draggable entry/SL/TP lines on the chart** — no drawing API exposed.
+- **Bar Replay controls driven from our UI** (play/pause/step/speed/jump-to-date buttons outside the iframe) — TV's Replay tool exists **inside** the widget toolbar and users can use it there, but we can't script it from outside.
+- **Favoriting drawing tools into our own toolbar** — favorites live in TV's own left toolbar (already visible); we can't mirror them.
+- **Price alerts tied to the chart's live price** — no price feed leaves the iframe. We can build alerts against a separate quote source, but they won't render as lines on the chart.
+- **Saved chart layouts to the user's account** (requires TV login inside the iframe, which is fine, or Charting Library + our backend).
 
-## Phase 2 — Session dashboard & analytics (next turn)
+**Options for the blocked items:**
 
-- Per-session dashboard route `/backtest/$sessionId`: equity curve, calendar heatmap, win/loss distribution, PF, expectancy, max DD, avg RR, avg hold time, largest win/loss, avg risk %, breakdown by pair / timeframe / day of week / session (London/NY/Asia/Sydney).
-- Sessions list route `/backtest` (when no session selected) with cards + search/filter/archive toggle.
-- Import/export JSON.
+1. **Ship the widget as-is** (recommended for beta): tell users Replay/Alerts/Drawing favorites live inside the TV chart itself. Everything you listed is available — just not re-skinned by us.
+2. **License TradingView Charting Library** later (paid, signed agreement, own datafeed backend). Then we can build draggable trade lines, external Replay controls, custom alert lines, favorited drawing toolbar. Out of scope for this turn.
+3. **Fake it** — build UI buttons that look like Replay/Alerts but don't actually control the chart. I refuse; it would mislead users.
 
-## Phase 3 — Future-proofing hooks (later)
+**I'll build option 1 and clearly label the widget-native features in the UI** ("Use TV's built-in Replay in the chart toolbar", etc.). If you want option 2, it's a separate, much larger project.
 
-- Interfaces for AI Coach, mistake detection, session comparison, Monte Carlo, strategy scoring. Stubs + typed contracts; no ML work in beta.
+## What I WILL build this turn
 
-## Technical notes
+### 1. Immersive workspace layout (`/backtest`)
 
-- Backtest "current price" for filling market orders and floating P&L uses the last symbol quote we can get from a lightweight quote endpoint (server fn hitting a free FX/crypto quote source; falls back to user-entered price if unavailable). Pending order fills are simulated when the user clicks "Fill now at price X" — we do not stream live ticks into the TV iframe (not exposed by the widget).
-- All trade math (pip value, P&L, RR) reuses `src/lib/instruments.ts` for consistency with the Lot Size Calculator.
-- Free-plan gate uses existing `useProfile().isPro`.
+- Chart takes 88vh, near edge-to-edge. Session bar collapses to a slim strip.
+- App shell sidebar auto-collapses when on this route.
+- Real Fullscreen API button (already have) — refined.
+- Trading panel removed from above the chart.
+
+### 2. Floating MT5-style trading toolbar
+
+- Compact draggable floating card, bottom-right by default, collapsible.
+- Six order buttons: Buy/Sell Market, Buy/Sell Limit, Buy/Sell Stop.
+- Inputs: Lot, Risk %, SL, TP, Price (for pendings). Auto-lot from `calculatePosition()`.
+- One click = order recorded to `backtest_trades`.
+- **No draggable chart lines** (blocked — see above). Instead, a numeric SL/TP row per open position in the floating positions dock with ±pip quick-adjust buttons. Users can visually mark levels with TV's horizontal-line drawing tool.
+
+### 3. Positions/Orders dock
+
+- Compact floating dock, bottom-left, tabs Open / Pending / History.
+- Actions: Close, Close 50%, Move to BE, Modify SL/TP, Cancel.
+- Shows floating P&L using a lightweight quote server fn (FX/crypto free source).
+
+### 4. Move analytics out to `/backtesting-station`
+
+- New route `Labs → Backtesting Station` (`/backtesting-station`).
+- Lists all sessions as cards: name, symbol, trades, win rate, PF, net P&L, last opened. Search + archive filter.
+- Click a card → `/backtesting-station/$sessionId` with: Win rate, PF, avg RR, expectancy, net/gross/max DD, largest win/loss, equity curve, calendar heatmap, daily/weekly/monthly/pair/timeframe breakdowns, trade list, session notes.
+- Distribution + heatmap charts using existing recharts.
+- "Most common mistakes" and "AI summary" as placeholder cards with typed contracts wired but empty (future feature).
+
+### 5. `/backtest` is now trading-only
+
+- Chart + floating toolbar + floating positions dock. No stats. No charts panel. No numbers.
+- Session picker modal on entry (existing) stays.
+
+### 6. Media-player Backtesting Controls bar (bottom of chart)
+
+I'll add a slim bottom bar with ⏮ ◀ ▶ ⏯ ⏩ 📅 buttons. **They will open TV's built-in Bar Replay tool via a helper tooltip on first click**, since we cannot programmatically step the widget. Speed/date pickers will be present but explicitly labelled "TV Replay tool". If you'd rather I remove the bar entirely instead of showing a scaffolded version that hands off to TV's own Replay, tell me.
+
+### 7. Free/Pro gates (existing pattern)
+
+- Free: 2 active sessions (existing).
+- Alerts / unlimited replay / etc. → deferred with the Charting Library work.
+
+## What I will NOT build this turn
+
+- Charting-Library-only features: draggable trade lines, external replay driving the chart, favorited drawing toolbar mirroring TV, alert lines on chart.
+- Multi-chart layouts, Monte Carlo, strategy scoring, AI coach — Phase 3 hooks only.
+
+## Files touched
+
+- `src/routes/_authenticated/backtest.tsx` — full redesign, chart-first, floating toolbars.
+- `src/components/app/tradingview-chart.tsx` — expose more props (studies, watchlist config), remove chrome.
+- New: `src/components/backtest/floating-trade-toolbar.tsx`, `src/components/backtest/floating-positions-dock.tsx`, `src/components/backtest/replay-controls-bar.tsx`.
+- New route: `src/routes/_authenticated/backtesting-station.tsx` (list).
+- New route: `src/routes/_authenticated/backtesting-station.$sessionId.tsx` (detail + analytics).
+- `src/components/app/app-shell.tsx` — add nav entry, auto-collapse sidebar on `/backtest`.
+- Analytics helpers extended in `src/lib/backtest.ts` (equity curve, DD, breakdowns).
+- Quote server fn `src/lib/quotes.functions.ts` for floating P&L.
+- No DB migration (Phase 1 schema already covers everything).
 
 ## Confirm
 
-Reply "go" to start Phase 1, or tell me to change the split (e.g. "do phases 1+2 in one go", "skip pending orders for now", "keep it single-session only").
+Reply **"go"** to build this, or tell me:
+
+- **"skip the replay bar"** — I'll drop the fake bottom media controls entirely (cleaner, more honest).
+- **"drop the floating dock, put positions in a slide-out panel instead"**.
+- **"do analytics station later"** — I'll only redesign the workspace this turn.
+- **"license Charting Library"** — separate quote, out of scope.

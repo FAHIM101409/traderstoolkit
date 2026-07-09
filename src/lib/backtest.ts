@@ -111,3 +111,96 @@ export function computeSessionStats(trades: BacktestTrade[], startingBalance: nu
 export const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1H", "4H", "1D", "1W"];
 
 export { getSpec, calculatePosition };
+
+// ============================================================================
+// Extended analytics for the Backtesting Station
+// ============================================================================
+
+export type EquityPoint = { i: number; balance: number; time: string };
+
+export function computeEquityCurve(trades: BacktestTrade[], startingBalance: number): EquityPoint[] {
+  const closed = trades
+    .filter((t) => t.status === "closed" && t.closed_at)
+    .sort((a, b) => Date.parse(a.closed_at!) - Date.parse(b.closed_at!));
+  const pts: EquityPoint[] = [{ i: 0, balance: startingBalance, time: closed[0]?.closed_at ?? new Date().toISOString() }];
+  let bal = startingBalance;
+  closed.forEach((t, i) => {
+    bal += t.pnl ?? 0;
+    pts.push({ i: i + 1, balance: +bal.toFixed(2), time: t.closed_at! });
+  });
+  return pts;
+}
+
+export function computeMaxDrawdown(eq: EquityPoint[]): { absolute: number; percent: number } {
+  let peak = eq[0]?.balance ?? 0;
+  let absDD = 0;
+  let pctDD = 0;
+  for (const p of eq) {
+    if (p.balance > peak) peak = p.balance;
+    const dd = peak - p.balance;
+    if (dd > absDD) absDD = dd;
+    const pct = peak > 0 ? (dd / peak) * 100 : 0;
+    if (pct > pctDD) pctDD = pct;
+  }
+  return { absolute: absDD, percent: pctDD };
+}
+
+export function groupBy<K extends string | number>(trades: BacktestTrade[], keyFn: (t: BacktestTrade) => K) {
+  const map = new Map<K, { key: K; count: number; pnl: number; wins: number }>();
+  for (const t of trades) {
+    if (t.status !== "closed") continue;
+    const k = keyFn(t);
+    const row = map.get(k) ?? { key: k, count: 0, pnl: 0, wins: 0 };
+    row.count += 1;
+    row.pnl += t.pnl ?? 0;
+    if ((t.pnl ?? 0) > 0) row.wins += 1;
+    map.set(k, row);
+  }
+  return Array.from(map.values());
+}
+
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+export function breakdownByDay(trades: BacktestTrade[]) {
+  return groupBy(trades, (t) => DOW[new Date(t.closed_at ?? t.opened_at ?? Date.now()).getUTCDay()])
+    .sort((a, b) => DOW.indexOf(a.key as string) - DOW.indexOf(b.key as string));
+}
+
+export function breakdownBySymbol(trades: BacktestTrade[]) {
+  return groupBy(trades, (t) => t.symbol).sort((a, b) => b.pnl - a.pnl);
+}
+
+export function breakdownByHour(trades: BacktestTrade[]) {
+  return groupBy(trades, (t) => new Date(t.closed_at ?? t.opened_at ?? Date.now()).getUTCHours())
+    .sort((a, b) => (a.key as number) - (b.key as number));
+}
+
+/** Daily P&L calendar — { "2026-07-08": 123.45, ... } */
+export function dailyPnlCalendar(trades: BacktestTrade[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const t of trades) {
+    if (t.status !== "closed" || !t.closed_at) continue;
+    const d = t.closed_at.slice(0, 10);
+    out[d] = (out[d] ?? 0) + (t.pnl ?? 0);
+  }
+  return out;
+}
+
+export function pnlDistribution(trades: BacktestTrade[], bins = 12) {
+  const closed = trades.filter((t) => t.status === "closed");
+  if (!closed.length) return [];
+  const vals = closed.map((t) => t.pnl ?? 0);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const step = (max - min) / bins || 1;
+  const out = Array.from({ length: bins }, (_, i) => ({
+    from: min + i * step,
+    to: min + (i + 1) * step,
+    count: 0,
+  }));
+  for (const v of vals) {
+    const idx = Math.min(bins - 1, Math.floor((v - min) / step));
+    out[idx].count += 1;
+  }
+  return out;
+}

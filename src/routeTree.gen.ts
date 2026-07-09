@@ -31,6 +31,7 @@ import { Route as AuthenticatedBacktestRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
 import { Route as AuthenticatedAdminCodesRouteImport } from './routes/_authenticated/admin-codes'
+import { Route as AuthenticatedReplaySessionIdRouteImport } from './routes/_authenticated/replay.$sessionId'
 import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
 const BestTradingJournalForMetatraderRoute =
@@ -144,6 +145,12 @@ const AuthenticatedAdminCodesRoute = AuthenticatedAdminCodesRouteImport.update({
   path: '/admin-codes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReplaySessionIdRoute =
+  AuthenticatedReplaySessionIdRouteImport.update({
+    id: '/$sessionId',
+    path: '/$sessionId',
+    getParentRoute: () => AuthenticatedReplayRoute,
+  } as any)
 const ApiPublicMt5IngestRoute = ApiPublicMt5IngestRouteImport.update({
   id: '/api/public/mt5/ingest',
   path: '/api/public/mt5/ingest',
@@ -167,11 +174,12 @@ export interface FileRoutesByFullPath {
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
-  '/replay': typeof AuthenticatedReplayRoute
+  '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulator': typeof AuthenticatedSimulatorRoute
+  '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRoutesByTo {
@@ -191,11 +199,12 @@ export interface FileRoutesByTo {
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
-  '/replay': typeof AuthenticatedReplayRoute
+  '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulator': typeof AuthenticatedSimulatorRoute
+  '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRoutesById {
@@ -217,11 +226,12 @@ export interface FileRoutesById {
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
   '/_authenticated/pricing': typeof AuthenticatedPricingRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
-  '/_authenticated/replay': typeof AuthenticatedReplayRoute
+  '/_authenticated/replay': typeof AuthenticatedReplayRouteWithChildren
   '/_authenticated/risk': typeof AuthenticatedRiskRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/simulator': typeof AuthenticatedSimulatorRoute
+  '/_authenticated/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRouteTypes {
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/settings'
     | '/simulator'
+    | '/replay/$sessionId'
     | '/api/public/mt5/ingest'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/settings'
     | '/simulator'
+    | '/replay/$sessionId'
     | '/api/public/mt5/ingest'
   id:
     | '__root__'
@@ -297,6 +309,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sessions'
     | '/_authenticated/settings'
     | '/_authenticated/simulator'
+    | '/_authenticated/replay/$sessionId'
     | '/api/public/mt5/ingest'
   fileRoutesById: FileRoutesById
 }
@@ -464,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCodesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/replay/$sessionId': {
+      id: '/_authenticated/replay/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/replay/$sessionId'
+      preLoaderRoute: typeof AuthenticatedReplaySessionIdRouteImport
+      parentRoute: typeof AuthenticatedReplayRoute
+    }
     '/api/public/mt5/ingest': {
       id: '/api/public/mt5/ingest'
       path: '/api/public/mt5/ingest'
@@ -473,6 +493,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedReplayRouteChildren {
+  AuthenticatedReplaySessionIdRoute: typeof AuthenticatedReplaySessionIdRoute
+}
+
+const AuthenticatedReplayRouteChildren: AuthenticatedReplayRouteChildren = {
+  AuthenticatedReplaySessionIdRoute: AuthenticatedReplaySessionIdRoute,
+}
+
+const AuthenticatedReplayRouteWithChildren =
+  AuthenticatedReplayRoute._addFileChildren(AuthenticatedReplayRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminCodesRoute: typeof AuthenticatedAdminCodesRoute
@@ -488,7 +519,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
   AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
-  AuthenticatedReplayRoute: typeof AuthenticatedReplayRoute
+  AuthenticatedReplayRoute: typeof AuthenticatedReplayRouteWithChildren
   AuthenticatedRiskRoute: typeof AuthenticatedRiskRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -509,7 +540,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
   AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
-  AuthenticatedReplayRoute: AuthenticatedReplayRoute,
+  AuthenticatedReplayRoute: AuthenticatedReplayRouteWithChildren,
   AuthenticatedRiskRoute: AuthenticatedRiskRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -529,13 +560,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
