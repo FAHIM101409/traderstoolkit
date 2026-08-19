@@ -52,15 +52,23 @@ export type Database = {
       }
       backtest_sessions: {
         Row: {
+          account_currency: string
+          chart_state: Json
+          commission_per_lot: number
           created_at: string
+          description: string | null
           ending_balance: number
           id: string
           last_opened_at: string
           name: string
           notes: string | null
+          replay_state: Json
+          risk_pct: number
+          spread_points: number
           starting_balance: number
           stats: Json
           status: string
+          strategy: string | null
           symbol: string
           timeframe: string
           trades: Json
@@ -68,15 +76,23 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_currency?: string
+          chart_state?: Json
+          commission_per_lot?: number
           created_at?: string
+          description?: string | null
           ending_balance?: number
           id?: string
           last_opened_at?: string
           name?: string
           notes?: string | null
+          replay_state?: Json
+          risk_pct?: number
+          spread_points?: number
           starting_balance?: number
           stats?: Json
           status?: string
+          strategy?: string | null
           symbol?: string
           timeframe?: string
           trades?: Json
@@ -84,15 +100,23 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_currency?: string
+          chart_state?: Json
+          commission_per_lot?: number
           created_at?: string
+          description?: string | null
           ending_balance?: number
           id?: string
           last_opened_at?: string
           name?: string
           notes?: string | null
+          replay_state?: Json
+          risk_pct?: number
+          spread_points?: number
           starting_balance?: number
           stats?: Json
           status?: string
+          strategy?: string | null
           symbol?: string
           timeframe?: string
           trades?: Json
@@ -104,14 +128,19 @@ export type Database = {
       backtest_trades: {
         Row: {
           closed_at: string | null
+          commission: number
           created_at: string
           direction: string
           duration_sec: number | null
           entry: number | null
           exit: number | null
           exit_reason: string | null
+          gross_pnl: number
           id: string
           lots: number
+          mae: number | null
+          mfe: number | null
+          notes: string | null
           opened_at: string | null
           order_type: string
           pnl: number
@@ -128,14 +157,19 @@ export type Database = {
         }
         Insert: {
           closed_at?: string | null
+          commission?: number
           created_at?: string
           direction: string
           duration_sec?: number | null
           entry?: number | null
           exit?: number | null
           exit_reason?: string | null
+          gross_pnl?: number
           id?: string
           lots: number
+          mae?: number | null
+          mfe?: number | null
+          notes?: string | null
           opened_at?: string | null
           order_type?: string
           pnl?: number
@@ -152,14 +186,19 @@ export type Database = {
         }
         Update: {
           closed_at?: string | null
+          commission?: number
           created_at?: string
           direction?: string
           duration_sec?: number | null
           entry?: number | null
           exit?: number | null
           exit_reason?: string | null
+          gross_pnl?: number
           id?: string
           lots?: number
+          mae?: number | null
+          mfe?: number | null
+          notes?: string | null
           opened_at?: string | null
           order_type?: string
           pnl?: number
