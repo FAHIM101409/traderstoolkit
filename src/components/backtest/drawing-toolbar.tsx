@@ -1,4 +1,4 @@
-import { MousePointer2, TrendingUp, MoveUpRight, Minus, Separator as SeparatorIcon, Square, Ruler, Type, Eraser, Star, Trash2, GitCommitVertical } from "lucide-react";
+import { MousePointer2, TrendingUp, MoveUpRight, Minus, AlignJustify, Square, Ruler, Type, Eraser, Star, Trash2, GitCommitVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ const ICONS: Record<DrawingTool, any> = {
   hline: Minus,
   vline: GitCommitVertical,
   rect: Square,
-  fib: SeparatorIcon,
+  fib: AlignJustify,
   measure: Ruler,
   text: Type,
   erase: Eraser,
