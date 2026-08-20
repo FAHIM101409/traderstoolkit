@@ -36,6 +36,11 @@ export type BacktestTrade = {
   opened_at: string | null;
   closed_at: string | null;
   duration_sec: number | null;
+  gross_pnl?: number;
+  commission?: number;
+  mfe?: number | null;
+  mae?: number | null;
+  notes?: string | null;
 };
 
 /** Compute P&L in the account currency for a trade given a mark price. */
