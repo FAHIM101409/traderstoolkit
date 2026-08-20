@@ -47,7 +47,7 @@ export function ReplayChart(props: ReplayChartProps) {
   const volRef = useRef<ISeriesApi<any> | null>(null);
   const indicatorRefs = useRef<ISeriesApi<any>[]>([]);
   const priceLines = useRef<IPriceLine[]>([]);
-  const markersRef = useRef<ReturnType<typeof createSeriesMarkers> | null>(null);
+  const markersRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
   const [handles, setHandles] = useState<{ tradeId: string; key: LevelKey; y: number; price: number; label: string; color: string }[]>([]);
   const draftRef = useRef<DrawPoint[]>([]);
