@@ -1,984 +1,816 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app/app-shell";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { TradingViewChart, TV_INTERVALS } from "@/components/app/tradingview-chart";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { UpgradeDialog } from "@/components/app/upgrade-dialog";
 import { formatMoney } from "@/lib/currencies";
-import { INSTRUMENT_SPECS, getSpec, calculatePosition } from "@/lib/instruments";
-import {
-  computePnl, computeRR, computeSessionStats,
-  type BacktestSession, type BacktestTrade,
-} from "@/lib/backtest";
+import { INSTRUMENT_SPECS, getSpec } from "@/lib/instruments";
+import { computeSessionStats, type BacktestSession, type BacktestTrade } from "@/lib/backtest";
+import { fetchCandles } from "@/lib/marketdata.functions";
+import { REPLAY_TIMEFRAMES, type Candle } from "@/lib/marketdata";
+import { processBar, closeAt, type SimContext } from "@/lib/replay-sim";
+import { ReplayChart } from "@/components/backtest/replay-chart";
+import { DrawingToolbar } from "@/components/backtest/drawing-toolbar";
+import { IndicatorManager } from "@/components/backtest/indicator-manager";
+import { ChartSettingsDialog } from "@/components/backtest/chart-settings-dialog";
+import { OrderTicket, type NewOrder } from "@/components/backtest/order-ticket";
+import { PositionsDock } from "@/components/backtest/positions-dock";
+import { ReplayControls } from "@/components/backtest/replay-controls";
+import { DEFAULT_CHART_SETTINGS, type ChartSettings, type Drawing, type DrawingTool } from "@/components/backtest/chart-types";
+import type { IndicatorConfig } from "@/lib/indicators";
 import { toast } from "sonner";
 import {
-  Maximize2, Minimize2, TrendingUp, TrendingDown, Plus, MoreVertical,
-  Archive, Copy, Trash2, Download, PencilLine, X, Loader2, Sparkles,
-  ChevronDown, ChevronUp, BarChart3, Info,
-  SkipBack, SkipForward, Play, Pause, FastForward, Rewind, CalendarDays,
+  Maximize2, Minimize2, Settings2, LineChart as LineChartIcon, Plus, Loader2,
+  Archive, Trash2, PencilLine, Columns2, Grid2X2, Square as SquareIcon, BarChart3, Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/backtest")({
-  head: () => ({ meta: [
-    { title: "Backtesting Lab — Traders Toolkit" },
-    { name: "description", content: "Immersive TradingView workspace with MT5-style order execution, floating trade panel and session-tracked practice." },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Backtesting Lab — Bar Replay Workspace | Traders Toolkit" },
+      { name: "description", content: "Blind bar-by-bar replay on real historical candles with MT5-style order execution, draggable stops, drawings and indicators." },
+      { property: "og:title", content: "Backtesting Lab — Bar Replay Workspace" },
+      { property: "og:description", content: "Practise real setups bar by bar with hidden future candles, full order execution and session-tracked results." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: BacktestPage,
 });
 
 const FREE_SESSION_LIMIT = 2;
 
-const TV_MAP: Record<string, string> = {
-  EURUSD: "FX:EURUSD", GBPUSD: "FX:GBPUSD", USDJPY: "FX:USDJPY", USDCHF: "FX:USDCHF",
-  USDCAD: "FX:USDCAD", AUDUSD: "FX:AUDUSD", NZDUSD: "FX:NZDUSD",
-  XAUUSD: "OANDA:XAUUSD", XAGUSD: "OANDA:XAGUSD",
-  BTCUSD: "BINANCE:BTCUSDT", ETHUSD: "BINANCE:ETHUSDT", SOLUSD: "BINANCE:SOLUSDT",
-  NAS100: "OANDA:NAS100USD", SPX500: "OANDA:SPX500USD", US30: "OANDA:US30USD",
-  GER40: "OANDA:DE30EUR", UK100: "OANDA:UK100GBP", USOIL: "OANDA:WTICOUSD", UKOIL: "OANDA:BCOUSD",
+type PaneCfg = { symbol: string; timeframe: string };
+
+type ChartState = {
+  settings: ChartSettings;
+  indicators: IndicatorConfig[];
+  drawings: Drawing[];
+  favorites: DrawingTool[];
+  panes: PaneCfg[];
+  layout: "1" | "2" | "4";
 };
-function toTV(symbol: string): string {
-  return TV_MAP[symbol] ?? `FX:${symbol}`;
-}
+
+const DEFAULT_CHART_STATE: ChartState = {
+  settings: DEFAULT_CHART_SETTINGS,
+  indicators: [],
+  drawings: [],
+  favorites: ["trend", "hline"],
+  panes: [],
+  layout: "1",
+};
 
 function BacktestPage() {
   const { user } = useAuth();
   const { profile, isPro } = useProfile();
   const accountCurrency = profile?.account_currency ?? "USD";
+  const callCandles = useServerFn(fetchCandles);
 
+  // ------------------------------------------------------------- sessions
   const [sessions, setSessions] = useState<BacktestSession[]>([]);
   const [active, setActive] = useState<BacktestSession | null>(null);
-  const [trades, setTrades] = useState<BacktestTrade[]>([]);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // ------------------------------------------------------------- workspace
+  const [symbol, setSymbol] = useState("EURUSD");
+  const [timeframe, setTimeframe] = useState("1H");
+  const [chartState, setChartState] = useState<ChartState>(DEFAULT_CHART_STATE);
+  const [tool, setTool] = useState<DrawingTool>("cursor");
+  const [drawColor, setDrawColor] = useState("#38bdf8");
+  const [indicatorsOpen, setIndicatorsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
 
+  // --------------------------------------------------------------- market
+  const [allCandles, setAllCandles] = useState<Candle[]>([]);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [cursor, setCursor] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [startOpen, setStartOpen] = useState(false);
+  const [startDate, setStartDate] = useState("");
+
+  // ---------------------------------------------------------------- trades
+  const [trades, setTrades] = useState<BacktestTrade[]>([]);
+  const dirty = useRef<Map<string, BacktestTrade>>(new Map());
+
+  const spec = useMemo(() => getSpec(symbol), [symbol]);
+  const visible = useMemo(() => allCandles.slice(0, cursor + 1), [allCandles, cursor]);
+  const currentBar = visible[visible.length - 1];
+  const price = currentBar?.close ?? 0;
+
+  const simCtx: SimContext = useMemo(() => ({
+    spec,
+    accountCurrency,
+    commissionPerLot: Number((active as any)?.commission_per_lot ?? 0),
+    spreadPoints: Number((active as any)?.spread_points ?? 0),
+  }), [spec, accountCurrency, active]);
+
+  const stats = useMemo(
+    () => computeSessionStats(trades, Number(active?.starting_balance ?? 10000)),
+    [trades, active],
+  );
+  const balance = stats.endingBalance;
+
+  // ------------------------------------------------------------ load data
   const loadSessions = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("backtest_sessions")
-      .select("*")
-      .eq("user_id", user.id)
+      .from("backtest_sessions").select("*").eq("user_id", user.id)
       .order("last_opened_at", { ascending: false });
-    setSessions((data as BacktestSession[]) ?? []);
+    setSessions((data as unknown as BacktestSession[]) ?? []);
     setLoading(false);
   }, [user]);
   useEffect(() => { void loadSessions(); }, [loadSessions]);
+  useEffect(() => { if (!loading && !active) setPickerOpen(true); }, [loading, active]);
 
-  useEffect(() => {
-    if (!loading && !active) setPickerOpen(true);
-  }, [loading, active]);
-
-  const loadTrades = useCallback(async (sessionId: string) => {
-    const { data } = await supabase
-      .from("backtest_trades")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: false });
-    setTrades((data as BacktestTrade[]) ?? []);
-  }, []);
-
-  async function openSession(s: BacktestSession) {
+  const openSession = useCallback(async (s: BacktestSession) => {
     setActive(s);
     setPickerOpen(false);
-    await supabase.from("backtest_sessions").update({ last_opened_at: new Date().toISOString() }).eq("id", s.id);
-    await loadTrades(s.id);
-  }
+    setSymbol(s.symbol);
+    setTimeframe(s.timeframe);
+    const cs = ((s as any).chart_state ?? {}) as Partial<ChartState>;
+    setChartState({
+      ...DEFAULT_CHART_STATE,
+      ...cs,
+      settings: { ...DEFAULT_CHART_SETTINGS, ...(cs.settings ?? {}) },
+      indicators: cs.indicators ?? [],
+      drawings: cs.drawings ?? [],
+      favorites: cs.favorites ?? DEFAULT_CHART_STATE.favorites,
+      panes: cs.panes ?? [],
+      layout: cs.layout ?? "1",
+    });
+    const { data } = await supabase.from("backtest_trades").select("*").eq("session_id", s.id).order("created_at");
+    setTrades((data as unknown as BacktestTrade[]) ?? []);
+    void supabase.from("backtest_sessions").update({ last_opened_at: new Date().toISOString() }).eq("id", s.id);
+  }, []);
 
-  async function createSession(name: string, symbol: string, timeframe: string, startingBalance: number) {
-    if (!user) return;
-    const activeCount = sessions.filter((s) => s.status === "active").length;
-    if (!isPro && activeCount >= FREE_SESSION_LIMIT) { setUpgradeOpen(true); return; }
-    const { data, error } = await supabase.from("backtest_sessions").insert({
-      user_id: user.id, name, symbol, timeframe,
-      starting_balance: startingBalance, ending_balance: startingBalance, status: "active",
-    }).select().single();
-    if (error) { toast.error(error.message); return; }
-    await loadSessions();
-    await openSession(data as BacktestSession);
-    toast.success("Session created");
-  }
+  // Fetch candles whenever the instrument or timeframe changes
+  useEffect(() => {
+    let cancelled = false;
+    if (!active) return;
+    setDataLoading(true);
+    setDataError(null);
+    setPlaying(false);
+    callCandles({ data: { symbol, interval: timeframe, outputsize: 5000 } })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.error) { setDataError(res.error); setAllCandles([]); return; }
+        if (!res.candles.length) { setDataError("No candles returned for this instrument."); setAllCandles([]); return; }
+        setAllCandles(res.candles);
+        const saved = ((active as any).replay_state ?? {}) as { cursorTime?: number; symbol?: string; timeframe?: string; speed?: number };
+        if (saved.speed) setSpeed(saved.speed);
+        if (saved.cursorTime && saved.symbol === symbol && saved.timeframe === timeframe) {
+          const idx = res.candles.findIndex((c) => c.time >= (saved.cursorTime as number));
+          setCursor(idx >= 0 ? idx : Math.floor(res.candles.length / 2));
+        } else {
+          setCursor(Math.max(150, Math.floor(res.candles.length * 0.6)));
+        }
+      })
+      .catch(() => !cancelled && setDataError("Could not load historical data."))
+      .finally(() => !cancelled && setDataLoading(false));
+    return () => { cancelled = true; };
+  }, [symbol, timeframe, active?.id, callCandles]);
 
-  async function renameSession(name: string) {
-    if (!active) return;
-    await supabase.from("backtest_sessions").update({ name }).eq("id", active.id);
-    setActive({ ...active, name });
-    await loadSessions();
-  }
-  async function duplicateSession() {
-    if (!active || !user) return;
-    const activeCount = sessions.filter((s) => s.status === "active").length;
-    if (!isPro && activeCount >= FREE_SESSION_LIMIT) { setUpgradeOpen(true); return; }
-    const { data } = await supabase.from("backtest_sessions").insert({
-      user_id: user.id, name: `${active.name} (copy)`,
-      symbol: active.symbol, timeframe: active.timeframe,
-      starting_balance: active.starting_balance, ending_balance: active.starting_balance,
-      status: "active",
-    }).select().single();
-    if (data) { toast.success("Duplicated"); await loadSessions(); await openSession(data as BacktestSession); }
-  }
-  async function archiveSession() {
-    if (!active) return;
-    await supabase.from("backtest_sessions").update({ status: "archived" }).eq("id", active.id);
-    toast.success("Session archived");
-    setActive(null); setTrades([]);
-    await loadSessions();
-  }
-  async function deleteSession() {
-    if (!active) return;
-    if (!confirm(`Delete session "${active.name}"? This removes all its trades.`)) return;
-    await supabase.from("backtest_sessions").delete().eq("id", active.id);
-    toast.success("Session deleted");
-    setActive(null); setTrades([]);
-    await loadSessions();
-  }
-  function exportSession() {
-    if (!active) return;
-    const blob = new Blob([JSON.stringify({ session: active, trades }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `${active.name}.backtest.json`; a.click();
-    URL.revokeObjectURL(url);
-  }
+  // ------------------------------------------------------------- persistence
+  const queueTrade = useCallback((t: BacktestTrade) => { dirty.current.set(t.id, t); }, []);
 
   useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
+    const id = window.setInterval(async () => {
+      if (!dirty.current.size) return;
+      const batch = Array.from(dirty.current.values());
+      dirty.current.clear();
+      for (const t of batch) {
+        const { id: _id, ...rest } = t;
+        await supabase.from("backtest_trades").update(rest as any).eq("id", t.id);
+      }
+    }, 1500);
+    return () => window.clearInterval(id);
   }, []);
+
+  // Save replay + chart state (debounced)
+  useEffect(() => {
+    if (!active) return;
+    const id = window.setTimeout(() => {
+      void supabase.from("backtest_sessions").update({
+        symbol, timeframe,
+        chart_state: chartState as any,
+        replay_state: { cursorTime: allCandles[cursor]?.time ?? null, symbol, timeframe, speed } as any,
+        ending_balance: balance,
+        stats: stats as any,
+      } as any).eq("id", active.id);
+    }, 1200);
+    return () => window.clearTimeout(id);
+  }, [chartState, cursor, symbol, timeframe, speed, active, allCandles, balance, stats]);
+
+  // ------------------------------------------------------------ replay step
+  const stepForward = useCallback((delta = 1) => {
+    setCursor((prev) => {
+      const next = Math.min(Math.max(prev + delta, 0), Math.max(allCandles.length - 1, 0));
+      if (delta > 0) {
+        for (let i = prev + 1; i <= next; i++) {
+          const bar = allCandles[i];
+          if (!bar) continue;
+          setTrades((cur) => {
+            const res = processBar(cur, bar, simCtx);
+            if (res.events.length) {
+              res.events.forEach((e) => toast(e.message));
+              res.trades.forEach((t) => {
+                const before = cur.find((x) => x.id === t.id);
+                if (before && before.status !== t.status) queueTrade(t);
+              });
+            }
+            return res.trades;
+          });
+        }
+      }
+      return next;
+    });
+  }, [allCandles, simCtx, queueTrade]);
+
+  useEffect(() => {
+    if (!playing) return;
+    const ms = Math.max(60, 800 / speed);
+    const id = window.setInterval(() => {
+      setCursor((c) => {
+        if (c >= allCandles.length - 1) { setPlaying(false); return c; }
+        return c;
+      });
+      stepForward(1);
+    }, ms);
+    return () => window.clearInterval(id);
+  }, [playing, speed, stepForward, allCandles.length]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.tagName === "INPUT" || (e.target as HTMLElement)?.tagName === "TEXTAREA") return;
+      if (e.code === "Space") { e.preventDefault(); setPlaying((p) => !p); }
+      if (e.key === "ArrowRight") { e.preventDefault(); stepForward(1); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); setCursor((c) => Math.max(0, c - 1)); }
+      if (e.key.toLowerCase() === "escape") setTool("cursor");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stepForward]);
+
+  // --------------------------------------------------------------- orders
+  async function submitOrder(o: NewOrder) {
+    if (!user || !active || !currentBar) return;
+    const nowIso = new Date(currentBar.time * 1000).toISOString();
+    const isMarket = o.order_type === "market";
+    const row = {
+      session_id: active.id,
+      user_id: user.id,
+      symbol,
+      direction: o.direction,
+      order_type: o.order_type,
+      status: isMarket ? "open" : "pending",
+      entry: o.entry,
+      sl: o.sl,
+      tp: o.tp,
+      lots: o.lots,
+      risk_pct: o.risk_pct,
+      risk_amount: o.risk_amount,
+      rr: o.sl && o.tp && o.entry ? Math.abs(o.tp - o.entry) / Math.abs(o.entry - o.sl) : null,
+      opened_at: isMarket ? nowIso : null,
+    };
+    const { data, error } = await supabase.from("backtest_trades").insert(row as any).select().single();
+    if (error) { toast.error(error.message); return; }
+    setTrades((t) => [...t, data as unknown as BacktestTrade]);
+    toast.success(`${o.direction === "long" ? "Buy" : "Sell"} ${o.lots} ${symbol} ${isMarket ? "executed" : "placed"}`);
+  }
+
+  function patchTrade(id: string, patch: Partial<BacktestTrade>) {
+    setTrades((cur) => cur.map((t) => {
+      if (t.id !== id) return t;
+      const next = { ...t, ...patch };
+      queueTrade(next);
+      return next;
+    }));
+  }
+
+  function manualClose(t: BacktestTrade) {
+    if (!currentBar) return;
+    const closed = closeAt(t, price, simCtx, new Date(currentBar.time * 1000).toISOString());
+    patchTrade(t.id, closed);
+    toast(`Closed ${(closed.pnl ?? 0) >= 0 ? "+" : ""}${(closed.pnl ?? 0).toFixed(2)}`);
+  }
+
+  function cancelPending(t: BacktestTrade) {
+    patchTrade(t.id, { status: "cancelled", closed_at: new Date().toISOString() });
+  }
+
+  function toBreakEven(t: BacktestTrade) {
+    if (t.entry == null) return;
+    patchTrade(t.id, { sl: t.entry });
+    toast("Stop moved to break-even");
+  }
+
+  function nudge(t: BacktestTrade, key: "sl" | "tp", pips: number) {
+    const base = (t as any)[key] ?? t.entry;
+    if (base == null) return;
+    patchTrade(t.id, { [key]: base + pips * spec.pipSize } as Partial<BacktestTrade>);
+  }
+
+  // ------------------------------------------------------------ session ops
+  async function createSession(name: string, sym: string, tf: string, startingBalance: number) {
+    if (!user) return;
+    if (!isPro && sessions.filter((s) => s.status === "active").length >= FREE_SESSION_LIMIT) {
+      setUpgradeOpen(true); return;
+    }
+    const { data, error } = await supabase.from("backtest_sessions").insert({
+      user_id: user.id, name, symbol: sym, timeframe: tf,
+      starting_balance: startingBalance, ending_balance: startingBalance, status: "active",
+    } as any).select().single();
+    if (error) { toast.error(error.message); return; }
+    await loadSessions();
+    await openSession(data as unknown as BacktestSession);
+    setStartOpen(true);
+  }
+
+  async function archiveSession(s: BacktestSession) {
+    await supabase.from("backtest_sessions").update({ status: s.status === "archived" ? "active" : "archived" }).eq("id", s.id);
+    await loadSessions();
+  }
+  async function deleteSession(s: BacktestSession) {
+    await supabase.from("backtest_trades").delete().eq("session_id", s.id);
+    await supabase.from("backtest_sessions").delete().eq("id", s.id);
+    if (active?.id === s.id) { setActive(null); setTrades([]); }
+    await loadSessions();
+  }
+
+  // ----------------------------------------------------------- fullscreen
   async function toggleFullscreen() {
     const el = shellRef.current;
     if (!el) return;
-    if (!document.fullscreenElement) await el.requestFullscreen?.();
-    else await document.exitFullscreen?.();
+    if (!document.fullscreenElement) { await el.requestFullscreen?.(); setFullscreen(true); }
+    else { await document.exitFullscreen?.(); setFullscreen(false); }
+  }
+  useEffect(() => {
+    const h = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
+  }, []);
+
+  // ------------------------------------------------------------ jump-to-date
+  function jumpToDate() {
+    const ts = Date.parse(startDate);
+    if (!Number.isFinite(ts)) { toast.error("Pick a valid date"); return; }
+    const target = Math.floor(ts / 1000);
+    let idx = allCandles.findIndex((c) => c.time >= target);
+    if (idx < 0) idx = allCandles.length - 1;
+    setCursor(Math.max(1, idx));
+    setStartOpen(false);
+    setPlaying(false);
+    toast.success(`Replay start set to ${new Date(allCandles[idx]?.time * 1000).toUTCString()}`);
   }
 
-  const stats = useMemo(() => active
-    ? computeSessionStats(trades, Number(active.starting_balance))
-    : null, [trades, active]);
+  const patchChart = (p: Partial<ChartState>) => setChartState((c) => ({ ...c, ...p }));
+  const openPositions = trades.filter((t) => t.status === "open" || t.status === "pending");
+  const closedTrades = trades.filter((t) => t.status === "closed");
+  const barLabel = currentBar ? new Date(currentBar.time * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
 
-  const body = (
-    <div
-      ref={shellRef}
-      className={cn(
-        "relative flex h-[calc(100vh-3.75rem)] w-full flex-col bg-[#0b0b12]",
-        isFullscreen && "h-screen w-screen",
-      )}
-    >
-      {active ? (
-        <>
-          <SessionStrip
-            session={active}
-            stats={stats}
-            accountCurrency={accountCurrency}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={toggleFullscreen}
-            onChangeSession={() => setPickerOpen(true)}
-            onRename={() => setRenameOpen(true)}
-            onDuplicate={duplicateSession}
-            onArchive={archiveSession}
-            onDelete={deleteSession}
-            onExport={exportSession}
-            onSymbolChanged={async (sym) => {
-              await supabase.from("backtest_sessions").update({ symbol: sym }).eq("id", active.id);
-              setActive({ ...active, symbol: sym });
-            }}
-            onTimeframeChanged={async (tf) => {
-              await supabase.from("backtest_sessions").update({ timeframe: tf }).eq("id", active.id);
-              setActive({ ...active, timeframe: tf });
-            }}
-          />
-
-          <div className="relative min-h-0 flex-1">
-            <TradingViewChart
-              symbol={toTV(active.symbol)}
-              interval={active.timeframe}
-              height="100%"
-              className="absolute inset-0"
-            />
-
-            <FloatingTradeToolbar
-              session={active}
-              trades={trades}
-              accountCurrency={accountCurrency}
-              startingBalance={Number(active.starting_balance)}
-              userId={user?.id ?? ""}
-              onTradesChanged={() => loadTrades(active.id)}
-            />
-
-            <FloatingPositionsDock
-              trades={trades}
-              accountCurrency={accountCurrency}
-              onChanged={() => loadTrades(active.id)}
-            />
-
-            <ReplayControlsBar />
-          </div>
-        </>
-      ) : !loading ? (
-        <div className="grid flex-1 place-items-center">
-          <Card className="border-dashed">
-            <CardContent className="p-10 text-center">
-              <p className="text-muted-foreground">No session selected.</p>
-              <Button className="mt-4" onClick={() => setPickerOpen(true)}>Select or create a session</Button>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-    </div>
-  );
+  const paneCount = chartState.layout === "4" ? 4 : chartState.layout === "2" ? 2 : 1;
+  const extraPanes = Array.from({ length: paneCount - 1 }, (_, i) => chartState.panes[i] ?? { symbol, timeframe: timeframe === "1H" ? "15m" : "1H" });
+  const cutoff = currentBar?.time ?? 0;
 
   return (
-    <>
-      {isFullscreen ? body : <AppShell title="Backtesting Lab" fullBleed>{body}</AppShell>}
+    <AppShell title="Backtesting Lab" fullBleed>
+      <TooltipProvider delayDuration={200}>
+        <div ref={shellRef} className="flex h-[calc(100vh-57px)] flex-col bg-background">
+          {/* ------------------------------------------------- top strip */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-card/60 px-2 py-1.5 backdrop-blur">
+            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
+              <LineChartIcon className="h-3.5 w-3.5 text-primary" />
+              {active?.name ?? "Choose session"}
+            </Button>
 
-      <SessionPickerDialog
+            <Select value={symbol} onValueChange={setSymbol}>
+              <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                {["Forex Major", "Forex Minor", "Forex Cross", "Forex Exotic", "Metals", "Indices", "Crypto", "Commodities"].map((g) => {
+                  const items = INSTRUMENT_SPECS.filter((s) => s.group === g);
+                  if (!items.length) return null;
+                  return (
+                    <SelectGroup key={g}>
+                      <SelectLabel className="text-[10px] uppercase">{g}</SelectLabel>
+                      {items.map((s) => <SelectItem key={s.symbol} value={s.symbol}>{s.label}</SelectItem>)}
+                    </SelectGroup>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-0.5 rounded-md border border-border/60 p-0.5">
+              {REPLAY_TIMEFRAMES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setTimeframe(t.value)}
+                  className={cn(
+                    "rounded px-1.5 py-1 text-[11px] transition hover:bg-accent",
+                    timeframe === t.value && "bg-primary/15 font-semibold text-primary",
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-0.5 rounded-md border border-border/60 p-0.5">
+              {([["1", SquareIcon], ["2", Columns2], ["4", Grid2X2]] as const).map(([k, Icon]) => (
+                <Tooltip key={k}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => (k !== "1" && !isPro ? setUpgradeOpen(true) : patchChart({ layout: k }))}
+                      className={cn("grid h-7 w-7 place-items-center rounded transition hover:bg-accent",
+                        chartState.layout === k && "bg-primary/15 text-primary")}
+                      aria-label={`${k} chart layout`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{k === "1" ? "Single chart" : `${k} charts`}{k !== "1" && !isPro ? " (Pro)" : ""}</TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+
+            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setIndicatorsOpen(true)}>
+              <BarChart3 className="h-3.5 w-3.5" /> Indicators
+              {chartState.indicators.length > 0 && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{chartState.indicators.length}</Badge>}
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setSettingsOpen(true)}>
+              <Settings2 className="h-3.5 w-3.5" /> Chart
+            </Button>
+
+            <div className="ml-auto flex items-center gap-3 text-xs">
+              <span className="text-muted-foreground">Balance</span>
+              <span className="font-semibold">{formatMoney(balance, accountCurrency)}</span>
+              <Link to="/replay" className="text-primary hover:underline">Analytics →</Link>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullscreen} aria-label="Toggle fullscreen">
+                {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* ------------------------------------------------- chart area */}
+          <div className="relative flex min-h-0 flex-1">
+            <DrawingToolbar
+              active={tool}
+              onSelect={setTool}
+              favorites={chartState.favorites}
+              onToggleFavorite={(t) =>
+                patchChart({
+                  favorites: chartState.favorites.includes(t)
+                    ? chartState.favorites.filter((f) => f !== t)
+                    : [...chartState.favorites, t],
+                })
+              }
+              color={drawColor}
+              onColor={setDrawColor}
+              onClearAll={() => patchChart({ drawings: [] })}
+              drawingCount={chartState.drawings.length}
+            />
+
+            <div className={cn("relative grid min-h-0 flex-1", paneCount === 1 ? "grid-cols-1" : paneCount === 2 ? "grid-cols-2" : "grid-cols-2 grid-rows-2")}>
+              <div className="relative min-h-0 border-r border-border/40">
+                {dataLoading && (
+                  <div className="absolute inset-0 z-30 grid place-items-center bg-background/70">
+                    <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading {symbol} {timeframe} history…
+                    </span>
+                  </div>
+                )}
+                {dataError && (
+                  <div className="absolute inset-0 z-30 grid place-items-center p-6">
+                    <Card className="max-w-md border-destructive/40">
+                      <CardContent className="space-y-2 p-5 text-center">
+                        <p className="text-sm font-semibold">Historical data unavailable</p>
+                        <p className="text-xs text-muted-foreground">{dataError}</p>
+                        <p className="text-xs text-muted-foreground">Try another instrument or timeframe — some symbols are not covered by the data plan.</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+                <ReplayChart
+                  candles={visible}
+                  settings={chartState.settings}
+                  indicators={chartState.indicators}
+                  positions={openPositions}
+                  closedTrades={closedTrades}
+                  digits={spec.digits}
+                  symbol={symbol}
+                  timeframe={timeframe}
+                  activeTool={tool}
+                  drawings={chartState.drawings}
+                  drawColor={drawColor}
+                  onDrawingsChange={(d) => patchChart({ drawings: d })}
+                  onToolDone={() => setTool("cursor")}
+                  onLevelDrag={(id, key, p) => patchTrade(id, { [key]: p } as Partial<BacktestTrade>)}
+                />
+              </div>
+
+              {extraPanes.map((p, i) => (
+                <SecondaryPane
+                  key={i}
+                  cfg={p}
+                  cutoff={cutoff}
+                  settings={chartState.settings}
+                  onChange={(cfg) => {
+                    const next = [...chartState.panes];
+                    next[i] = cfg;
+                    patchChart({ panes: next });
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* floating panels */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="pointer-events-auto absolute right-3 top-3">
+                <OrderTicket
+                  spec={spec}
+                  accountCurrency={accountCurrency}
+                  balance={balance}
+                  price={price}
+                  defaultRiskPct={Number(profile?.default_risk_pct ?? 1)}
+                  disabled={!active || !currentBar}
+                  onSubmit={submitOrder}
+                />
+              </div>
+              <div className="pointer-events-auto absolute bottom-3 left-3">
+                <PositionsDock
+                  trades={trades}
+                  spec={spec}
+                  accountCurrency={accountCurrency}
+                  price={price}
+                  commissionPerLot={simCtx.commissionPerLot}
+                  spreadPoints={simCtx.spreadPoints}
+                  onClose={manualClose}
+                  onCancel={cancelPending}
+                  onBreakEven={toBreakEven}
+                  onNudge={nudge}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ------------------------------------------------- replay bar */}
+          <ReplayControls
+            playing={playing}
+            onPlayPause={() => setPlaying((p) => !p)}
+            onStep={(d) => (d > 0 ? stepForward(1) : setCursor((c) => Math.max(0, c - 1)))}
+            onJumpStart={() => { setPlaying(false); setCursor(Math.min(150, allCandles.length - 1)); }}
+            onJumpEnd={() => { setPlaying(false); stepForward(allCandles.length - 1 - cursor); }}
+            onReset={() => { setPlaying(false); setCursor(Math.min(150, allCandles.length - 1)); }}
+            onPickDate={() => setStartOpen(true)}
+            index={cursor}
+            total={allCandles.length}
+            speed={speed}
+            onSpeed={setSpeed}
+            onScrub={(i) => { setPlaying(false); i > cursor ? stepForward(i - cursor) : setCursor(i); }}
+            barTime={barLabel}
+            disabled={!allCandles.length}
+          />
+        </div>
+      </TooltipProvider>
+
+      {/* ----------------------------------------------------- dialogs */}
+      <SessionPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         sessions={sessions}
-        loading={loading}
-        onResume={openSession}
-        onCreate={() => { setPickerOpen(false); setCreateOpen(true); }}
+        activeId={active?.id ?? null}
         isPro={isPro}
-        limit={FREE_SESSION_LIMIT}
-        onUpgrade={() => setUpgradeOpen(true)}
-      />
-
-      <CreateSessionDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenSession={openSession}
         onCreate={createSession}
-        defaultCurrency={accountCurrency}
+        onArchive={archiveSession}
+        onDelete={deleteSession}
+        currency={accountCurrency}
       />
 
-      <RenameDialog
-        open={renameOpen}
-        onOpenChange={setRenameOpen}
-        initial={active?.name ?? ""}
-        onSave={(n) => { void renameSession(n); setRenameOpen(false); }}
+      <IndicatorManager
+        open={indicatorsOpen}
+        onOpenChange={setIndicatorsOpen}
+        indicators={chartState.indicators}
+        onChange={(i) => patchChart({ indicators: i })}
       />
+
+      <ChartSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={chartState.settings}
+        onChange={(s) => patchChart({ settings: s })}
+      />
+
+      <Dialog open={startOpen} onOpenChange={setStartOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Replay start point</DialogTitle>
+            <DialogDescription>
+              Pick the date and time where replay begins. Every candle after it stays hidden until you step forward.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs">Start date & time (UTC)</Label>
+            <Input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            {allCandles.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Data available {new Date(allCandles[0].time * 1000).toISOString().slice(0, 16).replace("T", " ")} →{" "}
+                {new Date(allCandles[allCandles.length - 1].time * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setStartOpen(false)}>Cancel</Button>
+            <Button onClick={jumpToDate}>Set start point</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
-    </>
+    </AppShell>
   );
 }
 
-// ============================================================================
-// Session strip — slim bar with symbol/timeframe selectors and session menu
-// ============================================================================
-function SessionStrip({
-  session, stats, accountCurrency, isFullscreen,
-  onToggleFullscreen, onChangeSession, onRename, onDuplicate, onArchive, onDelete, onExport,
-  onSymbolChanged, onTimeframeChanged,
+/* -------------------------------------------------------------------------- */
+
+function SecondaryPane({
+  cfg, cutoff, settings, onChange,
 }: {
-  session: BacktestSession;
-  stats: ReturnType<typeof computeSessionStats> | null;
-  accountCurrency: string;
-  isFullscreen: boolean;
-  onToggleFullscreen: () => void;
-  onChangeSession: () => void;
-  onRename: () => void;
-  onDuplicate: () => void;
-  onArchive: () => void;
-  onDelete: () => void;
-  onExport: () => void;
-  onSymbolChanged: (s: string) => void;
-  onTimeframeChanged: (t: string) => void;
+  cfg: PaneCfg;
+  cutoff: number;
+  settings: ChartSettings;
+  onChange: (c: PaneCfg) => void;
 }) {
-  const bal = stats?.endingBalance ?? Number(session.starting_balance);
-  const net = stats?.net ?? 0;
-  return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-background/95 px-2 py-1.5 backdrop-blur">
-      <p className="max-w-[180px] truncate text-xs font-semibold">{session.name}</p>
-
-      <Select value={session.symbol} onValueChange={onSymbolChanged}>
-        <SelectTrigger className="h-7 w-[150px] text-xs"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {INSTRUMENT_SPECS.map((i) => (
-            <SelectItem key={i.symbol} value={i.symbol} className="text-xs">{i.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <div className="hidden items-center gap-0.5 rounded border border-border/60 p-0.5 md:flex">
-        {TV_INTERVALS.map((tf) => (
-          <button
-            key={tf.value}
-            onClick={() => onTimeframeChanged(tf.value)}
-            className={cn(
-              "rounded px-1.5 py-0.5 text-[10px] font-medium transition",
-              session.timeframe === tf.value
-                ? "bg-primary/20 text-primary"
-                : "text-muted-foreground hover:bg-muted/40",
-            )}
-          >{tf.label}</button>
-        ))}
-      </div>
-      <Select value={session.timeframe} onValueChange={onTimeframeChanged}>
-        <SelectTrigger className="h-7 w-[80px] text-xs md:hidden"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {TV_INTERVALS.map((t) => (<SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>))}
-        </SelectContent>
-      </Select>
-
-      <div className="ml-auto flex items-center gap-3 text-[11px]">
-        <span className="text-muted-foreground">Bal <span className="font-semibold text-foreground">{formatMoney(bal, accountCurrency)}</span></span>
-        <span className={cn("font-semibold", net >= 0 ? "text-success" : "text-destructive")}>
-          {net >= 0 ? "+" : ""}{formatMoney(net, accountCurrency)}
-        </span>
-        <span className="text-muted-foreground">{stats?.trades ?? 0} trades · WR {stats ? stats.winRate.toFixed(0) : 0}%</span>
-      </div>
-
-      <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={onChangeSession}>Change</Button>
-      <Link to="/replay">
-        <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-xs" title="Backtesting Station">
-          <BarChart3 className="h-3.5 w-3.5" /> Station
-        </Button>
-      </Link>
-      <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={onToggleFullscreen} title="Fullscreen">
-        {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-      </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="h-7 w-7 p-0"><MoreVertical className="h-3.5 w-3.5" /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onRename}><PencilLine className="mr-2 h-4 w-4" /> Rename</DropdownMenuItem>
-          <DropdownMenuItem onClick={onDuplicate}><Copy className="mr-2 h-4 w-4" /> Duplicate</DropdownMenuItem>
-          <DropdownMenuItem onClick={onExport}><Download className="mr-2 h-4 w-4" /> Export JSON</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onArchive}><Archive className="mr-2 h-4 w-4" /> Archive</DropdownMenuItem>
-          <DropdownMenuItem onClick={onDelete} className="text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-}
-
-// ============================================================================
-// Floating Trade Toolbar (MT5-style, bottom-right)
-// ============================================================================
-function FloatingTradeToolbar({
-  session, trades, accountCurrency, startingBalance, userId, onTradesChanged,
-}: {
-  session: BacktestSession;
-  trades: BacktestTrade[];
-  accountCurrency: string;
-  startingBalance: number;
-  userId: string;
-  onTradesChanged: () => void;
-}) {
-  const spec = getSpec(session.symbol);
-  const stats = computeSessionStats(trades, startingBalance);
-  const currentBalance = stats.endingBalance;
-
-  const [collapsed, setCollapsed] = useState(false);
-  const [markPrice, setMarkPrice] = useState<number>(spec.referencePrice);
-  useEffect(() => { setMarkPrice(getSpec(session.symbol).referencePrice); }, [session.symbol]);
-
-  const [orderType, setOrderType] = useState<"market" | "limit" | "stop">("market");
-  const [lots, setLots] = useState<string>("0.10");
-  const [riskPct, setRiskPct] = useState<string>("1");
-  const [entryPrice, setEntryPrice] = useState<string>("");
-  const [sl, setSl] = useState<string>("");
-  const [tp, setTp] = useState<string>("");
-  const [sizingMode, setSizingMode] = useState<"lots" | "risk">("risk");
+  const callCandles = useServerFn(fetchCandles);
+  const [candles, setCandles] = useState<Candle[]>([]);
+  const spec = getSpec(cfg.symbol);
 
   useEffect(() => {
-    if (sizingMode !== "risk") return;
-    const risk = +riskPct;
-    const slN = +sl;
-    const entryN = orderType === "market" ? markPrice : +entryPrice;
-    if (!risk || !slN || !entryN) return;
-    const dist = Math.abs(entryN - slN);
-    if (!dist) return;
-    const res = calculatePosition({
-      spec, accountCurrency,
-      riskAmountAccountCcy: currentBalance * (risk / 100),
-      priceDistance: dist,
-    });
-    if (res.lots > 0) setLots(res.lots.toFixed(2));
-  }, [sizingMode, riskPct, sl, entryPrice, markPrice, orderType, spec, accountCurrency, currentBalance]);
+    let cancelled = false;
+    callCandles({ data: { symbol: cfg.symbol, interval: cfg.timeframe, outputsize: 5000 } })
+      .then((r) => !cancelled && setCandles(r.candles ?? []))
+      .catch(() => !cancelled && setCandles([]));
+    return () => { cancelled = true; };
+  }, [cfg.symbol, cfg.timeframe, callCandles]);
 
-  function place(side: "long" | "short") {
-    const lotsN = +lots;
-    const slN = +sl || null;
-    const tpN = +tp || null;
-    const entryN = orderType === "market" ? markPrice : +entryPrice;
-
-    if (!lotsN || lotsN < spec.minLot) return toast.error(`Lot size must be at least ${spec.minLot}`);
-    if (!entryN) return toast.error("Entry price required");
-    if (slN && ((side === "long" && slN >= entryN) || (side === "short" && slN <= entryN)))
-      return toast.error("Stop loss on the wrong side of entry");
-    if (tpN && ((side === "long" && tpN <= entryN) || (side === "short" && tpN >= entryN)))
-      return toast.error("Take profit on the wrong side of entry");
-
-    const now = new Date().toISOString();
-    const rr = slN && tpN ? computeRR(side, entryN, slN, tpN) : null;
-    const riskAmount = slN
-      ? computePnl(spec, side === "long" ? "short" : "long", entryN, slN, lotsN, accountCurrency) * -1
-      : null;
-
-    void supabase.from("backtest_trades").insert({
-      session_id: session.id, user_id: userId,
-      symbol: session.symbol, direction: side, order_type: orderType,
-      status: orderType === "market" ? "open" : "pending",
-      entry: entryN, sl: slN, tp: tpN, lots: lotsN,
-      risk_pct: +riskPct || null,
-      risk_amount: riskAmount, rr,
-      opened_at: orderType === "market" ? now : null,
-    }).then(({ error }) => {
-      if (error) { toast.error(error.message); return; }
-      toast.success(`${side === "long" ? "Buy" : "Sell"} ${orderType} placed`);
-      setEntryPrice(""); setSl(""); setTp("");
-      onTradesChanged();
-    });
-  }
-
-  return (
-    <div className="pointer-events-auto absolute right-3 top-3 z-20 w-[260px] rounded-lg border border-border/60 bg-background/95 shadow-2xl backdrop-blur">
-      <button
-        onClick={() => setCollapsed((c) => !c)}
-        className="flex w-full items-center justify-between rounded-t-lg border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs font-semibold"
-      >
-        <span>Quick Trade · {session.symbol}</span>
-        {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
-      </button>
-
-      {!collapsed && (
-        <div className="space-y-2 p-2.5">
-          <div className="flex items-center gap-1.5">
-            <Select value={orderType} onValueChange={(v) => setOrderType(v as "market" | "limit" | "stop")}>
-              <SelectTrigger className="h-7 flex-1 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="market" className="text-xs">Market</SelectItem>
-                <SelectItem value="limit" className="text-xs">Limit</SelectItem>
-                <SelectItem value="stop" className="text-xs">Stop</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sizingMode} onValueChange={(v) => setSizingMode(v as "lots" | "risk")}>
-              <SelectTrigger className="h-7 flex-1 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="risk" className="text-xs">Auto lot</SelectItem>
-                <SelectItem value="lots" className="text-xs">Fixed lots</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1.5">
-            <FieldMini label="Lots">
-              <Input type="number" step="0.01" value={lots} onChange={(e) => setLots(e.target.value)}
-                disabled={sizingMode === "risk"} className="h-7 text-xs" />
-            </FieldMini>
-            <FieldMini label="Risk %">
-              <Input type="number" step="0.1" value={riskPct} onChange={(e) => setRiskPct(e.target.value)} className="h-7 text-xs" />
-            </FieldMini>
-            {orderType !== "market" && (
-              <FieldMini label="Entry">
-                <Input type="number" step="any" value={entryPrice} onChange={(e) => setEntryPrice(e.target.value)} className="h-7 text-xs" />
-              </FieldMini>
-            )}
-            <FieldMini label="Mark">
-              <Input type="number" step="any" value={markPrice} onChange={(e) => setMarkPrice(+e.target.value)} className="h-7 text-xs" />
-            </FieldMini>
-            <FieldMini label="SL">
-              <Input type="number" step="any" value={sl} onChange={(e) => setSl(e.target.value)} className="h-7 text-xs" />
-            </FieldMini>
-            <FieldMini label="TP">
-              <Input type="number" step="any" value={tp} onChange={(e) => setTp(e.target.value)} className="h-7 text-xs" />
-            </FieldMini>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1.5 pt-1">
-            <Button
-              onClick={() => place("long")}
-              className="h-8 bg-success text-success-foreground hover:bg-success/90"
-            >
-              <TrendingUp className="mr-1 h-3.5 w-3.5" />
-              {orderType === "market" ? "Buy" : `Buy ${orderType}`}
-            </Button>
-            <Button
-              onClick={() => place("short")}
-              className="h-8 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              <TrendingDown className="mr-1 h-3.5 w-3.5" />
-              {orderType === "market" ? "Sell" : `Sell ${orderType}`}
-            </Button>
-          </div>
-
-          <p className="pt-1 text-[10px] leading-tight text-muted-foreground">
-            <Info className="mr-1 inline h-3 w-3" />
-            Mark price seeds fills. Update it to match chart price for realistic sim.
-          </p>
-        </div>
-      )}
-    </div>
+  const visible = useMemo(
+    () => (cutoff ? candles.filter((c) => c.time <= cutoff) : candles),
+    [candles, cutoff],
   );
-}
-
-function FieldMini({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</Label>
-      {children}
-    </div>
-  );
-}
-
-// ============================================================================
-// Floating Positions Dock (bottom-left)
-// ============================================================================
-function FloatingPositionsDock({
-  trades, accountCurrency, onChanged,
-}: {
-  trades: BacktestTrade[];
-  accountCurrency: string;
-  onChanged: () => void;
-}) {
-  const [collapsed, setCollapsed] = useState(false);
-  const openTrades = trades.filter((t) => t.status === "open");
-  const pending = trades.filter((t) => t.status === "pending");
-  const history = trades.filter((t) => t.status === "closed" || t.status === "cancelled");
 
   return (
-    <div className="pointer-events-auto absolute bottom-14 left-3 z-20 w-[340px] max-w-[calc(100vw-1.5rem)] rounded-lg border border-border/60 bg-background/95 shadow-2xl backdrop-blur">
-      <button
-        onClick={() => setCollapsed((c) => !c)}
-        className="flex w-full items-center justify-between rounded-t-lg border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs font-semibold"
-      >
-        <span>Positions · {openTrades.length} open · {pending.length} pending</span>
-        {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-      </button>
-      {!collapsed && (
-        <div className="p-2">
-          <Tabs defaultValue="open">
-            <TabsList className="grid h-8 w-full grid-cols-3">
-              <TabsTrigger value="open" className="text-xs">Open ({openTrades.length})</TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs">Pending ({pending.length})</TabsTrigger>
-              <TabsTrigger value="history" className="text-xs">History ({history.length})</TabsTrigger>
-            </TabsList>
-            <TabsContent value="open" className="mt-2 max-h-[240px] space-y-1.5 overflow-y-auto">
-              {openTrades.length === 0 && <Empty label="No open positions" />}
-              {openTrades.map((t) => (
-                <OpenTradeRow key={t.id} trade={t} accountCurrency={accountCurrency} onChanged={onChanged} />
-              ))}
-            </TabsContent>
-            <TabsContent value="pending" className="mt-2 max-h-[240px] space-y-1.5 overflow-y-auto">
-              {pending.length === 0 && <Empty label="No pending orders" />}
-              {pending.map((t) => (
-                <PendingRow key={t.id} trade={t} onChanged={onChanged} />
-              ))}
-            </TabsContent>
-            <TabsContent value="history" className="mt-2 max-h-[240px] space-y-1.5 overflow-y-auto">
-              {history.length === 0 && <Empty label="No closed trades yet" />}
-              {history.map((t) => (
-                <HistoryRow key={t.id} trade={t} accountCurrency={accountCurrency} />
-              ))}
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
-    </div>
-  );
-}
-function Empty({ label }: { label: string }) {
-  return <p className="py-6 text-center text-[11px] text-muted-foreground">{label}</p>;
-}
-
-function OpenTradeRow({
-  trade, accountCurrency, onChanged,
-}: { trade: BacktestTrade; accountCurrency: string; onChanged: () => void }) {
-  const spec = getSpec(trade.symbol);
-  const [sl, setSl] = useState(trade.sl?.toString() ?? "");
-  const [tp, setTp] = useState(trade.tp?.toString() ?? "");
-  const [exitPrice, setExitPrice] = useState<string>(trade.entry?.toString() ?? "");
-  const [showModify, setShowModify] = useState(false);
-
-  const exit = +exitPrice || trade.entry || 0;
-  const pnl = trade.entry ? computePnl(spec, trade.direction, trade.entry, exit, trade.lots, accountCurrency) : 0;
-
-  async function saveSlTp() {
-    await supabase.from("backtest_trades").update({ sl: +sl || null, tp: +tp || null }).eq("id", trade.id);
-    toast.success("SL/TP updated"); onChanged();
-  }
-  async function closeAt(px: number, reason: string, lotsClosed?: number) {
-    const lots = lotsClosed ?? trade.lots;
-    const pnlClose = trade.entry ? computePnl(spec, trade.direction, trade.entry, px, lots, accountCurrency) : 0;
-    const closed_at = new Date().toISOString();
-    const duration = trade.opened_at
-      ? Math.max(0, Math.round((Date.parse(closed_at) - Date.parse(trade.opened_at)) / 1000)) : null;
-    if (lotsClosed && lotsClosed < trade.lots) {
-      const remaining = +(trade.lots - lotsClosed).toFixed(2);
-      await supabase.from("backtest_trades").insert({
-        session_id: trade.session_id, user_id: trade.user_id,
-        symbol: trade.symbol, direction: trade.direction, order_type: "market",
-        status: "closed", entry: trade.entry, sl: trade.sl, tp: trade.tp,
-        exit: px, exit_reason: reason, lots: lotsClosed, risk_pct: trade.risk_pct,
-        risk_amount: trade.risk_amount, rr: trade.rr, pnl: pnlClose,
-        opened_at: trade.opened_at, closed_at, duration_sec: duration,
-      });
-      await supabase.from("backtest_trades").update({ lots: remaining }).eq("id", trade.id);
-      toast.success(`Closed ${lotsClosed} lots`);
-    } else {
-      await supabase.from("backtest_trades").update({
-        status: "closed", exit: px, exit_reason: reason, pnl: pnlClose,
-        closed_at, duration_sec: duration,
-      }).eq("id", trade.id);
-      toast.success("Position closed");
-    }
-    onChanged();
-  }
-  async function moveToBE() {
-    if (!trade.entry) return;
-    await supabase.from("backtest_trades").update({ sl: trade.entry }).eq("id", trade.id);
-    setSl(String(trade.entry));
-    toast.success("Stop moved to BE"); onChanged();
-  }
-
-  return (
-    <div className="rounded border border-border/60 bg-card/50 p-1.5 text-[11px]">
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate font-semibold">
-          {trade.direction === "long"
-            ? <TrendingUp className="mr-1 inline h-3 w-3 text-success" />
-            : <TrendingDown className="mr-1 inline h-3 w-3 text-destructive" />}
-          {trade.symbol} · {trade.lots}
-        </span>
-        <span className={cn("font-semibold", pnl >= 0 ? "text-success" : "text-destructive")}>
-          {formatMoney(pnl, accountCurrency)}
-        </span>
-      </div>
-      <p className="mt-0.5 text-muted-foreground">
-        Entry {trade.entry?.toFixed(spec.digits)} · SL {trade.sl?.toFixed(spec.digits) ?? "—"} · TP {trade.tp?.toFixed(spec.digits) ?? "—"}
-      </p>
-      <div className="mt-1 flex items-center gap-1">
-        <Input type="number" step="any" value={exitPrice} onChange={(e) => setExitPrice(e.target.value)}
-          placeholder="Exit price" className="h-6 flex-1 text-[11px]" />
-        <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => closeAt(exit, "manual")}>Close</Button>
-        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]"
-          onClick={() => closeAt(exit, "manual", +(trade.lots / 2).toFixed(2))}
-          disabled={trade.lots < 0.02}>50%</Button>
-        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={moveToBE}>BE</Button>
-        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setShowModify((s) => !s)}>
-          <PencilLine className="h-3 w-3" />
-        </Button>
-      </div>
-      {showModify && (
-        <div className="mt-1 flex items-center gap-1">
-          <Input type="number" step="any" value={sl} onChange={(e) => setSl(e.target.value)} placeholder="SL" className="h-6 text-[11px]" />
-          <Input type="number" step="any" value={tp} onChange={(e) => setTp(e.target.value)} placeholder="TP" className="h-6 text-[11px]" />
-          <Button size="sm" className="h-6 px-2 text-[10px]" onClick={saveSlTp}>Save</Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PendingRow({ trade, onChanged }: { trade: BacktestTrade; onChanged: () => void }) {
-  const spec = getSpec(trade.symbol);
-  async function fill() {
-    await supabase.from("backtest_trades").update({
-      status: "open", opened_at: new Date().toISOString(), entry: trade.entry,
-    }).eq("id", trade.id);
-    toast.success("Order filled"); onChanged();
-  }
-  async function cancel() {
-    await supabase.from("backtest_trades").update({
-      status: "cancelled", exit_reason: "cancelled",
-    }).eq("id", trade.id);
-    toast.success("Order cancelled"); onChanged();
-  }
-  return (
-    <div className="rounded border border-border/60 bg-card/50 p-1.5 text-[11px]">
-      <div className="flex items-center justify-between">
-        <span className="font-semibold">
-          {trade.direction === "long" ? "▲" : "▼"} {trade.symbol} · {trade.order_type} · {trade.lots}
-        </span>
-      </div>
-      <p className="mt-0.5 text-muted-foreground">
-        Entry {trade.entry?.toFixed(spec.digits)} · SL {trade.sl?.toFixed(spec.digits) ?? "—"} · TP {trade.tp?.toFixed(spec.digits) ?? "—"}
-      </p>
-      <div className="mt-1 flex gap-1">
-        <Button size="sm" className="h-6 px-2 text-[10px]" onClick={fill}>Fill now</Button>
-        <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-destructive" onClick={cancel}>
-          <X className="mr-1 h-3 w-3" /> Cancel
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function HistoryRow({ trade, accountCurrency }: { trade: BacktestTrade; accountCurrency: string }) {
-  const spec = getSpec(trade.symbol);
-  return (
-    <div className="rounded border border-border/60 bg-card/50 p-1.5 text-[11px]">
-      <div className="flex items-center justify-between">
-        <span className="font-semibold">
-          {trade.direction === "long" ? "▲" : "▼"} {trade.symbol} · {trade.lots}
-        </span>
-        <span className={cn("font-semibold", (trade.pnl ?? 0) >= 0 ? "text-success" : "text-destructive")}>
-          {formatMoney(trade.pnl ?? 0, accountCurrency)}
-        </span>
-      </div>
-      <p className="mt-0.5 text-muted-foreground">
-        {trade.entry?.toFixed(spec.digits)} → {trade.exit?.toFixed(spec.digits) ?? "—"} · {trade.exit_reason ?? "manual"}
-        {trade.rr != null && ` · ${trade.rr.toFixed(2)}R`}
-      </p>
-    </div>
-  );
-}
-
-// ============================================================================
-// Replay Controls Bar (bottom media-player strip)
-//
-// The free TradingView widget is an iframe we don't control, so we cannot
-// programmatically step candles. This bar surfaces the controls users expect
-// and, on click, points them to TV's built-in Bar Replay tool in the chart's
-// left toolbar. If we later license the TradingView Charting Library we can
-// wire these buttons to real chart actions.
-// ============================================================================
-function ReplayControlsBar() {
-  const [dismissed, setDismissed] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-
-  function nudge() {
-    setShowHint(true);
-    setTimeout(() => setShowHint(false), 3200);
-    toast("Bar Replay lives inside the chart", {
-      description: "Click the ⏵ Replay button on the chart's top toolbar to step bars, pause, and change speed.",
-    });
-  }
-
-  if (dismissed) return null;
-
-  return (
-    <div className="pointer-events-auto absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/60 bg-background/95 px-2 py-1 shadow-xl backdrop-blur">
-      <div className="flex items-center gap-1">
-        <span className="hidden px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:inline">Replay</span>
-        <ReplayBtn icon={<SkipBack className="h-3.5 w-3.5" />} label="Jump back" onClick={nudge} />
-        <ReplayBtn icon={<Rewind className="h-3.5 w-3.5" />} label="Step -1" onClick={nudge} />
-        <ReplayBtn icon={<Play className="h-3.5 w-3.5" />} label="Play" onClick={nudge} />
-        <ReplayBtn icon={<Pause className="h-3.5 w-3.5" />} label="Pause" onClick={nudge} />
-        <ReplayBtn icon={<FastForward className="h-3.5 w-3.5" />} label="Step +1" onClick={nudge} />
-        <ReplayBtn icon={<SkipForward className="h-3.5 w-3.5" />} label="Jump forward" onClick={nudge} />
-        <Select defaultValue="1" onValueChange={nudge}>
-          <SelectTrigger className="h-7 w-[64px] text-[11px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {["0.5","1","2","5","10","20"].map((s) => (
-              <SelectItem key={s} value={s} className="text-xs">{s}×</SelectItem>
-            ))}
+    <div className="relative min-h-0 border-l border-t border-border/40">
+      <div className="absolute left-2 top-2 z-20 flex gap-1">
+        <Select value={cfg.symbol} onValueChange={(v) => onChange({ ...cfg, symbol: v })}>
+          <SelectTrigger className="h-6 w-[120px] bg-card/80 text-[10px]"><SelectValue /></SelectTrigger>
+          <SelectContent className="max-h-64">
+            {INSTRUMENT_SPECS.map((s) => <SelectItem key={s.symbol} value={s.symbol}>{s.label}</SelectItem>)}
           </SelectContent>
         </Select>
-        <ReplayBtn icon={<CalendarDays className="h-3.5 w-3.5" />} label="Jump to date" onClick={nudge} />
-        <button
-          onClick={() => setDismissed(true)}
-          className="ml-1 rounded p-1 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-          aria-label="Hide replay bar"
-          title="Hide"
-        >
-          <X className="h-3 w-3" />
-        </button>
+        <Select value={cfg.timeframe} onValueChange={(v) => onChange({ ...cfg, timeframe: v })}>
+          <SelectTrigger className="h-6 w-[70px] bg-card/80 text-[10px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {REPLAY_TIMEFRAMES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
-      {showHint && (
-        <p className="mt-1 max-w-[420px] px-2 pb-1 text-center text-[10px] leading-tight text-muted-foreground">
-          <Info className="mr-1 inline h-3 w-3" />
-          Use TradingView's built-in Bar Replay on the chart toolbar (top of chart). External replay control needs the paid Charting Library.
-        </p>
-      )}
+      <ReplayChart
+        candles={visible}
+        settings={{ ...settings, showWatermark: false }}
+        digits={spec.digits}
+        symbol={cfg.symbol}
+        timeframe={cfg.timeframe}
+      />
     </div>
   );
 }
-function ReplayBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className="grid h-7 w-7 place-items-center rounded text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
-    >{icon}</button>
-  );
-}
 
-// ============================================================================
-// Session Picker + Create + Rename dialogs
-// ============================================================================
-function SessionPickerDialog({
-  open, onOpenChange, sessions, loading, onResume, onCreate, isPro, limit, onUpgrade,
+/* -------------------------------------------------------------------------- */
+
+function SessionPicker({
+  open, onOpenChange, sessions, activeId, isPro, onOpenSession, onCreate, onArchive, onDelete, currency,
 }: {
   open: boolean;
-  onOpenChange: (o: boolean) => void;
+  onOpenChange: (v: boolean) => void;
   sessions: BacktestSession[];
-  loading: boolean;
-  onResume: (s: BacktestSession) => void;
-  onCreate: () => void;
+  activeId: string | null;
   isPro: boolean;
-  limit: number;
-  onUpgrade: () => void;
+  onOpenSession: (s: BacktestSession) => void;
+  onCreate: (name: string, symbol: string, tf: string, balance: number) => void;
+  onArchive: (s: BacktestSession) => void;
+  onDelete: (s: BacktestSession) => void;
+  currency: string;
 }) {
-  const active = sessions.filter((s) => s.status === "active");
-  const archived = sessions.filter((s) => s.status === "archived");
-  const [showArchived, setShowArchived] = useState(false);
-  const list = showArchived ? archived : active;
+  const [name, setName] = useState("");
+  const [sym, setSym] = useState("EURUSD");
+  const [tf, setTf] = useState("1H");
+  const [bal, setBal] = useState("10000");
+
+  const activeCount = sessions.filter((s) => s.status === "active").length;
+  const limited = !isPro && activeCount >= FREE_SESSION_LIMIT;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Select a Backtesting Session</DialogTitle>
-          <DialogDescription>
-            {isPro
-              ? "Resume any session or create a new one. Every trade you take is tracked separately per session."
-              : `Free plan includes ${limit} active sessions. Archive or delete a session to free a slot.`}
-          </DialogDescription>
+          <DialogTitle>Backtesting sessions</DialogTitle>
+          <DialogDescription>Each session keeps its own balance, trade history, chart layout and replay position.</DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant={showArchived ? "outline" : "secondary"} onClick={() => setShowArchived(false)}>
-            Active ({active.length})
-          </Button>
-          <Button size="sm" variant={showArchived ? "secondary" : "outline"} onClick={() => setShowArchived(true)}>
-            Archived ({archived.length})
-          </Button>
-          <div className="ml-auto flex items-center gap-2">
-            {!isPro && (
-              <Button size="sm" variant="outline" onClick={onUpgrade} className="gap-1">
-                <Sparkles className="h-3 w-3 text-primary" /> Unlock unlimited
-              </Button>
-            )}
-            <Button size="sm" onClick={() => {
-              if (!isPro && active.length >= limit) { onUpgrade(); return; }
-              onCreate();
-            }}>
-              <Plus className="mr-1 h-4 w-4" /> New session
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">New session</p>
+            <div>
+              <Label className="text-xs">Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="London breakout run" className="h-8" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Instrument</Label>
+                <Select value={sym} onValueChange={setSym}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    {INSTRUMENT_SPECS.map((s) => <SelectItem key={s.symbol} value={s.symbol}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Timeframe</Label>
+                <Select value={tf} onValueChange={setTf}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {REPLAY_TIMEFRAMES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Starting balance</Label>
+              <Input value={bal} onChange={(e) => setBal(e.target.value)} inputMode="decimal" className="h-8" />
+            </div>
+            {limited ? (
+              <p className="flex items-center gap-1 text-[11px] text-amber-500">
+                <Lock className="h-3 w-3" /> Free plan is limited to {FREE_SESSION_LIMIT} active sessions.
+              </p>
+            ) : null}
+            <Button
+              className="w-full gap-1"
+              onClick={() => onCreate(name.trim() || "Untitled session", sym, tf, Number(bal) || 10000)}
+            >
+              <Plus className="h-4 w-4" /> Create & open
             </Button>
           </div>
-        </div>
-        <div className="max-h-[420px] space-y-2 overflow-y-auto">
-          {loading && <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
-          {!loading && list.length === 0 && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              {showArchived ? "No archived sessions." : "No active sessions yet. Create your first one."}
-            </p>
-          )}
-          {list.map((s) => (
-            <button
-              key={s.id} onClick={() => onResume(s)}
-              className="flex w-full items-center gap-3 rounded-md border border-border/60 bg-card/40 p-3 text-left transition hover:border-primary/40 hover:bg-card"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{s.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {s.symbol} · {s.timeframe} · started {new Date(s.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <Badge variant="outline" className="text-[10px]">Resume</Badge>
-            </button>
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
-function CreateSessionDialog({
-  open, onOpenChange, onCreate, defaultCurrency,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  onCreate: (name: string, symbol: string, timeframe: string, startingBalance: number) => void;
-  defaultCurrency: string;
-}) {
-  const [name, setName] = useState("");
-  const [symbol, setSymbol] = useState("EURUSD");
-  const [timeframe, setTimeframe] = useState("60");
-  const [balance, setBalance] = useState("10000");
-  useEffect(() => { if (open) { setName(""); setSymbol("EURUSD"); setTimeframe("60"); setBalance("10000"); } }, [open]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Backtesting Session</DialogTitle>
-          <DialogDescription>Every trade you take will be recorded to this session automatically.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label>Session name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Gold May 2026 — SMC" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label>Instrument</Label>
-              <Select value={symbol} onValueChange={setSymbol}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {INSTRUMENT_SPECS.map((i) => (
-                    <SelectItem key={i.symbol} value={i.symbol}>{i.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Timeframe</Label>
-              <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {TV_INTERVALS.map((t) => (<SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your sessions</p>
+            <div className="max-h-[46vh] space-y-1 overflow-y-auto pr-1">
+              {sessions.length === 0 && <p className="py-8 text-center text-xs text-muted-foreground">No sessions yet.</p>}
+              {sessions.map((s) => (
+                <div
+                  key={s.id}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border border-border/60 p-2 text-xs",
+                    s.id === activeId && "border-primary/50 bg-primary/5",
+                    s.status === "archived" && "opacity-60",
+                  )}
+                >
+                  <button className="min-w-0 flex-1 text-left" onClick={() => onOpenSession(s)}>
+                    <p className="truncate font-medium">{s.name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {s.symbol} · {s.timeframe} · {formatMoney(Number(s.ending_balance), currency)}
+                    </p>
+                  </button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onArchive(s)} aria-label="Archive session">
+                    <Archive className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(s)} aria-label="Delete session">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
-          <div>
-            <Label>Starting balance ({defaultCurrency})</Label>
-            <Input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} />
-          </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => {
-            if (!name.trim()) { toast.error("Give your session a name"); return; }
-            onCreate(name.trim(), symbol, timeframe, +balance || 10000);
-          }}>Create session</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function RenameDialog({
-  open, onOpenChange, initial, onSave,
-}: { open: boolean; onOpenChange: (o: boolean) => void; initial: string; onSave: (n: string) => void }) {
-  const [v, setV] = useState(initial);
-  useEffect(() => { if (open) setV(initial); }, [open, initial]);
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Rename session</DialogTitle></DialogHeader>
-        <Input value={v} onChange={(e) => setV(e.target.value)} />
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => v.trim() && onSave(v.trim())}>Save</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
