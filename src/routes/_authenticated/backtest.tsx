@@ -222,42 +222,46 @@ function BacktestPage() {
   }, [chartState, cursor, symbol, timeframe, speed, active, allCandles, balance, stats]);
 
   // ------------------------------------------------------------ replay step
+  const cursorRef = useRef(0);
+  const tradesRef = useRef<BacktestTrade[]>([]);
+  useEffect(() => { cursorRef.current = cursor; }, [cursor]);
+  useEffect(() => { tradesRef.current = trades; }, [trades]);
+
   const stepForward = useCallback((delta = 1) => {
-    setCursor((prev) => {
-      const next = Math.min(Math.max(prev + delta, 0), Math.max(allCandles.length - 1, 0));
-      if (delta > 0) {
-        for (let i = prev + 1; i <= next; i++) {
-          const bar = allCandles[i];
-          if (!bar) continue;
-          setTrades((cur) => {
-            const res = processBar(cur, bar, simCtx);
-            if (res.events.length) {
-              res.events.forEach((e) => toast(e.message));
-              res.trades.forEach((t) => {
-                const before = cur.find((x) => x.id === t.id);
-                if (before && before.status !== t.status) queueTrade(t);
-              });
-            }
-            return res.trades;
-          });
-        }
+    if (!allCandles.length) return;
+    const prev = cursorRef.current;
+    const next = Math.min(prev + delta, allCandles.length - 1);
+    if (next <= prev) return;
+    let list = tradesRef.current;
+    for (let i = prev + 1; i <= next; i++) {
+      const bar = allCandles[i];
+      if (!bar) continue;
+      const res = processBar(list, bar, simCtx);
+      if (res.events.length) {
+        res.events.forEach((e) => toast(e.message));
+        res.trades.forEach((t) => {
+          const before = list.find((x) => x.id === t.id);
+          if (before && before.status !== t.status) queueTrade(t);
+        });
       }
-      return next;
-    });
+      list = res.trades;
+    }
+    tradesRef.current = list;
+    cursorRef.current = next;
+    setTrades(list);
+    setCursor(next);
   }, [allCandles, simCtx, queueTrade]);
 
   useEffect(() => {
     if (!playing) return;
     const ms = Math.max(60, 800 / speed);
     const id = window.setInterval(() => {
-      setCursor((c) => {
-        if (c >= allCandles.length - 1) { setPlaying(false); return c; }
-        return c;
-      });
+      if (cursorRef.current >= allCandles.length - 1) { setPlaying(false); return; }
       stepForward(1);
     }, ms);
     return () => window.clearInterval(id);
   }, [playing, speed, stepForward, allCandles.length]);
+
 
   // Keyboard shortcuts
   useEffect(() => {
