@@ -34,7 +34,7 @@ import type { IndicatorConfig } from "@/lib/indicators";
 import { toast } from "sonner";
 import {
   Maximize2, Minimize2, Settings2, LineChart as LineChartIcon, Plus, Loader2,
-  Archive, Trash2, PencilLine, Columns2, Grid2X2, Square as SquareIcon, BarChart3, Lock,
+  Archive, Trash2, Columns2, Grid2X2, Square as SquareIcon, BarChart3, Lock, Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +107,7 @@ function BacktestPage() {
   const [speed, setSpeed] = useState(1);
   const [startOpen, setStartOpen] = useState(false);
   const [startDate, setStartDate] = useState("");
+  const [hoveredBar, setHoveredBar] = useState<Candle | null>(null);
 
   // ---------------------------------------------------------------- trades
   const [trades, setTrades] = useState<BacktestTrade[]>([]);
@@ -115,6 +116,7 @@ function BacktestPage() {
   const spec = useMemo(() => getSpec(symbol), [symbol]);
   const visible = useMemo(() => allCandles.slice(0, cursor + 1), [allCandles, cursor]);
   const currentBar = visible[visible.length - 1];
+  const displayBar = hoveredBar ?? currentBar;
   const price = currentBar?.close ?? 0;
 
   const simCtx: SimContext = useMemo(() => ({
@@ -400,9 +402,9 @@ function BacktestPage() {
   return (
     <AppShell title="Backtesting Lab" fullBleed>
       <TooltipProvider delayDuration={200}>
-        <div ref={shellRef} className="flex h-[calc(100vh-57px)] flex-col bg-background">
+        <div ref={shellRef} className="flex h-[calc(100dvh-57px)] min-h-[520px] flex-col bg-background">
           {/* ------------------------------------------------- top strip */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-card/60 px-2 py-1.5 backdrop-blur">
+          <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 bg-card/80 px-2 py-1.5 backdrop-blur">
             <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
               <LineChartIcon className="h-3.5 w-3.5 text-primary" />
               {active?.name ?? "Choose session"}
@@ -424,18 +426,22 @@ function BacktestPage() {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-0.5 rounded-md border border-border/60 p-0.5">
+            <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border/60 p-0.5">
               {REPLAY_TIMEFRAMES.map((t) => (
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
                   key={t.value}
                   onClick={() => setTimeframe(t.value)}
                   className={cn(
-                    "rounded px-1.5 py-1 text-[11px] transition hover:bg-accent",
+                    "h-6 min-w-7 px-1.5 text-[11px]",
                     timeframe === t.value && "bg-primary/15 font-semibold text-primary",
                   )}
+                  aria-label={`${t.label} timeframe`}
                 >
                   {t.label}
-                </button>
+                </Button>
               ))}
             </div>
 
@@ -443,14 +449,17 @@ function BacktestPage() {
               {([["1", SquareIcon], ["2", Columns2], ["4", Grid2X2]] as const).map(([k, Icon]) => (
                 <Tooltip key={k}>
                   <TooltipTrigger asChild>
-                    <button
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => (k !== "1" && !isPro ? setUpgradeOpen(true) : patchChart({ layout: k }))}
-                      className={cn("grid h-7 w-7 place-items-center rounded transition hover:bg-accent",
+                      className={cn("h-7 w-7",
                         chartState.layout === k && "bg-primary/15 text-primary")}
                       aria-label={`${k} chart layout`}
                     >
                       <Icon className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>{k === "1" ? "Single chart" : `${k} charts`}{k !== "1" && !isPro ? " (Pro)" : ""}</TooltipContent>
                 </Tooltip>
@@ -465,7 +474,16 @@ function BacktestPage() {
               <Settings2 className="h-3.5 w-3.5" /> Chart
             </Button>
 
-            <div className="ml-auto flex items-center gap-3 text-xs">
+            <div className="ml-auto flex shrink-0 items-center gap-3 text-xs">
+              <span className="hidden items-center gap-1 font-mono text-[10px] text-muted-foreground xl:flex">
+                {displayBar ? (
+                  <>O <b className="text-foreground">{displayBar.open.toFixed(spec.digits)}</b> H <b className="text-success">{displayBar.high.toFixed(spec.digits)}</b> L <b className="text-destructive">{displayBar.low.toFixed(spec.digits)}</b> C <b className="text-foreground">{displayBar.close.toFixed(spec.digits)}</b></>
+                ) : "No candle selected"}
+              </span>
+              <span className="hidden items-center gap-1 text-[10px] text-muted-foreground sm:flex">
+                <Radio className={cn("h-3 w-3", playing && "animate-pulse text-success")} />
+                {playing ? "Replaying" : "Paused"}
+              </span>
               <span className="text-muted-foreground">Balance</span>
               <span className="font-semibold">{formatMoney(balance, accountCurrency)}</span>
               <Link to="/replay" className="text-primary hover:underline">Analytics →</Link>
@@ -476,7 +494,7 @@ function BacktestPage() {
           </div>
 
           {/* ------------------------------------------------- chart area */}
-          <div className="relative flex min-h-0 flex-1">
+          <div className="relative flex min-h-0 flex-1 flex-col md:flex-row">
             <DrawingToolbar
               active={tool}
               onSelect={setTool}
@@ -528,6 +546,7 @@ function BacktestPage() {
                   drawColor={drawColor}
                   onDrawingsChange={(d) => patchChart({ drawings: d })}
                   onToolDone={() => setTool("cursor")}
+                  onCrosshair={({ candle }) => setHoveredBar(candle)}
                   onLevelDrag={(id, key, p) => patchTrade(id, { [key]: p } as Partial<BacktestTrade>)}
                 />
               </div>
@@ -548,7 +567,7 @@ function BacktestPage() {
             </div>
 
             {/* floating panels */}
-            <div className="pointer-events-none absolute inset-0">
+            <div className="pointer-events-none absolute inset-0 hidden sm:block">
               <div className="pointer-events-auto absolute right-3 top-3">
                 <OrderTicket
                   spec={spec}

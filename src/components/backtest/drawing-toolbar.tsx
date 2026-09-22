@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { DrawingTool } from "./chart-types";
+import type { LucideIcon } from "lucide-react";
 
-const ICONS: Record<DrawingTool, any> = {
+const ICONS: Record<DrawingTool, LucideIcon> = {
   cursor: MousePointer2,
   trend: TrendingUp,
   ray: MoveUpRight,
