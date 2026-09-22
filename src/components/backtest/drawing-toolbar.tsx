@@ -1,10 +1,11 @@
-import { MousePointer2, TrendingUp, MoveUpRight, Minus, AlignJustify, Square, Ruler, Type, Eraser, Star, Trash2, GitCommitVertical } from "lucide-react";
+import { MousePointer2, TrendingUp, MoveUpRight, Minus, AlignJustify, Square, Ruler, Type, Eraser, Star, Trash2, GitCommitVertical, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { DrawingTool } from "./chart-types";
+import type { LucideIcon } from "lucide-react";
 
-const ICONS: Record<DrawingTool, any> = {
+const ICONS: Record<DrawingTool, LucideIcon> = {
   cursor: MousePointer2,
   trend: TrendingUp,
   ray: MoveUpRight,
@@ -50,24 +51,27 @@ export function DrawingToolbar({
   const ordered = [...ORDER].sort((a, b) => Number(favSet.has(b)) - Number(favSet.has(a)));
 
   return (
-    <div className="flex h-full w-11 shrink-0 flex-col items-center gap-1 border-r border-border/60 bg-card/70 py-2 backdrop-blur">
+    <div className="flex h-11 w-full shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 bg-card/80 px-2 backdrop-blur md:h-full md:w-11 md:flex-col md:overflow-x-visible md:border-b-0 md:border-r md:px-0 md:py-2">
       {ordered.map((tool) => {
         const Icon = ICONS[tool];
         return (
           <Tooltip key={tool}>
             <TooltipTrigger asChild>
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => onSelect(tool)}
                 onContextMenu={(e) => { e.preventDefault(); onToggleFavorite(tool); }}
                 className={cn(
-                  "relative grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground",
+                  "relative h-8 w-8 shrink-0 text-muted-foreground",
                   active === tool && "bg-primary/15 text-primary",
                 )}
                 aria-label={LABELS[tool]}
               >
                 <Icon className="h-4 w-4" />
                 {favSet.has(tool) && <Star className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 fill-amber-400 text-amber-400" />}
-              </button>
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
               {LABELS[tool]} <span className="text-muted-foreground">· right-click to favourite</span>
@@ -76,21 +80,25 @@ export function DrawingToolbar({
         );
       })}
 
-      <div className="my-1 h-px w-6 bg-border" />
+       <div className="mx-1 h-6 w-px shrink-0 bg-border md:my-1 md:h-px md:w-6" />
 
-      <div className="grid grid-cols-1 gap-1">
+       <div className="flex items-center gap-1 md:grid md:grid-cols-1">
+         <Palette className="mr-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground md:hidden" />
         {COLORS.map((c) => (
-          <button
+           <Button
+             type="button"
+             variant="ghost"
+             size="icon"
             key={c}
             onClick={() => onColor(c)}
             aria-label={`Colour ${c}`}
-            className={cn("h-4 w-4 rounded-full border transition", color === c ? "border-foreground scale-110" : "border-transparent")}
+             className={cn("h-5 w-5 shrink-0 rounded-full border p-0", color === c ? "scale-110 border-foreground" : "border-transparent")}
             style={{ background: c }}
           />
         ))}
       </div>
 
-      <div className="mt-auto">
+       <div className="ml-auto md:ml-0 md:mt-auto">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClearAll} disabled={!drawingCount}>

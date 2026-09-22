@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus } from "lucide-react";
+import { Eye, EyeOff, Search, Trash2, Plus } from "lucide-react";
 import { INDICATOR_META, type IndicatorConfig, type IndicatorKind } from "@/lib/indicators";
 
 const KINDS = Object.keys(INDICATOR_META) as IndicatorKind[];
@@ -19,6 +19,8 @@ export function IndicatorManager({
   onChange: (next: IndicatorConfig[]) => void;
 }) {
   const [kind, setKind] = useState<IndicatorKind>("ema");
+  const [query, setQuery] = useState("");
+  const matches = KINDS.filter((item) => INDICATOR_META[item].label.toLowerCase().includes(query.trim().toLowerCase()));
 
   function add() {
     const meta = INDICATOR_META[kind];
@@ -48,25 +50,30 @@ export function IndicatorManager({
           <DialogDescription>Overlays render on the price pane; oscillators get their own pane below the chart.</DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <Label className="text-xs">Add indicator</Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as IndicatorKind)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {KINDS.map((k) => (
-                  <SelectItem key={k} value={k}>{INDICATOR_META[k].label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="space-y-2 border-b border-border/60 pb-4">
+          <Label className="text-xs">Indicator library</Label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search indicators" className="pl-9" />
           </div>
-          <Button onClick={add} className="gap-1"><Plus className="h-4 w-4" /> Add</Button>
+          <div className="grid max-h-36 grid-cols-1 gap-1 overflow-y-auto sm:grid-cols-2">
+            {matches.map((item) => (
+              <Button key={item} type="button" variant={kind === item ? "secondary" : "ghost"} className="h-auto justify-between px-3 py-2 text-left" onClick={() => setKind(item)}>
+                <span>
+                  <span className="block text-xs">{INDICATOR_META[item].label}</span>
+                  <span className="block text-[10px] font-normal text-muted-foreground">{INDICATOR_META[item].pane === "sub" ? "Separate pane" : "Price overlay"}</span>
+                </span>
+                {kind === item ? <Plus className="h-4 w-4" /> : null}
+              </Button>
+            ))}
+          </div>
+          <Button onClick={add} className="w-full gap-1"><Plus className="h-4 w-4" /> Add {INDICATOR_META[kind].label}</Button>
         </div>
 
         <div className="max-h-[45vh] space-y-2 overflow-y-auto pr-1">
           {indicators.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No indicators yet.</p>}
           {indicators.map((i) => (
-            <div key={i.id} className="flex flex-wrap items-end gap-2 rounded-lg border border-border/60 bg-card/60 p-2">
+            <div key={i.id} className="flex flex-wrap items-end gap-2 rounded-md border border-border/60 bg-card/60 p-2">
               <div className="min-w-32 flex-1">
                 <p className="text-xs font-medium">{INDICATOR_META[i.kind].label}</p>
                 <p className="text-[10px] uppercase text-muted-foreground">{INDICATOR_META[i.kind].pane === "sub" ? "Separate pane" : "Overlay"}</p>
@@ -93,7 +100,8 @@ export function IndicatorManager({
               </div>
               <div className="flex items-center gap-2 pb-1">
                 <Switch checked={i.visible} onCheckedChange={(v) => patch(i.id, { visible: v })} />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onChange(indicators.filter((x) => x.id !== i.id))}>
+                {i.visible ? <Eye className="h-3.5 w-3.5 text-muted-foreground" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onChange(indicators.filter((x) => x.id !== i.id))} aria-label={`Remove ${INDICATOR_META[i.kind].label}`}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>

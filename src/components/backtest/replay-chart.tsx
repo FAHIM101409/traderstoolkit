@@ -26,7 +26,7 @@ export type ReplayChartProps = {
   drawColor?: string;
   onDrawingsChange?: (next: Drawing[]) => void;
   onToolDone?: () => void;
-  onCrosshair?: (info: { price: number | null; time: number | null }) => void;
+  onCrosshair?: (info: { price: number | null; time: number | null; candle: Candle | null }) => void;
   onLevelDrag?: (tradeId: string, key: LevelKey, price: number) => void;
   className?: string;
 };
@@ -282,7 +282,9 @@ export function ReplayChart(props: ReplayChartProps) {
     const handler = (param: any) => {
       const price = param.seriesData?.get(s);
       const value = price ? (price.close ?? price.value ?? null) : null;
-      props.onCrosshair?.({ price: value ?? null, time: (param.time as number) ?? null });
+      const time = (param.time as number) ?? null;
+      const candle = time === null ? null : data.find((item) => item.time === time) ?? null;
+      props.onCrosshair?.({ price: value ?? null, time, candle });
     };
     chart.subscribeCrosshairMove(handler);
     return () => chart.unsubscribeCrosshairMove(handler);

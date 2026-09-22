@@ -29,7 +29,7 @@ export function ReplayControls({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-border/60 bg-card/80 px-3 py-2 backdrop-blur">
+    <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border/60 bg-card/90 px-2 py-1.5 backdrop-blur sm:px-3">
       <div className="flex items-center gap-1">
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onJumpStart} disabled={disabled} aria-label="Jump to replay start">
           <SkipBack className="h-4 w-4" />
@@ -68,13 +68,13 @@ export function ReplayControls({
         <RotateCcw className="h-3.5 w-3.5" /> Restart
       </Button>
 
-      <div className="flex min-w-[180px] flex-1 items-center gap-2">
+      <div className="order-last flex min-w-full flex-1 items-center gap-2 sm:order-none sm:min-w-[180px]">
         <Slider
           value={[index]}
           min={0}
           max={Math.max(total - 1, 0)}
           step={1}
-          onValueChange={([v]) => onScrub(v)}
+          onValueChange={(values) => onScrub(values[0] ?? index)}
           disabled={disabled}
         />
       </div>
