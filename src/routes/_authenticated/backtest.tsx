@@ -54,6 +54,16 @@ export const Route = createFileRoute("/_authenticated/backtest")({
 
 const FREE_SESSION_LIMIT = 2;
 
+const LEGACY_TIMEFRAMES: Record<string, string> = {
+  "1": "1m", "5": "5m", "15": "15m", "30": "30m", "45": "45m",
+  "60": "1H", "120": "2H", "240": "4H", D: "1D", W: "1W", M: "1M",
+};
+
+function normalizeTimeframe(value: string): string {
+  const normalized = LEGACY_TIMEFRAMES[value] ?? value;
+  return REPLAY_TIMEFRAMES.some((item) => item.value === normalized) ? normalized : "1H";
+}
+
 type PaneCfg = { symbol: string; timeframe: string };
 
 type ChartState = {
@@ -148,7 +158,7 @@ function BacktestPage() {
     setActive(s);
     setPickerOpen(false);
     setSymbol(s.symbol);
-    setTimeframe(s.timeframe);
+    setTimeframe(normalizeTimeframe(s.timeframe));
     const cs = ((s as any).chart_state ?? {}) as Partial<ChartState>;
     setChartState({
       ...DEFAULT_CHART_STATE,
