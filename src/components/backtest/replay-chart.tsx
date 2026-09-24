@@ -181,10 +181,7 @@ export function ReplayChart(props: ReplayChartProps) {
       window.requestAnimationFrame(() => {
         const chart = chartRef.current;
         if (!chart) return;
-        chart.timeScale().setVisibleLogicalRange({
-          from: Math.max(0, data.length - 180),
-          to: data.length - 1 + settings.rightOffset,
-        });
+        chart.timeScale().fitContent();
       });
     }
     repaintRef.current();
