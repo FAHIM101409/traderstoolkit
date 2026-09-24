@@ -101,7 +101,7 @@ export function DrawingToolbar({
        <div className="ml-auto md:ml-0 md:mt-auto">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClearAll} disabled={!drawingCount}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClearAll} disabled={!drawingCount} aria-label={`Clear all drawings (${drawingCount})`}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>

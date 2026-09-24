@@ -53,6 +53,7 @@ export function ReplayChart(props: ReplayChartProps) {
   const draftRef = useRef<DrawPoint[]>([]);
   const [, force] = useState(0);
   const repaintRef = useRef<() => void>(() => {});
+  const fittedDataKeyRef = useRef("");
 
   const data = useMemo(
     () => (settings.style === "heikin" ? heikinAshi(candles) : candles),
@@ -174,8 +175,20 @@ export function ReplayChart(props: ReplayChartProps) {
         })),
       );
     }
+    const dataKey = `${props.symbol ?? ""}:${props.timeframe ?? ""}:${data[0]?.time ?? 0}`;
+    if (data.length && fittedDataKeyRef.current !== dataKey) {
+      fittedDataKeyRef.current = dataKey;
+      window.requestAnimationFrame(() => {
+        const chart = chartRef.current;
+        if (!chart) return;
+        chart.timeScale().setVisibleLogicalRange({
+          from: Math.max(0, data.length - 180),
+          to: data.length - 1 + settings.rightOffset,
+        });
+      });
+    }
     repaintRef.current();
-  }, [data, settings.style]);
+  }, [data, settings.style, settings.rightOffset, props.symbol, props.timeframe]);
 
   // ------------------------------------------------------------ indicators
   useEffect(() => {
