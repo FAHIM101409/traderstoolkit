@@ -188,7 +188,7 @@ export function ReplayChart(props: ReplayChartProps) {
       });
     }
     repaintRef.current();
-  }, [data, settings.style, settings.rightOffset, props.symbol, props.timeframe]);
+  }, [data, ready, settings.style, settings.showVolume, settings.rightOffset, props.symbol, props.timeframe]);
 
   // ------------------------------------------------------------ indicators
   useEffect(() => {
