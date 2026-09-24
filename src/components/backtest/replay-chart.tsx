@@ -51,8 +51,9 @@ export function ReplayChart(props: ReplayChartProps) {
   const [ready, setReady] = useState(false);
   const [handles, setHandles] = useState<{ tradeId: string; key: LevelKey; y: number; price: number; label: string; color: string }[]>([]);
   const draftRef = useRef<DrawPoint[]>([]);
-  const [, force] = useState(0);
+  const [seriesVersion, setSeriesVersion] = useState(0);
   const repaintRef = useRef<() => void>(() => {});
+  const fittedDataKeyRef = useRef("");
 
   const data = useMemo(
     () => (settings.style === "heikin" ? heikinAshi(candles) : candles),
@@ -153,7 +154,7 @@ export function ReplayChart(props: ReplayChartProps) {
       chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
       volRef.current = vol;
     }
-    force((n) => n + 1);
+    setSeriesVersion((n) => n + 1);
   }, [ready, settings.style, settings.upColor, settings.downColor, settings.wickUp, settings.wickDown, settings.showVolume, digits]);
 
   // Data updates
@@ -174,8 +175,17 @@ export function ReplayChart(props: ReplayChartProps) {
         })),
       );
     }
+    const dataKey = `${props.symbol ?? ""}:${props.timeframe ?? ""}:${data[0]?.time ?? 0}`;
+    if (data.length && fittedDataKeyRef.current !== dataKey) {
+      fittedDataKeyRef.current = dataKey;
+      window.requestAnimationFrame(() => {
+        const chart = chartRef.current;
+        if (!chart) return;
+        chart.timeScale().fitContent();
+      });
+    }
     repaintRef.current();
-  }, [data, settings.style]);
+  }, [data, ready, seriesVersion, settings.style, settings.showVolume, settings.rightOffset, props.symbol, props.timeframe]);
 
   // ------------------------------------------------------------ indicators
   useEffect(() => {
@@ -215,7 +225,7 @@ export function ReplayChart(props: ReplayChartProps) {
         try { chart.panes()[paneIndex]?.setHeight(120); } catch { /* pane sizing best effort */ }
       }
     }
-  }, [indicators, data, ready]);
+  }, [indicators, data, ready, seriesVersion]);
 
   // ---------------------------------------------------- position price lines
   useEffect(() => {
@@ -242,7 +252,7 @@ export function ReplayChart(props: ReplayChartProps) {
       }
     }
     repaintRef.current();
-  }, [positions, data]);
+  }, [positions, data, seriesVersion]);
 
   // ------------------------------------------------------------- markers
   useEffect(() => {
@@ -272,7 +282,7 @@ export function ReplayChart(props: ReplayChartProps) {
     marks.sort((a, b) => (a.time as number) - (b.time as number));
     if (!markersRef.current) markersRef.current = createSeriesMarkers(s, marks);
     else markersRef.current.setMarkers(marks);
-  }, [closedTrades, data]);
+  }, [closedTrades, data, seriesVersion]);
 
   // ------------------------------------------------------- crosshair report
   useEffect(() => {
@@ -288,7 +298,7 @@ export function ReplayChart(props: ReplayChartProps) {
     };
     chart.subscribeCrosshairMove(handler);
     return () => chart.unsubscribeCrosshairMove(handler);
-  }, [ready, props.onCrosshair, data]);
+  }, [ready, seriesVersion, props.onCrosshair, data]);
 
   // ------------------------------------------------------- drawing overlay
   useEffect(() => {
