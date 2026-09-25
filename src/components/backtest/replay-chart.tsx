@@ -144,6 +144,11 @@ export function ReplayChart(props: ReplayChartProps) {
       });
     }
     mainRef.current = series;
+    if (settings.style === "line" || settings.style === "area") {
+      series.setData(data.map((c) => ({ time: c.time as Time, value: c.close })));
+    } else {
+      series.setData(data.map((c) => ({ time: c.time as Time, open: c.open, high: c.high, low: c.low, close: c.close })));
+    }
 
     if (settings.showVolume) {
       const vol = chart.addSeries(HistogramSeries, {
@@ -152,10 +157,16 @@ export function ReplayChart(props: ReplayChartProps) {
         color: "rgba(148,163,184,0.4)",
       });
       chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+      vol.setData(data.map((c) => ({
+        time: c.time as Time,
+        value: c.volume,
+        color: c.close >= c.open ? "rgba(38,166,154,0.35)" : "rgba(239,83,80,0.35)",
+      })));
       volRef.current = vol;
     }
+    if (data.length) window.requestAnimationFrame(() => chart.timeScale().fitContent());
     setSeriesVersion((n) => n + 1);
-  }, [ready, settings.style, settings.upColor, settings.downColor, settings.wickUp, settings.wickDown, settings.showVolume, digits]);
+  }, [ready, settings.style, settings.upColor, settings.downColor, settings.wickUp, settings.wickDown, settings.showVolume, digits, data]);
 
   // Data updates
   useEffect(() => {
