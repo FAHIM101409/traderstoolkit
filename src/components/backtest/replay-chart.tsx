@@ -97,7 +97,6 @@ export function ReplayChart(props: ReplayChartProps) {
       indicatorRefs.current = [];
       priceLines.current = [];
       markersRef.current = null;
-      setReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
