@@ -149,8 +149,6 @@ export function ReplayChart(props: ReplayChartProps) {
     } else {
       series.setData(data.map((c) => ({ time: c.time as Time, open: c.open, high: c.high, low: c.low, close: c.close })));
     }
-    hostRef.current?.setAttribute("data-series-points", String(data.length));
-    hostRef.current?.setAttribute("data-series-colors", `${settings.upColor},${settings.downColor},${settings.background}`);
 
     if (settings.showVolume) {
       const vol = chart.addSeries(HistogramSeries, {
@@ -172,11 +170,7 @@ export function ReplayChart(props: ReplayChartProps) {
       chart.timeScale().fitContent();
       window.requestAnimationFrame(() => {
         const last = data[data.length - 1];
-        hostRef.current?.setAttribute("data-chart-coordinates", JSON.stringify({
-          x: chart.timeScale().timeToCoordinate(last.time as Time),
-          y: series.priceToCoordinate(last.close),
-          range: chart.timeScale().getVisibleLogicalRange(),
-        }));
+        void last;
         repaintRef.current();
       });
     });
@@ -624,9 +618,31 @@ export function ReplayChart(props: ReplayChartProps) {
     window.addEventListener("pointerup", up);
   }
 
+  const visibleCandles = data.slice(-180);
+  const visibleMin = visibleCandles.length ? Math.min(...visibleCandles.map((c) => c.low)) : 0;
+  const visibleMax = visibleCandles.length ? Math.max(...visibleCandles.map((c) => c.high)) : 1;
+  const visibleSpan = Math.max(Number.EPSILON, visibleMax - visibleMin);
+
   return (
     <div className={cn("relative h-full w-full", props.className)}>
       <div ref={hostRef} className="h-full w-full" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 right-[66px] bottom-7 overflow-hidden" aria-hidden="true">
+        {visibleCandles.map((c, index) => {
+          const left = ((index + 0.5) / visibleCandles.length) * 100;
+          const high = ((visibleMax - c.high) / visibleSpan) * 94 + 3;
+          const low = ((visibleMax - c.low) / visibleSpan) * 94 + 3;
+          const open = ((visibleMax - c.open) / visibleSpan) * 94 + 3;
+          const close = ((visibleMax - c.close) / visibleSpan) * 94 + 3;
+          const color = c.close >= c.open ? settings.upColor : settings.downColor;
+          const width = Math.max(1, 72 / visibleCandles.length);
+          return (
+            <div key={c.time} className="absolute inset-y-0" style={{ left: `${left}%`, width: `${width}%` }}>
+              <span className="absolute left-1/2 w-px -translate-x-1/2" style={{ top: `${high}%`, height: `${Math.max(0.08, low - high)}%`, backgroundColor: color }} />
+              <span className="absolute left-0.5 right-0.5" style={{ top: `${Math.min(open, close)}%`, height: `${Math.max(0.12, Math.abs(close - open))}%`, backgroundColor: color }} />
+            </div>
+          );
+        })}
+      </div>
       <canvas
         ref={canvasRef}
         className="absolute inset-0"
