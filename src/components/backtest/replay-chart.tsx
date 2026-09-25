@@ -177,6 +177,7 @@ export function ReplayChart(props: ReplayChartProps) {
           y: series.priceToCoordinate(last.close),
           range: chart.timeScale().getVisibleLogicalRange(),
         }));
+        repaintRef.current();
       });
     });
     setSeriesVersion((n) => n + 1);
