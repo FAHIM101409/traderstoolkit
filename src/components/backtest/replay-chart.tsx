@@ -88,8 +88,9 @@ export function ReplayChart(props: ReplayChartProps) {
       handleScale: true,
     });
     chartRef.current = chart;
-    setReady(true);
+    const readyFrame = window.requestAnimationFrame(() => setReady(true));
     return () => {
+      window.cancelAnimationFrame(readyFrame);
       chart.remove();
       chartRef.current = null;
       mainRef.current = null;
