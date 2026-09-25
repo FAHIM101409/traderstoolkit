@@ -88,8 +88,9 @@ export function ReplayChart(props: ReplayChartProps) {
       handleScale: true,
     });
     chartRef.current = chart;
-    setReady(true);
+    const readyFrame = window.requestAnimationFrame(() => setReady(true));
     return () => {
+      window.cancelAnimationFrame(readyFrame);
       chart.remove();
       chartRef.current = null;
       mainRef.current = null;
@@ -97,7 +98,6 @@ export function ReplayChart(props: ReplayChartProps) {
       indicatorRefs.current = [];
       priceLines.current = [];
       markersRef.current = null;
-      setReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -144,6 +144,11 @@ export function ReplayChart(props: ReplayChartProps) {
       });
     }
     mainRef.current = series;
+    if (settings.style === "line" || settings.style === "area") {
+      series.setData(data.map((c) => ({ time: c.time as Time, value: c.close })));
+    } else {
+      series.setData(data.map((c) => ({ time: c.time as Time, open: c.open, high: c.high, low: c.low, close: c.close })));
+    }
 
     if (settings.showVolume) {
       const vol = chart.addSeries(HistogramSeries, {
@@ -152,10 +157,25 @@ export function ReplayChart(props: ReplayChartProps) {
         color: "rgba(148,163,184,0.4)",
       });
       chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+      vol.setData(data.map((c) => ({
+        time: c.time as Time,
+        value: c.volume,
+        color: c.close >= c.open ? "rgba(38,166,154,0.35)" : "rgba(239,83,80,0.35)",
+      })));
       volRef.current = vol;
     }
+    if (data.length) window.requestAnimationFrame(() => {
+      const host = hostRef.current;
+      if (host) chart.resize(host.clientWidth, host.clientHeight, true);
+      chart.timeScale().fitContent();
+      window.requestAnimationFrame(() => {
+        const last = data[data.length - 1];
+        void last;
+        repaintRef.current();
+      });
+    });
     setSeriesVersion((n) => n + 1);
-  }, [ready, settings.style, settings.upColor, settings.downColor, settings.wickUp, settings.wickDown, settings.showVolume, digits]);
+  }, [ready, settings.style, settings.upColor, settings.downColor, settings.wickUp, settings.wickDown, settings.showVolume, digits, data]);
 
   // Data updates
   useEffect(() => {
@@ -325,6 +345,56 @@ export function ReplayChart(props: ReplayChartProps) {
       const ts = chart.timeScale();
       const x = (logical: number) => ts.logicalToCoordinate(logical as any);
       const y = (price: number) => s.priceToCoordinate(price);
+
+      // Lightweight Charts can occasionally retain a transparent series layer
+      // after a hidden dialog mount. Paint the same real OHLC data on the
+      // interaction canvas so the replay never presents an empty workspace.
+      const visibleStart = Math.max(0, data.length - 180);
+      const visibleBars = data.slice(visibleStart);
+      const chartWidth = Math.max(1, rect.width - 66);
+      const chartHeight = Math.max(1, rect.height - 28);
+      const minPrice = Math.min(...visibleBars.map((c) => c.low));
+      const maxPrice = Math.max(...visibleBars.map((c) => c.high));
+      const priceSpan = Math.max(Number.EPSILON, maxPrice - minPrice);
+      const candleX = (index: number) => ((index - visibleStart + 0.5) / Math.max(1, visibleBars.length)) * chartWidth;
+      const candleY = (price: number) => 12 + ((maxPrice - price) / priceSpan) * Math.max(1, chartHeight - 24);
+      const spacing = chartWidth / Math.max(1, visibleBars.length);
+      const bodyWidth = Math.max(1, Math.min(10, spacing * 0.72));
+      ctx.lineWidth = 1;
+      if (settings.style === "line" || settings.style === "area") {
+        ctx.beginPath();
+        let started = false;
+        for (let i = visibleStart; i < data.length; i++) {
+          const cx = candleX(i), cy = candleY(data[i].close);
+          if (!started) { ctx.moveTo(cx, cy); started = true; } else ctx.lineTo(cx, cy);
+        }
+        ctx.strokeStyle = settings.upColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        for (let i = visibleStart; i < data.length; i++) {
+          const c = data[i];
+          const cx = candleX(i), openY = candleY(c.open), closeY = candleY(c.close), highY = candleY(c.high), lowY = candleY(c.low);
+          const color = c.close >= c.open ? settings.upColor : settings.downColor;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx, highY);
+          ctx.lineTo(cx, lowY);
+          ctx.stroke();
+          if (settings.style === "bars") {
+            ctx.beginPath();
+            ctx.moveTo(cx - bodyWidth / 2, openY);
+            ctx.lineTo(cx, openY);
+            ctx.moveTo(cx, closeY);
+            ctx.lineTo(cx + bodyWidth / 2, closeY);
+            ctx.stroke();
+          } else {
+            ctx.fillRect(cx - bodyWidth / 2, Math.min(openY, closeY), bodyWidth, Math.max(1, Math.abs(closeY - openY)));
+          }
+        }
+      }
 
       const all = [...drawings];
       if (draftRef.current.length) {
@@ -548,9 +618,31 @@ export function ReplayChart(props: ReplayChartProps) {
     window.addEventListener("pointerup", up);
   }
 
+  const visibleCandles = data.slice(-180);
+  const visibleMin = visibleCandles.length ? Math.min(...visibleCandles.map((c) => c.low)) : 0;
+  const visibleMax = visibleCandles.length ? Math.max(...visibleCandles.map((c) => c.high)) : 1;
+  const visibleSpan = Math.max(Number.EPSILON, visibleMax - visibleMin);
+
   return (
     <div className={cn("relative h-full w-full", props.className)}>
       <div ref={hostRef} className="h-full w-full" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 right-[66px] bottom-7 overflow-hidden" aria-hidden="true">
+        {visibleCandles.map((c, index) => {
+          const left = ((index + 0.5) / visibleCandles.length) * 100;
+          const high = ((visibleMax - c.high) / visibleSpan) * 94 + 3;
+          const low = ((visibleMax - c.low) / visibleSpan) * 94 + 3;
+          const open = ((visibleMax - c.open) / visibleSpan) * 94 + 3;
+          const close = ((visibleMax - c.close) / visibleSpan) * 94 + 3;
+          const color = c.close >= c.open ? settings.upColor : settings.downColor;
+          const width = Math.max(1, 72 / visibleCandles.length);
+          return (
+            <div key={c.time} className="absolute inset-y-0" style={{ left: `${left}%`, width: `${width}%` }}>
+              <span className="absolute left-1/2 w-px -translate-x-1/2" style={{ top: `${high}%`, height: `${Math.max(0.08, low - high)}%`, backgroundColor: color }} />
+              <span className="absolute left-0.5 right-0.5" style={{ top: `${Math.min(open, close)}%`, height: `${Math.max(0.12, Math.abs(close - open))}%`, backgroundColor: color }} />
+            </div>
+          );
+        })}
+      </div>
       <canvas
         ref={canvasRef}
         className="absolute inset-0"
