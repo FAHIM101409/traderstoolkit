@@ -355,27 +355,32 @@ export function ReplayChart(props: ReplayChartProps) {
       // Lightweight Charts can occasionally retain a transparent series layer
       // after a hidden dialog mount. Paint the same real OHLC data on the
       // interaction canvas so the replay never presents an empty workspace.
-      const spacing = data.length > 1
-        ? Math.abs((x(data.length - 1) ?? 0) - (x(data.length - 2) ?? 0))
-        : 6;
+      const visibleStart = Math.max(0, data.length - 180);
+      const visibleBars = data.slice(visibleStart);
+      const chartWidth = Math.max(1, rect.width - 66);
+      const chartHeight = Math.max(1, rect.height - 28);
+      const minPrice = Math.min(...visibleBars.map((c) => c.low));
+      const maxPrice = Math.max(...visibleBars.map((c) => c.high));
+      const priceSpan = Math.max(Number.EPSILON, maxPrice - minPrice);
+      const candleX = (index: number) => ((index - visibleStart + 0.5) / Math.max(1, visibleBars.length)) * chartWidth;
+      const candleY = (price: number) => 12 + ((maxPrice - price) / priceSpan) * Math.max(1, chartHeight - 24);
+      const spacing = chartWidth / Math.max(1, visibleBars.length);
       const bodyWidth = Math.max(1, Math.min(10, spacing * 0.72));
       ctx.lineWidth = 1;
       if (settings.style === "line" || settings.style === "area") {
         ctx.beginPath();
         let started = false;
-        for (let i = 0; i < data.length; i++) {
-          const cx = x(i), cy = y(data[i].close);
-          if (cx === null || cy === null || cx < -2 || cx > rect.width + 2) continue;
+        for (let i = visibleStart; i < data.length; i++) {
+          const cx = candleX(i), cy = candleY(data[i].close);
           if (!started) { ctx.moveTo(cx, cy); started = true; } else ctx.lineTo(cx, cy);
         }
         ctx.strokeStyle = settings.upColor;
         ctx.lineWidth = 2;
         ctx.stroke();
       } else {
-        for (let i = 0; i < data.length; i++) {
+        for (let i = visibleStart; i < data.length; i++) {
           const c = data[i];
-          const cx = x(i), openY = y(c.open), closeY = y(c.close), highY = y(c.high), lowY = y(c.low);
-          if (cx === null || openY === null || closeY === null || highY === null || lowY === null || cx < -bodyWidth || cx > rect.width + bodyWidth) continue;
+          const cx = candleX(i), openY = candleY(c.open), closeY = candleY(c.close), highY = candleY(c.high), lowY = candleY(c.low);
           const color = c.close >= c.open ? settings.upColor : settings.downColor;
           ctx.strokeStyle = color;
           ctx.fillStyle = color;
