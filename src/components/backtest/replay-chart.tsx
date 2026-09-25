@@ -166,6 +166,8 @@ export function ReplayChart(props: ReplayChartProps) {
       volRef.current = vol;
     }
     if (data.length) window.requestAnimationFrame(() => {
+      const host = hostRef.current;
+      if (host) chart.resize(host.clientWidth, host.clientHeight, true);
       chart.timeScale().fitContent();
       window.requestAnimationFrame(() => {
         const last = data[data.length - 1];
