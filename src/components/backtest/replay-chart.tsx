@@ -149,6 +149,7 @@ export function ReplayChart(props: ReplayChartProps) {
     } else {
       series.setData(data.map((c) => ({ time: c.time as Time, open: c.open, high: c.high, low: c.low, close: c.close })));
     }
+    hostRef.current?.setAttribute("data-series-points", String(data.length));
 
     if (settings.showVolume) {
       const vol = chart.addSeries(HistogramSeries, {
