@@ -165,7 +165,17 @@ export function ReplayChart(props: ReplayChartProps) {
       })));
       volRef.current = vol;
     }
-    if (data.length) window.requestAnimationFrame(() => chart.timeScale().fitContent());
+    if (data.length) window.requestAnimationFrame(() => {
+      chart.timeScale().fitContent();
+      window.requestAnimationFrame(() => {
+        const last = data[data.length - 1];
+        hostRef.current?.setAttribute("data-chart-coordinates", JSON.stringify({
+          x: chart.timeScale().timeToCoordinate(last.time as Time),
+          y: series.priceToCoordinate(last.close),
+          range: chart.timeScale().getVisibleLogicalRange(),
+        }));
+      });
+    });
     setSeriesVersion((n) => n + 1);
   }, [ready, settings.style, settings.upColor, settings.downColor, settings.wickUp, settings.wickDown, settings.showVolume, digits, data]);
 
