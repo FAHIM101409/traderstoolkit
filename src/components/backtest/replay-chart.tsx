@@ -351,6 +351,51 @@ export function ReplayChart(props: ReplayChartProps) {
       const x = (logical: number) => ts.logicalToCoordinate(logical as any);
       const y = (price: number) => s.priceToCoordinate(price);
 
+      // Lightweight Charts can occasionally retain a transparent series layer
+      // after a hidden dialog mount. Paint the same real OHLC data on the
+      // interaction canvas so the replay never presents an empty workspace.
+      const spacing = data.length > 1
+        ? Math.abs((x(data.length - 1) ?? 0) - (x(data.length - 2) ?? 0))
+        : 6;
+      const bodyWidth = Math.max(1, Math.min(10, spacing * 0.72));
+      ctx.lineWidth = 1;
+      if (settings.style === "line" || settings.style === "area") {
+        ctx.beginPath();
+        let started = false;
+        for (let i = 0; i < data.length; i++) {
+          const cx = x(i), cy = y(data[i].close);
+          if (cx === null || cy === null || cx < -2 || cx > rect.width + 2) continue;
+          if (!started) { ctx.moveTo(cx, cy); started = true; } else ctx.lineTo(cx, cy);
+        }
+        ctx.strokeStyle = settings.upColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        for (let i = 0; i < data.length; i++) {
+          const c = data[i];
+          const cx = x(i), openY = y(c.open), closeY = y(c.close), highY = y(c.high), lowY = y(c.low);
+          if (cx === null || openY === null || closeY === null || highY === null || lowY === null || cx < -bodyWidth || cx > rect.width + bodyWidth) continue;
+          const color = c.close >= c.open ? settings.upColor : settings.downColor;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx, highY);
+          ctx.lineTo(cx, lowY);
+          ctx.stroke();
+          if (settings.style === "bars") {
+            ctx.beginPath();
+            ctx.moveTo(cx - bodyWidth / 2, openY);
+            ctx.lineTo(cx, openY);
+            ctx.moveTo(cx, closeY);
+            ctx.lineTo(cx + bodyWidth / 2, closeY);
+            ctx.stroke();
+          } else {
+            ctx.fillRect(cx - bodyWidth / 2, Math.min(openY, closeY), bodyWidth, Math.max(1, Math.abs(closeY - openY)));
+          }
+        }
+      }
+
       const all = [...drawings];
       if (draftRef.current.length) {
         all.push({ id: "__draft", tool: (activeTool === "cursor" || activeTool === "erase" ? "trend" : activeTool) as Drawing["tool"], points: draftRef.current, color: drawColor, width: 2 });
