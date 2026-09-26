@@ -172,7 +172,9 @@ function BacktestPage() {
     });
     const { data } = await supabase.from("backtest_trades").select("*").eq("session_id", s.id).order("created_at");
     setTrades((data as unknown as BacktestTrade[]) ?? []);
-    void supabase.from("backtest_sessions").update({ last_opened_at: new Date().toISOString() }).eq("id", s.id);
+    void (async () => {
+      await supabase.from("backtest_sessions").update({ last_opened_at: new Date().toISOString() }).eq("id", s.id);
+    })();
   }, []);
 
   // Fetch candles whenever the instrument or timeframe changes
@@ -219,19 +221,25 @@ function BacktestPage() {
   }, []);
 
   // Save replay + chart state (debounced)
+  const chartStateKey = JSON.stringify(chartState);
+  const statsKey = JSON.stringify(stats);
+  const cursorTime = allCandles[cursor]?.time ?? null;
   useEffect(() => {
-    if (!active) return;
+    const sessionId = active?.id;
+    if (!sessionId) return;
     const id = window.setTimeout(() => {
-      void supabase.from("backtest_sessions").update({
-        symbol, timeframe,
-        chart_state: chartState as any,
-        replay_state: { cursorTime: allCandles[cursor]?.time ?? null, symbol, timeframe, speed } as any,
-        ending_balance: balance,
-        stats: stats as any,
-      } as any).eq("id", active.id);
+      void (async () => {
+        await supabase.from("backtest_sessions").update({
+          symbol, timeframe,
+          chart_state: JSON.parse(chartStateKey) as any,
+          replay_state: { cursorTime, symbol, timeframe, speed } as any,
+          ending_balance: balance,
+          stats: JSON.parse(statsKey) as any,
+        } as any).eq("id", sessionId);
+      })();
     }, 1200);
     return () => window.clearTimeout(id);
-  }, [chartState, cursor, symbol, timeframe, speed, active, allCandles, balance, stats]);
+  }, [chartStateKey, cursorTime, symbol, timeframe, speed, active?.id, balance, statsKey]);
 
   // ------------------------------------------------------------ replay step
   const cursorRef = useRef(0);
@@ -400,7 +408,16 @@ function BacktestPage() {
     toast.success(`Replay start set to ${new Date(allCandles[idx]?.time * 1000).toUTCString()}`);
   }
 
-  const patchChart = (p: Partial<ChartState>) => setChartState((c) => ({ ...c, ...p }));
+  const patchChart = (p: Partial<ChartState>) => {
+    const next = { ...chartState, ...p };
+    setChartState(next);
+    const sessionId = active?.id;
+    if (sessionId) {
+      void (async () => {
+        await supabase.from("backtest_sessions").update({ chart_state: next as any }).eq("id", sessionId);
+      })();
+    }
+  };
   const openPositions = trades.filter((t) => t.status === "open" || t.status === "pending");
   const closedTrades = trades.filter((t) => t.status === "closed");
   const barLabel = currentBar ? new Date(currentBar.time * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
