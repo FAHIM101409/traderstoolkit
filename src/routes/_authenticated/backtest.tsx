@@ -404,7 +404,14 @@ function BacktestPage() {
     toast.success(`Replay start set to ${new Date(allCandles[idx]?.time * 1000).toUTCString()}`);
   }
 
-  const patchChart = (p: Partial<ChartState>) => setChartState((c) => ({ ...c, ...p }));
+  const patchChart = (p: Partial<ChartState>) => setChartState((current) => {
+    const next = { ...current, ...p };
+    const sessionId = active?.id;
+    if (sessionId) {
+      void supabase.from("backtest_sessions").update({ chart_state: next as any }).eq("id", sessionId);
+    }
+    return next;
+  });
   const openPositions = trades.filter((t) => t.status === "open" || t.status === "pending");
   const closedTrades = trades.filter((t) => t.status === "closed");
   const barLabel = currentBar ? new Date(currentBar.time * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
