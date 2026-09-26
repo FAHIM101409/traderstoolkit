@@ -219,19 +219,23 @@ function BacktestPage() {
   }, []);
 
   // Save replay + chart state (debounced)
+  const chartStateKey = JSON.stringify(chartState);
+  const statsKey = JSON.stringify(stats);
+  const cursorTime = allCandles[cursor]?.time ?? null;
   useEffect(() => {
-    if (!active) return;
+    const sessionId = active?.id;
+    if (!sessionId) return;
     const id = window.setTimeout(() => {
       void supabase.from("backtest_sessions").update({
         symbol, timeframe,
-        chart_state: chartState as any,
-        replay_state: { cursorTime: allCandles[cursor]?.time ?? null, symbol, timeframe, speed } as any,
+        chart_state: JSON.parse(chartStateKey) as any,
+        replay_state: { cursorTime, symbol, timeframe, speed } as any,
         ending_balance: balance,
-        stats: stats as any,
-      } as any).eq("id", active.id);
+        stats: JSON.parse(statsKey) as any,
+      } as any).eq("id", sessionId);
     }, 1200);
     return () => window.clearTimeout(id);
-  }, [chartState, cursor, symbol, timeframe, speed, active, allCandles, balance, stats]);
+  }, [chartStateKey, cursorTime, symbol, timeframe, speed, active?.id, balance, statsKey]);
 
   // ------------------------------------------------------------ replay step
   const cursorRef = useRef(0);
