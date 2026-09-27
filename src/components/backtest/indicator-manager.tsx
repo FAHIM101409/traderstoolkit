@@ -44,9 +44,9 @@ export function IndicatorManager({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl gap-3 p-4 text-sm">
         <DialogHeader>
-          <DialogTitle>Indicators</DialogTitle>
+          <DialogTitle className="text-base">Indicators &amp; Studies</DialogTitle>
           <DialogDescription>Overlays render on the price pane; oscillators get their own pane below the chart.</DialogDescription>
         </DialogHeader>
 

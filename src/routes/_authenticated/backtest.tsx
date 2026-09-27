@@ -675,7 +675,7 @@ function BacktestPage() {
       <Dialog open={startOpen} onOpenChange={setStartOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Replay start point</DialogTitle>
+            <DialogTitle className="text-base">Replay Start Point</DialogTitle>
             <DialogDescription>
               Pick the date and time where replay begins. Every candle after it stays hidden until you step forward.
             </DialogDescription>
@@ -782,9 +782,9 @@ function SessionPicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl gap-3 p-4">
         <DialogHeader>
-          <DialogTitle>Backtesting sessions</DialogTitle>
+          <DialogTitle className="text-base">Backtesting Sessions</DialogTitle>
           <DialogDescription>Each session keeps its own balance, trade history, chart layout and replay position.</DialogDescription>
         </DialogHeader>
 

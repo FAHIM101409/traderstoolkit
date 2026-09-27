@@ -44,9 +44,9 @@ export function ChartSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl gap-3 p-4 text-sm">
         <DialogHeader>
-          <DialogTitle>Chart settings</DialogTitle>
+          <DialogTitle className="text-base">Chart Settings</DialogTitle>
           <DialogDescription>Appearance applies to every chart in this workspace and is saved with the session.</DialogDescription>
         </DialogHeader>
 
