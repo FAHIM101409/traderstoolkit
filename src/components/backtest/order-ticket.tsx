@@ -74,23 +74,46 @@ export function OrderTicket({
     };
   }
 
+  const dirLabel = mode === "market" ? "" : ` ${mode}`;
   return (
-    <div className="w-[268px] rounded-xl border border-border/70 bg-card/95 shadow-xl backdrop-blur">
-      <button
-        onClick={() => setCollapsed((c) => !c)}
-        className="flex w-full items-center justify-between border-b border-border/60 px-3 py-2 text-left"
-      >
-        <span className="flex items-center gap-2 text-xs font-semibold">
-          <Crosshair className="h-3.5 w-3.5 text-primary" /> Order ticket
-        </span>
-        <span className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-[10px]">{price ? price.toFixed(spec.digits) : "—"}</Badge>
-          {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-        </span>
-      </button>
+    <div className="w-[248px] overflow-hidden rounded-md border border-border/60 bg-card/95 shadow-lg backdrop-blur">
+      <div className="flex items-stretch gap-px bg-border/60">
+        <button
+          type="button"
+          disabled={disabled || finalLots <= 0}
+          onClick={() => onSubmit(build("short"))}
+          className="flex flex-1 flex-col items-start bg-destructive px-2 py-1 text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          aria-label={`Sell${dirLabel}`}
+        >
+          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase"><TrendingDown className="h-3 w-3" /> Sell{dirLabel}</span>
+          <span className="font-mono text-xs font-semibold">{price ? price.toFixed(spec.digits) : "—"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          className="flex w-14 flex-col items-center justify-center bg-card px-1 text-[10px] text-muted-foreground hover:text-foreground"
+          aria-label={collapsed ? "Show order options" : "Hide order options"}
+        >
+          <span className="font-mono font-semibold text-foreground">{finalLots.toFixed(2)}</span>
+          {collapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+        </button>
+        <button
+          type="button"
+          disabled={disabled || finalLots <= 0}
+          onClick={() => onSubmit(build("long"))}
+          className="flex flex-1 flex-col items-end bg-success px-2 py-1 text-success-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          aria-label={`Buy${dirLabel}`}
+        >
+          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase">Buy{dirLabel} <TrendingUp className="h-3 w-3" /></span>
+          <span className="font-mono text-xs font-semibold">{price ? price.toFixed(spec.digits) : "—"}</span>
+        </button>
+      </div>
 
       {!collapsed && (
-        <div className="space-y-2 p-3">
+        <div className="space-y-2 p-2">
+          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Crosshair className="h-3 w-3 text-primary" /> Order options
+          </p>
           <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
             <TabsList className="grid h-8 w-full grid-cols-3">
               <TabsTrigger value="market" className="text-[11px]">Market</TabsTrigger>
@@ -163,27 +186,8 @@ export function OrderTicket({
           </div>
 
           {computed.warnings.map((w) => (
-            <p key={w} className="text-[10px] text-amber-500">{w}</p>
+            <p key={w} className="text-[10px] text-warning">{w}</p>
           ))}
-
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              size="sm"
-              disabled={disabled || finalLots <= 0}
-              className={cn("h-9 gap-1 bg-emerald-600 text-white hover:bg-emerald-500")}
-              onClick={() => onSubmit(build("long"))}
-            >
-              <TrendingUp className="h-4 w-4" /> Buy
-            </Button>
-            <Button
-              size="sm"
-              disabled={disabled || finalLots <= 0}
-              className={cn("h-9 gap-1 bg-rose-600 text-white hover:bg-rose-500")}
-              onClick={() => onSubmit(build("short"))}
-            >
-              <TrendingDown className="h-4 w-4" /> Sell
-            </Button>
-          </div>
         </div>
       )}
     </div>
