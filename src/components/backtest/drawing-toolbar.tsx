@@ -51,7 +51,7 @@ export function DrawingToolbar({
   const ordered = [...ORDER].sort((a, b) => Number(favSet.has(b)) - Number(favSet.has(a)));
 
   return (
-    <div className="flex h-11 w-full shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 bg-card/80 px-2 backdrop-blur md:h-full md:w-11 md:flex-col md:overflow-x-visible md:border-b-0 md:border-r md:px-0 md:py-2">
+    <div className="flex h-10 w-full shrink-0 items-center gap-0.5 overflow-x-auto border-b border-border/60 bg-card/90 px-2 backdrop-blur md:absolute md:left-2 md:top-2 md:z-20 md:max-h-[calc(100%-1rem)] md:w-9 md:flex-col md:overflow-y-auto md:overflow-x-visible md:rounded-md md:border md:px-0 md:py-1 md:shadow-lg">
       {ordered.map((tool) => {
         const Icon = ICONS[tool];
         return (
@@ -64,7 +64,7 @@ export function DrawingToolbar({
                 onClick={() => onSelect(tool)}
                 onContextMenu={(e) => { e.preventDefault(); onToggleFavorite(tool); }}
                 className={cn(
-                  "relative h-8 w-8 shrink-0 text-muted-foreground",
+                  "relative h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground",
                   active === tool && "bg-primary/15 text-primary",
                 )}
                 aria-label={LABELS[tool]}
@@ -80,7 +80,7 @@ export function DrawingToolbar({
         );
       })}
 
-       <div className="mx-1 h-6 w-px shrink-0 bg-border md:my-1 md:h-px md:w-6" />
+       <div className="mx-1 h-6 w-px shrink-0 bg-border md:my-1 md:h-px md:w-5" />
 
        <div className="flex items-center gap-1 md:grid md:grid-cols-1">
          <Palette className="mr-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground md:hidden" />
@@ -92,16 +92,16 @@ export function DrawingToolbar({
             key={c}
             onClick={() => onColor(c)}
             aria-label={`Colour ${c}`}
-             className={cn("h-5 w-5 shrink-0 rounded-full border p-0", color === c ? "scale-110 border-foreground" : "border-transparent")}
+             className={cn("h-4 w-4 shrink-0 rounded-full border p-0", color === c ? "scale-110 border-foreground" : "border-transparent")}
             style={{ background: c }}
           />
         ))}
       </div>
 
-       <div className="ml-auto md:ml-0 md:mt-auto">
+       <div className="ml-auto md:ml-0 md:mt-1">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClearAll} disabled={!drawingCount} aria-label={`Clear all drawings (${drawingCount})`}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClearAll} disabled={!drawingCount} aria-label={`Clear all drawings (${drawingCount})`}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>

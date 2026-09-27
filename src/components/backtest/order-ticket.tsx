@@ -186,7 +186,7 @@ export function OrderTicket({
           </div>
 
           {computed.warnings.map((w) => (
-            <p key={w} className="text-[10px] text-warning">{w}</p>
+            <p key={w} className="text-[10px] text-destructive">{w}</p>
           ))}
         </div>
       )}
