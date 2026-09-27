@@ -626,7 +626,7 @@ export function ReplayChart(props: ReplayChartProps) {
   return (
     <div className={cn("relative h-full w-full", props.className)}>
       <div ref={hostRef} className="h-full w-full" />
-      <div className="pointer-events-none absolute inset-y-0 left-0 right-[66px] bottom-7 overflow-hidden" aria-hidden="true">
+      <div className="pointer-events-none absolute z-10 inset-y-0 left-0 right-[66px] bottom-7 overflow-hidden" aria-hidden="true">
         {visibleCandles.map((c, index) => {
           const left = ((index + 0.5) / visibleCandles.length) * 100;
           const high = ((visibleMax - c.high) / visibleSpan) * 94 + 3;

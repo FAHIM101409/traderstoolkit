@@ -24,7 +24,7 @@ export function PositionsDock({
   onBreakEven: (t: BacktestTrade) => void;
   onNudge: (t: BacktestTrade, key: "sl" | "tp", pips: number) => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const ctx = { spec, accountCurrency, commissionPerLot, spreadPoints };
 
   const open = trades.filter((t) => t.status === "open");
@@ -34,12 +34,12 @@ export function PositionsDock({
   const floating = open.reduce((s, t) => s + (t.entry != null ? pnlFor(ctx, t.direction, t.entry, price, t.lots) : 0), 0);
 
   return (
-    <div className="w-[420px] max-w-[92vw] rounded-xl border border-border/70 bg-card/95 shadow-xl backdrop-blur">
-      <button onClick={() => setCollapsed((c) => !c)} className="flex w-full items-center justify-between border-b border-border/60 px-3 py-2">
-        <span className="text-xs font-semibold">Positions</span>
+    <div className="w-full shrink-0 border-t border-border/60 bg-card">
+      <button onClick={() => setCollapsed((c) => !c)} className="flex h-7 w-full items-center justify-between px-3 hover:bg-muted/40" aria-label="Toggle trading panel">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Trading Panel</span>
         <span className="flex items-center gap-2">
           <Badge variant="secondary" className="text-[10px]">{open.length} open · {pending.length} pending</Badge>
-          <span className={cn("text-xs font-semibold", floating >= 0 ? "text-emerald-500" : "text-rose-500")}>
+          <span className={cn("text-xs font-semibold", floating >= 0 ? "text-success" : "text-destructive")}>
             {formatMoney(floating, accountCurrency)}
           </span>
           {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -47,14 +47,14 @@ export function PositionsDock({
       </button>
 
       {!collapsed && (
-        <Tabs defaultValue="open">
-          <TabsList className="m-2 grid h-8 w-[calc(100%-1rem)] grid-cols-3">
+        <Tabs defaultValue="open" className="border-t border-border/60">
+          <TabsList className="mx-2 my-1 h-7">
             <TabsTrigger value="open" className="text-[11px]">Open</TabsTrigger>
             <TabsTrigger value="pending" className="text-[11px]">Pending</TabsTrigger>
             <TabsTrigger value="history" className="text-[11px]">History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="open" className="m-0 max-h-56 overflow-y-auto px-2 pb-2">
+          <TabsContent value="open" className="m-0 max-h-40 overflow-y-auto px-2 pb-2">
             {open.length === 0 && <Empty label="No open positions" />}
             {open.map((t) => {
               const pnl = t.entry != null ? pnlFor(ctx, t.direction, t.entry, price, t.lots) : 0;
@@ -62,12 +62,12 @@ export function PositionsDock({
                 <div key={t.id} className="mb-1.5 rounded-lg border border-border/60 bg-background/60 p-2 text-[11px]">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">
-                      <span className={t.direction === "long" ? "text-emerald-500" : "text-rose-500"}>
+                      <span className={t.direction === "long" ? "text-success" : "text-destructive"}>
                         {t.direction === "long" ? "BUY" : "SELL"}
                       </span>{" "}
                       {t.lots} {t.symbol} @ {t.entry?.toFixed(spec.digits)}
                     </span>
-                    <span className={cn("font-semibold", pnl >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                    <span className={cn("font-semibold", pnl >= 0 ? "text-success" : "text-destructive")}>
                       {formatMoney(pnl, accountCurrency)}
                     </span>
                   </div>
@@ -86,10 +86,10 @@ export function PositionsDock({
             })}
           </TabsContent>
 
-          <TabsContent value="pending" className="m-0 max-h-56 overflow-y-auto px-2 pb-2">
+          <TabsContent value="pending" className="m-0 max-h-40 overflow-y-auto px-2 pb-2">
             {pending.length === 0 && <Empty label="No pending orders" />}
             {pending.map((t) => (
-              <div key={t.id} className="mb-1.5 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/5 p-2 text-[11px]">
+              <div key={t.id} className="mb-1.5 flex items-center justify-between rounded-lg border border-primary/40 bg-primary/5 p-2 text-[11px]">
                 <span>
                   <span className="font-semibold uppercase">{t.direction === "long" ? "Buy" : "Sell"} {t.order_type}</span>{" "}
                   {t.lots} @ {t.entry?.toFixed(spec.digits)}
@@ -101,7 +101,7 @@ export function PositionsDock({
             ))}
           </TabsContent>
 
-          <TabsContent value="history" className="m-0 max-h-56 overflow-y-auto px-2 pb-2">
+          <TabsContent value="history" className="m-0 max-h-40 overflow-y-auto px-2 pb-2">
             {closed.length === 0 && <Empty label="No closed trades yet" />}
             {closed.map((t) => (
               <div key={t.id} className="mb-1 flex items-center justify-between rounded-md px-2 py-1 text-[11px] odd:bg-muted/30">
@@ -109,7 +109,7 @@ export function PositionsDock({
                   {t.direction === "long" ? "BUY" : "SELL"} {t.lots} · {t.entry?.toFixed(spec.digits)} → {t.exit?.toFixed(spec.digits)}
                   <span className="ml-1 uppercase text-muted-foreground">{t.exit_reason}</span>
                 </span>
-                <span className={cn("font-semibold", (t.pnl ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                <span className={cn("font-semibold", (t.pnl ?? 0) >= 0 ? "text-success" : "text-destructive")}>
                   {formatMoney(t.pnl ?? 0, accountCurrency)}
                 </span>
               </div>

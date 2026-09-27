@@ -431,7 +431,7 @@ function BacktestPage() {
       <TooltipProvider delayDuration={200}>
         <div ref={shellRef} className="flex h-[calc(100dvh-57px)] min-h-[520px] flex-col bg-background">
           {/* ------------------------------------------------- top strip */}
-          <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 bg-card/80 px-2 py-1.5 backdrop-blur">
+          <div className="flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 bg-card px-2">
             <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
               <LineChartIcon className="h-3.5 w-3.5 text-primary" />
               {active?.name ?? "Choose session"}
@@ -498,7 +498,7 @@ function BacktestPage() {
               {chartState.indicators.length > 0 && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{chartState.indicators.length}</Badge>}
             </Button>
             <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setSettingsOpen(true)}>
-              <Settings2 className="h-3.5 w-3.5" /> Chart
+              <Settings2 className="h-3.5 w-3.5" /> Chart settings
             </Button>
 
             <div className="ml-auto flex shrink-0 items-center gap-3 text-xs">
@@ -540,7 +540,7 @@ function BacktestPage() {
             />
 
             <div className={cn("relative grid min-h-0 flex-1", paneCount === 1 ? "grid-cols-1" : paneCount === 2 ? "grid-cols-2" : "grid-cols-2 grid-rows-2")}>
-              <div className="relative min-h-0 border-r border-border/40">
+              <div className="relative min-h-0">
                 {dataLoading && (
                   <div className="absolute inset-0 z-30 grid place-items-center bg-background/70">
                     <span className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -594,8 +594,8 @@ function BacktestPage() {
             </div>
 
             {/* floating panels */}
-            <div className="pointer-events-none absolute inset-0 hidden sm:block">
-              <div className="pointer-events-auto absolute right-3 top-3">
+            <div className="pointer-events-none absolute inset-0 z-30 hidden sm:block">
+              <div className="pointer-events-auto absolute right-14 top-2">
                 <OrderTicket
                   spec={spec}
                   accountCurrency={accountCurrency}
@@ -606,21 +606,22 @@ function BacktestPage() {
                   onSubmit={submitOrder}
                 />
               </div>
-              <div className="pointer-events-auto absolute bottom-3 left-3">
-                <PositionsDock
-                  trades={trades}
-                  spec={spec}
-                  accountCurrency={accountCurrency}
-                  price={price}
-                  commissionPerLot={simCtx.commissionPerLot}
-                  spreadPoints={simCtx.spreadPoints}
-                  onClose={manualClose}
-                  onCancel={cancelPending}
-                  onBreakEven={toBreakEven}
-                  onNudge={nudge}
-                />
-              </div>
             </div>
+          </div>
+
+          <div className="hidden sm:block">
+            <PositionsDock
+              trades={trades}
+              spec={spec}
+              accountCurrency={accountCurrency}
+              price={price}
+              commissionPerLot={simCtx.commissionPerLot}
+              spreadPoints={simCtx.spreadPoints}
+              onClose={manualClose}
+              onCancel={cancelPending}
+              onBreakEven={toBreakEven}
+              onNudge={nudge}
+            />
           </div>
 
           {/* ------------------------------------------------- replay bar */}
@@ -674,7 +675,7 @@ function BacktestPage() {
       <Dialog open={startOpen} onOpenChange={setStartOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Replay start point</DialogTitle>
+            <DialogTitle className="text-base">Replay Start Point</DialogTitle>
             <DialogDescription>
               Pick the date and time where replay begins. Every candle after it stays hidden until you step forward.
             </DialogDescription>
@@ -781,9 +782,9 @@ function SessionPicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl gap-3 p-4">
         <DialogHeader>
-          <DialogTitle>Backtesting sessions</DialogTitle>
+          <DialogTitle className="text-base">Backtesting Sessions</DialogTitle>
           <DialogDescription>Each session keeps its own balance, trade history, chart layout and replay position.</DialogDescription>
         </DialogHeader>
 

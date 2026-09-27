@@ -29,27 +29,27 @@ export function ReplayControls({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border/60 bg-card/90 px-2 py-1.5 backdrop-blur sm:px-3">
+    <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border/60 bg-card/90 px-2 py-1 sm:px-3">
       <div className="flex items-center gap-1">
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onJumpStart} disabled={disabled} aria-label="Jump to replay start">
+        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onJumpStart} disabled={disabled} aria-label="Jump to replay start">
           <SkipBack className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onStep(-1)} disabled={disabled} aria-label="Previous bar">
+        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStep(-1)} disabled={disabled} aria-label="Previous bar">
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <Button
           size="icon"
-          className={cn("h-9 w-9", playing ? "bg-amber-500 hover:bg-amber-400" : "bg-primary")}
+          className={cn("h-8 w-8 rounded-full", playing ? "bg-secondary text-foreground hover:bg-secondary/80" : "bg-primary")}
           onClick={onPlayPause}
           disabled={disabled}
           aria-label={playing ? "Pause replay" : "Play replay"}
         >
           {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onStep(1)} disabled={disabled} aria-label="Next bar">
+        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStep(1)} disabled={disabled} aria-label="Next bar">
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onJumpEnd} disabled={disabled} aria-label="Jump to last bar">
+        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onJumpEnd} disabled={disabled} aria-label="Jump to last bar">
           <SkipForward className="h-4 w-4" />
         </Button>
       </div>
