@@ -51,7 +51,7 @@ export function DrawingToolbar({
   const ordered = [...ORDER].sort((a, b) => Number(favSet.has(b)) - Number(favSet.has(a)));
 
   return (
-    <div className="flex h-10 w-full shrink-0 items-center gap-0.5 overflow-x-auto border-b border-border/60 bg-card/90 px-2 backdrop-blur md:absolute md:left-2 md:top-2 md:z-20 md:max-h-[calc(100%-1rem)] md:w-9 md:flex-col md:overflow-y-auto md:overflow-x-visible md:rounded-md md:border md:px-0 md:py-1 md:shadow-lg">
+    <div className="flex h-10 w-full shrink-0 items-center gap-0.5 overflow-x-auto border-b border-border/60 bg-card/90 px-2 backdrop-blur md:absolute md:h-auto md:left-2 md:top-2 md:z-20 md:max-h-[calc(100%-1rem)] md:w-9 md:flex-col md:overflow-y-auto md:overflow-x-visible md:rounded-md md:border md:px-0 md:py-1 md:shadow-lg">
       {ordered.map((tool) => {
         const Icon = ICONS[tool];
         return (
