@@ -594,7 +594,7 @@ function BacktestPage() {
             </div>
 
             {/* floating panels */}
-            <div className="pointer-events-none absolute inset-0 hidden sm:block">
+            <div className="pointer-events-none absolute inset-0 z-30 hidden sm:block">
               <div className="pointer-events-auto absolute right-14 top-2">
                 <OrderTicket
                   spec={spec}
