@@ -431,7 +431,7 @@ function BacktestPage() {
       <TooltipProvider delayDuration={200}>
         <div ref={shellRef} className="flex h-[calc(100dvh-57px)] min-h-[520px] flex-col bg-background">
           {/* ------------------------------------------------- top strip */}
-          <div className="flex h-10 shrink-0 items-center gap-2 overflow-hidden border-b border-border/60 bg-card px-2">
+          <div className="flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-border/60 bg-card px-2 md:overflow-hidden">
             <Button variant="ghost" size="sm" className="h-8 shrink-0 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
               <LineChartIcon className="h-3.5 w-3.5 text-primary" />
               {active?.name ?? "Choose session"}
@@ -455,7 +455,7 @@ function BacktestPage() {
 
             {/* middle: scrolls horizontally when the strip gets tight, so the
                 balance / stats cluster on the right always stays on screen */}
-            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+            <div className="flex min-w-[240px] flex-1 items-center gap-1 overflow-x-auto md:min-w-0">
             <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border/60 p-0.5">
               {REPLAY_TIMEFRAMES.map((t) => (
                 <Button
