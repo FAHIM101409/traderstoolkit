@@ -1,0 +1,2 @@
+DELETE FROM public.backtest_trades WHERE session_id = 'f8645c5a-d6be-4d4e-8169-f6c42f842451';
+UPDATE public.backtest_sessions SET ending_balance = starting_balance WHERE id = 'f8645c5a-d6be-4d4e-8169-f6c42f842451';

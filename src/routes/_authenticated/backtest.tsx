@@ -431,14 +431,14 @@ function BacktestPage() {
       <TooltipProvider delayDuration={200}>
         <div ref={shellRef} className="flex h-[calc(100dvh-57px)] min-h-[520px] flex-col bg-background">
           {/* ------------------------------------------------- top strip */}
-          <div className="flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 bg-card px-2">
-            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
+          <div className="flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-border/60 bg-card px-2 md:overflow-hidden">
+            <Button variant="ghost" size="sm" className="h-8 shrink-0 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
               <LineChartIcon className="h-3.5 w-3.5 text-primary" />
               {active?.name ?? "Choose session"}
             </Button>
 
             <Select value={symbol} onValueChange={setSymbol}>
-              <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 w-[150px] shrink-0 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {["Forex Major", "Forex Minor", "Forex Cross", "Forex Exotic", "Metals", "Indices", "Crypto", "Commodities"].map((g) => {
                   const items = INSTRUMENT_SPECS.filter((s) => s.group === g);
@@ -453,6 +453,9 @@ function BacktestPage() {
               </SelectContent>
             </Select>
 
+            {/* middle: scrolls horizontally when the strip gets tight, so the
+                balance / stats cluster on the right always stays on screen */}
+            <div className="flex min-w-[240px] flex-1 items-center gap-1 overflow-x-auto md:min-w-0">
             <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border/60 p-0.5">
               {REPLAY_TIMEFRAMES.map((t) => (
                 <Button
@@ -500,9 +503,10 @@ function BacktestPage() {
             <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setSettingsOpen(true)}>
               <Settings2 className="h-3.5 w-3.5" /> Chart settings
             </Button>
+            </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-3 text-xs">
-              <span className="hidden items-center gap-1 font-mono text-[10px] text-muted-foreground xl:flex">
+              <span className="hidden items-center gap-1 font-mono text-[10px] text-muted-foreground 2xl:flex">
                 {displayBar ? (
                   <>O <b className="text-foreground">{displayBar.open.toFixed(spec.digits)}</b> H <b className="text-success">{displayBar.high.toFixed(spec.digits)}</b> L <b className="text-destructive">{displayBar.low.toFixed(spec.digits)}</b> C <b className="text-foreground">{displayBar.close.toFixed(spec.digits)}</b></>
                 ) : "No candle selected"}
@@ -513,6 +517,22 @@ function BacktestPage() {
               </span>
               <span className="text-muted-foreground">Balance</span>
               <span className="font-semibold">{formatMoney(balance, accountCurrency)}</span>
+              <span className="hidden items-center gap-2 xl:flex">
+                <span className="flex items-center gap-1 border-l border-border pl-2">
+                  <span className="text-muted-foreground">Win rate</span>
+                  <b className="font-semibold tabular-nums">{stats.winRate.toFixed(0)}%</b>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Trades</span>
+                  <b className="font-semibold tabular-nums">{stats.trades}</b>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Net P&amp;L</span>
+                  <b className={cn("font-semibold tabular-nums", stats.net > 0 ? "text-success" : stats.net < 0 ? "text-destructive" : undefined)}>
+                    {formatMoney(stats.net, accountCurrency)}
+                  </b>
+                </span>
+              </span>
               <Link to="/replay" className="text-primary hover:underline">Analytics →</Link>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullscreen} aria-label="Toggle fullscreen">
                 {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
