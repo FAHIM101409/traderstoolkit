@@ -432,13 +432,13 @@ function BacktestPage() {
         <div ref={shellRef} className="flex h-[calc(100dvh-57px)] min-h-[520px] flex-col bg-background">
           {/* ------------------------------------------------- top strip */}
           <div className="flex h-10 shrink-0 items-center gap-2 overflow-hidden border-b border-border/60 bg-card px-2">
-            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
+            <Button variant="ghost" size="sm" className="h-8 shrink-0 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
               <LineChartIcon className="h-3.5 w-3.5 text-primary" />
               {active?.name ?? "Choose session"}
             </Button>
 
             <Select value={symbol} onValueChange={setSymbol}>
-              <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 w-[150px] shrink-0 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {["Forex Major", "Forex Minor", "Forex Cross", "Forex Exotic", "Metals", "Indices", "Crypto", "Commodities"].map((g) => {
                   const items = INSTRUMENT_SPECS.filter((s) => s.group === g);
