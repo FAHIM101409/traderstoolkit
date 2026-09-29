@@ -513,6 +513,22 @@ function BacktestPage() {
               </span>
               <span className="text-muted-foreground">Balance</span>
               <span className="font-semibold">{formatMoney(balance, accountCurrency)}</span>
+              <span className="hidden items-center gap-2 lg:flex">
+                <span className="flex items-center gap-1 border-l border-border pl-2">
+                  <span className="text-muted-foreground">Win rate</span>
+                  <b className="font-semibold tabular-nums">{stats.winRate.toFixed(0)}%</b>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Trades</span>
+                  <b className="font-semibold tabular-nums">{stats.trades}</b>
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Net P&amp;L</span>
+                  <b className={cn("font-semibold tabular-nums", stats.net > 0 ? "text-success" : stats.net < 0 ? "text-destructive" : undefined)}>
+                    {formatMoney(stats.net, accountCurrency)}
+                  </b>
+                </span>
+              </span>
               <Link to="/replay" className="text-primary hover:underline">Analytics →</Link>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFullscreen} aria-label="Toggle fullscreen">
                 {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
