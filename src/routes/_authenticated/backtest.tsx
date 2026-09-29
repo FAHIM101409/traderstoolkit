@@ -431,7 +431,7 @@ function BacktestPage() {
       <TooltipProvider delayDuration={200}>
         <div ref={shellRef} className="flex h-[calc(100dvh-57px)] min-h-[520px] flex-col bg-background">
           {/* ------------------------------------------------- top strip */}
-          <div className="flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 bg-card px-2">
+          <div className="flex h-10 shrink-0 items-center gap-2 overflow-hidden border-b border-border/60 bg-card px-2">
             <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold" onClick={() => setPickerOpen(true)}>
               <LineChartIcon className="h-3.5 w-3.5 text-primary" />
               {active?.name ?? "Choose session"}
@@ -453,6 +453,9 @@ function BacktestPage() {
               </SelectContent>
             </Select>
 
+            {/* middle: scrolls horizontally when the strip gets tight, so the
+                balance / stats cluster on the right always stays on screen */}
+            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border/60 p-0.5">
               {REPLAY_TIMEFRAMES.map((t) => (
                 <Button
@@ -500,9 +503,10 @@ function BacktestPage() {
             <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setSettingsOpen(true)}>
               <Settings2 className="h-3.5 w-3.5" /> Chart settings
             </Button>
+            </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-3 text-xs">
-              <span className="hidden items-center gap-1 font-mono text-[10px] text-muted-foreground xl:flex">
+              <span className="hidden items-center gap-1 font-mono text-[10px] text-muted-foreground 2xl:flex">
                 {displayBar ? (
                   <>O <b className="text-foreground">{displayBar.open.toFixed(spec.digits)}</b> H <b className="text-success">{displayBar.high.toFixed(spec.digits)}</b> L <b className="text-destructive">{displayBar.low.toFixed(spec.digits)}</b> C <b className="text-foreground">{displayBar.close.toFixed(spec.digits)}</b></>
                 ) : "No candle selected"}
@@ -513,7 +517,7 @@ function BacktestPage() {
               </span>
               <span className="text-muted-foreground">Balance</span>
               <span className="font-semibold">{formatMoney(balance, accountCurrency)}</span>
-              <span className="hidden items-center gap-2 lg:flex">
+              <span className="hidden items-center gap-2 xl:flex">
                 <span className="flex items-center gap-1 border-l border-border pl-2">
                   <span className="text-muted-foreground">Win rate</span>
                   <b className="font-semibold tabular-nums">{stats.winRate.toFixed(0)}%</b>
