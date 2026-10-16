@@ -14,7 +14,6 @@ const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { section: "Calculators" as const },
   { to: "/lot-size", label: "Lot Size", icon: Calculator },
-  { to: "/risk", label: "Risk Manager", icon: Shield },
   { to: "/prop-firm", label: "Prop Firm", icon: Building2 },
   { to: "/sessions", label: "Sessions", icon: Clock },
   { section: "Journal" as const },
@@ -27,8 +26,7 @@ const nav = [
   { section: "Labs" as const },
   { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical },
   { to: "/replay", label: "Backtesting Station", icon: Play },
-  { to: "/news", label: "News Lab", icon: CalendarClock },
-  { to: "/simulator", label: "Prop Simulator", icon: Activity },
+  { to: "/news", label: "Economic Calendar", icon: CalendarClock },
   { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true },
 ];
 
