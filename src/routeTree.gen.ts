@@ -27,10 +27,8 @@ import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
 import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
 import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated/replay'
-import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedSimulatorRouteImport } from './routes/_authenticated/simulator'
 import { Route as AuthenticatedReplaySessionIdRouteImport } from './routes/_authenticated/replay.$sessionId'
 import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
@@ -125,11 +123,6 @@ const AuthenticatedReplayRoute = AuthenticatedReplayRouteImport.update({
   path: '/replay',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedRiskRoute = AuthenticatedRiskRouteImport.update({
-  id: '/risk',
-  path: '/risk',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
@@ -138,11 +131,6 @@ const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSimulatorRoute = AuthenticatedSimulatorRouteImport.update({
-  id: '/simulator',
-  path: '/simulator',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReplaySessionIdRoute =
@@ -175,10 +163,8 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/replay': typeof AuthenticatedReplayRouteWithChildren
-  '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/simulator': typeof AuthenticatedSimulatorRoute
   '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -200,10 +186,8 @@ export interface FileRoutesByTo {
   '/pricing': typeof AuthenticatedPricingRoute
   '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/replay': typeof AuthenticatedReplayRouteWithChildren
-  '/risk': typeof AuthenticatedRiskRoute
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/simulator': typeof AuthenticatedSimulatorRoute
   '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -227,10 +211,8 @@ export interface FileRoutesById {
   '/_authenticated/pricing': typeof AuthenticatedPricingRoute
   '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
   '/_authenticated/replay': typeof AuthenticatedReplayRouteWithChildren
-  '/_authenticated/risk': typeof AuthenticatedRiskRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/simulator': typeof AuthenticatedSimulatorRoute
   '/_authenticated/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -254,10 +236,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/prop-firm'
     | '/replay'
-    | '/risk'
     | '/sessions'
     | '/settings'
-    | '/simulator'
     | '/replay/$sessionId'
     | '/api/public/mt5/ingest'
   fileRoutesByTo: FileRoutesByTo
@@ -279,10 +259,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/prop-firm'
     | '/replay'
-    | '/risk'
     | '/sessions'
     | '/settings'
-    | '/simulator'
     | '/replay/$sessionId'
     | '/api/public/mt5/ingest'
   id:
@@ -305,10 +283,8 @@ export interface FileRouteTypes {
     | '/_authenticated/pricing'
     | '/_authenticated/prop-firm'
     | '/_authenticated/replay'
-    | '/_authenticated/risk'
     | '/_authenticated/sessions'
     | '/_authenticated/settings'
-    | '/_authenticated/simulator'
     | '/_authenticated/replay/$sessionId'
     | '/api/public/mt5/ingest'
   fileRoutesById: FileRoutesById
@@ -449,13 +425,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReplayRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/risk': {
-      id: '/_authenticated/risk'
-      path: '/risk'
-      fullPath: '/risk'
-      preLoaderRoute: typeof AuthenticatedRiskRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/sessions': {
       id: '/_authenticated/sessions'
       path: '/sessions'
@@ -468,13 +437,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/simulator': {
-      id: '/_authenticated/simulator'
-      path: '/simulator'
-      fullPath: '/simulator'
-      preLoaderRoute: typeof AuthenticatedSimulatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/replay/$sessionId': {
@@ -520,10 +482,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
   AuthenticatedReplayRoute: typeof AuthenticatedReplayRouteWithChildren
-  AuthenticatedRiskRoute: typeof AuthenticatedRiskRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedSimulatorRoute: typeof AuthenticatedSimulatorRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -541,10 +501,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
   AuthenticatedReplayRoute: AuthenticatedReplayRouteWithChildren,
-  AuthenticatedRiskRoute: AuthenticatedRiskRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedSimulatorRoute: AuthenticatedSimulatorRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
