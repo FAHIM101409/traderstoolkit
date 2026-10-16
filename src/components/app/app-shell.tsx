@@ -20,15 +20,24 @@ const nav = [
   { to: "/journal", label: "Trade Journal", icon: BookOpen },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { section: "AI Tools" as const },
-  { to: "/ai-reviewer", label: "AI Reviewer", icon: Brain, pro: true },
-  { to: "/fundamentals", label: "Fundamentals Bot", icon: Newspaper },
-  { to: "/patterns", label: "Pattern Detection", icon: Sparkles, pro: true },
+  { to: "/ai-reviewer", label: "AI Reviewer", icon: Brain, pro: true, hidden: true },
+  { to: "/fundamentals", label: "Fundamentals Bot", icon: Newspaper, hidden: true },
+  { to: "/patterns", label: "Pattern Detection", icon: Sparkles, pro: true, hidden: true },
   { section: "Labs" as const },
-  { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical },
-  { to: "/replay", label: "Backtesting Station", icon: Play },
+  { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical, hidden: true },
+  { to: "/replay", label: "Backtesting Station", icon: Play, hidden: true },
   { to: "/news", label: "Economic Calendar", icon: CalendarClock },
-  { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true },
+  { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true, hidden: true },
 ];
+
+// Items flagged `hidden` keep their routes, pages and code — they just stay out of the sidebar.
+const visibleNav = nav.filter((item: any) => !item.hidden);
+// Drop a section heading when nothing visible sits under it.
+const shownNav = visibleNav.filter((item: any, i: number) => {
+  if (!("section" in item)) return true;
+  const next = visibleNav[i + 1];
+  return Boolean(next) && !("section" in next);
+});
 
 export function AppShell({ children, title, fullBleed = false }: { children: React.ReactNode; title: string; fullBleed?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -50,7 +59,7 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
 
   const renderNavItems = () => (
     <>
-      {nav.map((item: any, i) => {
+      {shownNav.map((item: any, i) => {
         if ("section" in item) {
           return <p key={`s-${i}`} className="mt-4 px-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{item.section}</p>;
         }
