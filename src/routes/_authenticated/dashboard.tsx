@@ -29,7 +29,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 const tools = [
   { to: "/lot-size", icon: Calculator, t: "Lot Size", d: "Forex, gold, indices, crypto" },
-  { to: "/risk", icon: Shield, t: "Risk Manager", d: "Daily & max drawdown" },
   { to: "/prop-firm", icon: Building2, t: "Prop Firm", d: "FTMO-style rules" },
   { to: "/sessions", icon: Clock, t: "Sessions", d: "London, NY, Tokyo, Sydney" },
 ];

@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/use-profile";
 
 export const Route = createFileRoute("/_authenticated/news")({
-  head: () => ({ meta: [{ title: "News Lab — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Economic Calendar — Traders Toolkit" }] }),
   component: NewsLab,
 });
 
@@ -153,7 +153,7 @@ function NewsLab() {
   }
 
   return (
-    <AppShell title="News Lab">
+    <AppShell title="Economic Calendar">
       <p className="mb-6 text-sm text-muted-foreground">Live economic calendar (Forex Factory feed) — auto-refreshed every minute, adjusted to your timezone.</p>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
