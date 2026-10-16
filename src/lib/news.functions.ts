@@ -69,11 +69,65 @@ function normalize(e: FFEvent): CalendarEvent | null {
   };
 }
 
+// Optional actuals provider (Financial Modeling Prep). Only used when the
+// FMP_API_KEY secret is set; the key never leaves the server.
+type FmpEvent = { date: string; currency?: string; event?: string; actual?: number | string | null };
+async function fetchActuals(): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const key = process.env["FMP_API_KEY"];
+  if (!key) return out;
+  try {
+    const from = new Date(Date.now() - 8 * 86400000).toISOString().slice(0, 10);
+    const to = new Date(Date.now() + 8 * 86400000).toISOString().slice(0, 10);
+    const res = await fetch(`https://financialmodelingprep.com/stable/economic-calendar?from=${from}&to=${to}&apikey=${encodeURIComponent(key)}`);
+    if (!res.ok) { console.error("[news] actuals HTTP", res.status); return out; }
+    const rows = (await res.json()) as FmpEvent[];
+    if (!Array.isArray(rows)) return out;
+    for (const r of rows) {
+      if (r.actual === null || r.actual === undefined || r.actual === "" || !r.currency || !r.date) continue;
+      const t = Date.parse(r.date.replace(" ", "T") + "Z");
+      if (isNaN(t)) continue;
+      const k = `${r.currency}|${Math.round(t / 60000)}`;
+      out.set(k + "|" + (r.event ?? "").toLowerCase(), String(r.actual));
+      if (!out.has(k)) out.set(k, String(r.actual));
+    }
+  } catch (e: any) {
+    console.error("[news] actuals fetch failed", e?.message ?? e);
+  }
+  return out;
+}
+
+function wordsMatch(a: string, b: string) {
+  const wa = new Set(a.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2));
+  return b.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && wa.has(w)).length >= 1;
+}
+
+function attachActuals(events: CalendarEvent[], actuals: Map<string, string>) {
+  if (actuals.size === 0) return;
+  const byKey = new Map<string, { title: string; value: string }[]>();
+  for (const [k, v] of actuals) {
+    const parts = k.split("|");
+    if (parts.length !== 3) continue;
+    const base = `${parts[0]}|${parts[1]}`;
+    const arr = byKey.get(base) ?? [];
+    arr.push({ title: parts[2], value: v });
+    byKey.set(base, arr);
+  }
+  for (const e of events) {
+    const base = `${e.currency}|${Math.round(Date.parse(e.timeUtc) / 60000)}`;
+    const cands = byKey.get(base);
+    if (!cands) continue;
+    const hit = cands.length === 1 ? cands[0] : cands.find((c) => wordsMatch(c.title, e.title));
+    if (hit) e.actual = hit.value;
+  }
+}
+
 async function loadAll(): Promise<{ events: CalendarEvent[]; error?: string }> {
   if (cache && Date.now() - cache.at < CACHE_MS) return { events: cache.events };
-  const [thisWeek, nextWeek] = await Promise.all([
+  const [thisWeek, nextWeek, actuals] = await Promise.all([
     fetchWeek("https://nfs.faireconomy.media/ff_calendar_thisweek.json"),
     fetchWeek("https://nfs.faireconomy.media/ff_calendar_nextweek.json"),
+    fetchActuals(),
   ]);
   const raw = [...thisWeek.events, ...nextWeek.events];
   const merged = raw
@@ -82,6 +136,7 @@ async function loadAll(): Promise<{ events: CalendarEvent[]; error?: string }> {
     .sort((a, b) => a.timeUtc.localeCompare(b.timeUtc));
   const seen = new Set<string>();
   const out = merged.filter((e) => (seen.has(e.id) ? false : (seen.add(e.id), true)));
+  attachActuals(out, actuals);
   console.log("[news] normalized events:", out.length, "raw:", raw.length);
   if (out.length > 0) {
     cache = { at: Date.now(), events: out };
@@ -98,7 +153,7 @@ export const getEconomicCalendar = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
       .object({
-        range: z.enum(["today", "week", "upcoming", "released"]).default("week"),
+        range: z.enum(["today", "week", "upcoming", "released", "past"]).default("week"),
       })
       .parse(d ?? {}),
   )
@@ -119,7 +174,9 @@ export const getEconomicCalendar = createServerFn({ method: "POST" })
         return t >= dayStart && t < dayEnd;
       });
     } else if (data.range === "upcoming") {
-      events = all.filter((e) => e.impact === "high" && Date.parse(e.timeUtc) >= now).slice(0, 30);
+      events = all.filter((e) => Date.parse(e.timeUtc) >= now - 15 * 60000);
+    } else if (data.range === "past") {
+      events = all.filter((e) => Date.parse(e.timeUtc) < now).reverse();
     } else if (data.range === "released") {
       events = all.filter((e) => Date.parse(e.timeUtc) < now).slice(-40);
     } else {
@@ -130,7 +187,7 @@ export const getEconomicCalendar = createServerFn({ method: "POST" })
       });
     }
     console.log("[news] range=", data.range, "total=", all.length, "returned=", events.length, "error=", error ?? "none");
-    return { events, fetchedAt: cache?.at ?? Date.now(), error: error ?? null, totalLoaded: all.length };
+    return { events, fetchedAt: cache?.at ?? Date.now(), error: error ?? null, totalLoaded: all.length, hasActualsProvider: !!process.env["FMP_API_KEY"] };
   });
 
 // Server-side helper for the fundamentals AI. Returns a compact string
