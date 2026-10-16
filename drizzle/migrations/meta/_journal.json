@@ -8,6 +8,13 @@
       "when": 1790649404769,
       "tag": "0000_cleanup_backtest_test_trades",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792111609654,
+      "tag": "0001_restore_smc_session_timeframe",
+      "breakpoints": true
     }
   ]
 }

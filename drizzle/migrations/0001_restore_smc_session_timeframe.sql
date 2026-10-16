@@ -1,0 +1,1 @@
+UPDATE public.backtest_sessions SET timeframe = '60', replay_state = jsonb_set(replay_state, '{timeframe}', '"1H"') WHERE id = 'f8645c5a-d6be-4d4e-8169-f6c42f842451';
