@@ -9,109 +9,74 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as BestTradingJournalForMetatraderRouteImport } from './routes/best-trading-journal-for-metatrader'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedSimulatorRouteImport } from './routes/_authenticated/simulator'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
-import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
-import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated/replay'
-import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
-import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
-import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
-import { Route as AuthenticatedNewsRouteImport } from './routes/_authenticated/news'
-import { Route as AuthenticatedMt5RouteImport } from './routes/_authenticated/mt5'
-import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticated/lot-size'
-import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
-import { Route as AuthenticatedFundamentalsRouteImport } from './routes/_authenticated/fundamentals'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedBacktestRouteImport } from './routes/_authenticated/backtest'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BestTradingJournalForMetatraderRouteImport } from './routes/best-trading-journal-for-metatrader'
 import { Route as AuthenticatedAdminCodesRouteImport } from './routes/_authenticated/admin-codes'
+import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedBacktestRouteImport } from './routes/_authenticated/backtest'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFundamentalsRouteImport } from './routes/_authenticated/fundamentals'
+import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
+import { Route as AuthenticatedLotSizeRouteImport } from './routes/_authenticated/lot-size'
+import { Route as AuthenticatedMt5RouteImport } from './routes/_authenticated/mt5'
+import { Route as AuthenticatedNewsRouteImport } from './routes/_authenticated/news'
+import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
+import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
+import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
+import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated/replay'
+import { Route as AuthenticatedRiskRouteImport } from './routes/_authenticated/risk'
+import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSimulatorRouteImport } from './routes/_authenticated/simulator'
 import { Route as AuthenticatedReplaySessionIdRouteImport } from './routes/_authenticated/replay.$sessionId'
 import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
-const BestTradingJournalForMetatraderRoute =
-  BestTradingJournalForMetatraderRouteImport.update({
-    id: '/best-trading-journal-for-metatrader',
-    path: '/best-trading-journal-for-metatrader',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSimulatorRoute = AuthenticatedSimulatorRouteImport.update({
-  id: '/simulator',
-  path: '/simulator',
+const BestTradingJournalForMetatraderRoute =
+  BestTradingJournalForMetatraderRouteImport.update({
+    id: '/best-trading-journal-for-metatrader',
+    path: '/best-trading-journal-for-metatrader',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAdminCodesRoute = AuthenticatedAdminCodesRouteImport.update({
+  id: '/admin-codes',
+  path: '/admin-codes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const AuthenticatedAiReviewerRoute = AuthenticatedAiReviewerRouteImport.update({
+  id: '/ai-reviewer',
+  path: '/ai-reviewer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedRiskRoute = AuthenticatedRiskRouteImport.update({
-  id: '/risk',
-  path: '/risk',
+const AuthenticatedBacktestRoute = AuthenticatedBacktestRouteImport.update({
+  id: '/backtest',
+  path: '/backtest',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedReplayRoute = AuthenticatedReplayRouteImport.update({
-  id: '/replay',
-  path: '/replay',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPropFirmRoute = AuthenticatedPropFirmRouteImport.update({
-  id: '/prop-firm',
-  path: '/prop-firm',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
-  id: '/patterns',
-  path: '/patterns',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedNewsRoute = AuthenticatedNewsRouteImport.update({
-  id: '/news',
-  path: '/news',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMt5Route = AuthenticatedMt5RouteImport.update({
-  id: '/mt5',
-  path: '/mt5',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedLotSizeRoute = AuthenticatedLotSizeRouteImport.update({
-  id: '/lot-size',
-  path: '/lot-size',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
-  id: '/journal',
-  path: '/journal',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFundamentalsRoute =
@@ -120,29 +85,64 @@ const AuthenticatedFundamentalsRoute =
     path: '/fundamentals',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBacktestRoute = AuthenticatedBacktestRouteImport.update({
-  id: '/backtest',
-  path: '/backtest',
+const AuthenticatedLotSizeRoute = AuthenticatedLotSizeRouteImport.update({
+  id: '/lot-size',
+  path: '/lot-size',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
+const AuthenticatedMt5Route = AuthenticatedMt5RouteImport.update({
+  id: '/mt5',
+  path: '/mt5',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAiReviewerRoute = AuthenticatedAiReviewerRouteImport.update({
-  id: '/ai-reviewer',
-  path: '/ai-reviewer',
+const AuthenticatedNewsRoute = AuthenticatedNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminCodesRoute = AuthenticatedAdminCodesRouteImport.update({
-  id: '/admin-codes',
-  path: '/admin-codes',
+const AuthenticatedPatternsRoute = AuthenticatedPatternsRouteImport.update({
+  id: '/patterns',
+  path: '/patterns',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPropFirmRoute = AuthenticatedPropFirmRouteImport.update({
+  id: '/prop-firm',
+  path: '/prop-firm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReplayRoute = AuthenticatedReplayRouteImport.update({
+  id: '/replay',
+  path: '/replay',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRiskRoute = AuthenticatedRiskRouteImport.update({
+  id: '/risk',
+  path: '/risk',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSimulatorRoute = AuthenticatedSimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReplaySessionIdRoute =
@@ -323,18 +323,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/best-trading-journal-for-metatrader': {
-      id: '/best-trading-journal-for-metatrader'
-      path: '/best-trading-journal-for-metatrader'
-      fullPath: '/best-trading-journal-for-metatrader'
-      preLoaderRoute: typeof BestTradingJournalForMetatraderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -344,123 +337,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/simulator': {
-      id: '/_authenticated/simulator'
-      path: '/simulator'
-      fullPath: '/simulator'
-      preLoaderRoute: typeof AuthenticatedSimulatorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/best-trading-journal-for-metatrader': {
+      id: '/best-trading-journal-for-metatrader'
+      path: '/best-trading-journal-for-metatrader'
+      fullPath: '/best-trading-journal-for-metatrader'
+      preLoaderRoute: typeof BestTradingJournalForMetatraderRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/sessions': {
-      id: '/_authenticated/sessions'
-      path: '/sessions'
-      fullPath: '/sessions'
-      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/risk': {
-      id: '/_authenticated/risk'
-      path: '/risk'
-      fullPath: '/risk'
-      preLoaderRoute: typeof AuthenticatedRiskRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/replay': {
-      id: '/_authenticated/replay'
-      path: '/replay'
-      fullPath: '/replay'
-      preLoaderRoute: typeof AuthenticatedReplayRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/prop-firm': {
-      id: '/_authenticated/prop-firm'
-      path: '/prop-firm'
-      fullPath: '/prop-firm'
-      preLoaderRoute: typeof AuthenticatedPropFirmRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pricing': {
-      id: '/_authenticated/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof AuthenticatedPricingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/patterns': {
-      id: '/_authenticated/patterns'
-      path: '/patterns'
-      fullPath: '/patterns'
-      preLoaderRoute: typeof AuthenticatedPatternsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/news': {
-      id: '/_authenticated/news'
-      path: '/news'
-      fullPath: '/news'
-      preLoaderRoute: typeof AuthenticatedNewsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/mt5': {
-      id: '/_authenticated/mt5'
-      path: '/mt5'
-      fullPath: '/mt5'
-      preLoaderRoute: typeof AuthenticatedMt5RouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/lot-size': {
-      id: '/_authenticated/lot-size'
-      path: '/lot-size'
-      fullPath: '/lot-size'
-      preLoaderRoute: typeof AuthenticatedLotSizeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/journal': {
-      id: '/_authenticated/journal'
-      path: '/journal'
-      fullPath: '/journal'
-      preLoaderRoute: typeof AuthenticatedJournalRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/fundamentals': {
-      id: '/_authenticated/fundamentals'
-      path: '/fundamentals'
-      fullPath: '/fundamentals'
-      preLoaderRoute: typeof AuthenticatedFundamentalsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/backtest': {
-      id: '/_authenticated/backtest'
-      path: '/backtest'
-      fullPath: '/backtest'
-      preLoaderRoute: typeof AuthenticatedBacktestRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/analytics': {
-      id: '/_authenticated/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+    '/_authenticated/admin-codes': {
+      id: '/_authenticated/admin-codes'
+      path: '/admin-codes'
+      fullPath: '/admin-codes'
+      preLoaderRoute: typeof AuthenticatedAdminCodesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/ai-reviewer': {
@@ -470,11 +365,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAiReviewerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin-codes': {
-      id: '/_authenticated/admin-codes'
-      path: '/admin-codes'
-      fullPath: '/admin-codes'
-      preLoaderRoute: typeof AuthenticatedAdminCodesRouteImport
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/backtest': {
+      id: '/_authenticated/backtest'
+      path: '/backtest'
+      fullPath: '/backtest'
+      preLoaderRoute: typeof AuthenticatedBacktestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fundamentals': {
+      id: '/_authenticated/fundamentals'
+      path: '/fundamentals'
+      fullPath: '/fundamentals'
+      preLoaderRoute: typeof AuthenticatedFundamentalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/journal': {
+      id: '/_authenticated/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof AuthenticatedJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/lot-size': {
+      id: '/_authenticated/lot-size'
+      path: '/lot-size'
+      fullPath: '/lot-size'
+      preLoaderRoute: typeof AuthenticatedLotSizeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mt5': {
+      id: '/_authenticated/mt5'
+      path: '/mt5'
+      fullPath: '/mt5'
+      preLoaderRoute: typeof AuthenticatedMt5RouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/news': {
+      id: '/_authenticated/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof AuthenticatedNewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patterns': {
+      id: '/_authenticated/patterns'
+      path: '/patterns'
+      fullPath: '/patterns'
+      preLoaderRoute: typeof AuthenticatedPatternsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pricing': {
+      id: '/_authenticated/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AuthenticatedPricingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/prop-firm': {
+      id: '/_authenticated/prop-firm'
+      path: '/prop-firm'
+      fullPath: '/prop-firm'
+      preLoaderRoute: typeof AuthenticatedPropFirmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/replay': {
+      id: '/_authenticated/replay'
+      path: '/replay'
+      fullPath: '/replay'
+      preLoaderRoute: typeof AuthenticatedReplayRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/risk': {
+      id: '/_authenticated/risk'
+      path: '/risk'
+      fullPath: '/risk'
+      preLoaderRoute: typeof AuthenticatedRiskRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sessions': {
+      id: '/_authenticated/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/simulator': {
+      id: '/_authenticated/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof AuthenticatedSimulatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/replay/$sessionId': {
