@@ -21,7 +21,28 @@ export const Route = createFileRoute("/_authenticated/news")({
   component: NewsLab,
 });
 
-type RangeKey = "today" | "week" | "upcoming" | "released";
+type RangeKey = "today" | "upcoming" | "past";
+
+function num(v: string | null): number | null {
+  if (!v) return null;
+  const m = v.replace(/,/g, "").match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  let n = parseFloat(m[0]);
+  const u = v.trim().slice(-1).toUpperCase();
+  if (u === "K") n *= 1e3; else if (u === "M") n *= 1e6; else if (u === "B") n *= 1e9; else if (u === "T") n *= 1e12;
+  return n;
+}
+const LOWER_IS_BETTER = /unemployment|jobless|claims|claimant/i;
+function actualTone(e: CalendarEvent): string {
+  const a = num(e.actual), f = num(e.forecast ?? e.previous);
+  if (a === null || f === null || a === f) return "";
+  const better = LOWER_IS_BETTER.test(e.title) ? a < f : a > f;
+  return better ? "text-success" : "text-danger";
+}
+function isNow(e: CalendarEvent, now: number) {
+  const t = Date.parse(e.timeUtc);
+  return e.hasTime && now >= t - 10 * 60000 && now <= t + 30 * 60000;
+}
 
 // Compact reference for common events. Anything not listed falls back to a
 // generic message; the AI dialog gives full analysis.
@@ -70,7 +91,9 @@ function NewsLab() {
   const { profile } = useProfile();
   const [range, setRange] = useState<RangeKey>("today");
   const [tz, setTz] = useState<string>("local");
-  const [minImpact, setMinImpact] = useState<"all" | "medium" | "high">("all");
+  const [impacts, setImpacts] = useState<Set<string>>(new Set(["high", "medium", "low", "holiday"]));
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(id); }, []);
   const [currency, setCurrency] = useState<string>("all");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -117,8 +140,7 @@ function NewsLab() {
 
   const filtered = useMemo(() => {
     const out = events.filter((e) => {
-      if (minImpact === "high" && e.impact !== "high") return false;
-      if (minImpact === "medium" && e.impact !== "high" && e.impact !== "medium") return false;
+      if (!impacts.has(e.impact)) return false;
       if (currency !== "all" && e.currency !== currency) return false;
       // For "today" tab, narrow to the user's selected timezone day
       if (range === "today") {
@@ -132,9 +154,8 @@ function NewsLab() {
       }
       return true;
     });
-    console.log("[NewsLab] filter", { range, minImpact, currency, tz, in: events.length, out: out.length });
     return out;
-  }, [events, minImpact, currency, range, tz]);
+  }, [events, impacts, currency, range, tz]);
 
   const currencies = useMemo(() => Array.from(new Set(events.map((e) => e.currency).filter(Boolean))).sort(), [events]);
   const highHits = useMemo(() => filtered.filter((e) => e.impact === "high").slice(0, 8), [filtered]);
@@ -154,15 +175,14 @@ function NewsLab() {
 
   return (
     <AppShell title="Economic Calendar">
-      <p className="mb-6 text-sm text-muted-foreground">Live economic calendar (Forex Factory feed) — auto-refreshed every minute, adjusted to your timezone.</p>
+      <p className="mb-6 text-sm text-muted-foreground">Live economic calendar — refreshed every minute, times shown in your timezone. Events happening now are highlighted.</p>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Tabs value={range} onValueChange={(v) => setRange(v as RangeKey)}>
           <TabsList>
             <TabsTrigger value="today">Today</TabsTrigger>
-            <TabsTrigger value="week">This Week</TabsTrigger>
-            <TabsTrigger value="upcoming">Upcoming High Impact</TabsTrigger>
-            <TabsTrigger value="released">Recently Released</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="past">Past</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -170,14 +190,17 @@ function NewsLab() {
             <SelectTrigger className="h-9 w-[190px]"><SelectValue placeholder="Timezone" /></SelectTrigger>
             <SelectContent>{TIMEZONES.map((t) => <SelectItem key={t.id} value={t.ianaOrOffset}>{t.label}</SelectItem>)}</SelectContent>
           </Select>
-          <Select value={minImpact} onValueChange={(v) => setMinImpact(v as any)}>
-            <SelectTrigger className="h-9 w-[130px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All impact</SelectItem>
-              <SelectItem value="medium">Medium+</SelectItem>
-              <SelectItem value="high">High only</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-1" aria-label="Impact filter">
+            {(["high", "medium", "low"] as const).map((k) => {
+              const on = impacts.has(k);
+              return (
+                <Button key={k} size="sm" variant={on ? "secondary" : "outline"} className="h-9 gap-1.5 px-2.5 text-xs capitalize" aria-pressed={on}
+                  onClick={() => setImpacts((prev) => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; })}>
+                  <ImpactDot impact={k} /> {k}
+                </Button>
+              );
+            })}
+          </div>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger className="h-9 w-[120px]"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -225,10 +248,11 @@ function NewsLab() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>When</TableHead>
-                      <TableHead>Ccy</TableHead>
-                      <TableHead>Event</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Currency</TableHead>
                       <TableHead>Impact</TableHead>
+                      <TableHead>Event</TableHead>
+                      <TableHead className="text-right">Actual</TableHead>
                       <TableHead className="text-right">Forecast</TableHead>
                       <TableHead className="text-right">Previous</TableHead>
                       <TableHead></TableHead>
@@ -237,13 +261,15 @@ function NewsLab() {
                   <TableBody>
                     {filtered.map((e) => {
                       const w = fmtWhen(e.timeUtc, tz);
-                      const isPast = Date.parse(e.timeUtc) < Date.now();
+                      const live = isNow(e, now);
+                      const isPast = Date.parse(e.timeUtc) < now;
                       return (
-                        <TableRow key={e.id} className={e.impact === "high" ? "bg-danger/5" : ""}>
-                          <TableCell className="whitespace-nowrap text-xs"><div>{w.date}</div><div className="text-muted-foreground">{e.hasTime ? w.time : "All day"}</div></TableCell>
+                        <TableRow key={e.id} className={live ? "bg-primary/10 ring-1 ring-inset ring-primary/40" : isPast ? "opacity-80" : ""}>
+                          <TableCell className="whitespace-nowrap text-xs"><div className="text-muted-foreground">{w.date}</div><div className="font-medium">{e.hasTime ? w.time : "All day"}</div>{live && <Badge className="mt-1 h-4 px-1.5 text-[9px]">NOW</Badge>}</TableCell>
                           <TableCell><Badge variant="outline">{e.currency}</Badge></TableCell>
-                          <TableCell className="font-medium">{e.title}{isPast && <span className="ml-2 text-[10px] uppercase text-muted-foreground">released</span>}</TableCell>
                           <TableCell><ImpactBadge impact={e.impact} /></TableCell>
+                          <TableCell className="font-medium">{e.title}</TableCell>
+                          <TableCell className={`text-right font-semibold tabular-nums ${actualTone(e)}`}>{e.actual ?? "—"}</TableCell>
                           <TableCell className="text-right tabular-nums">{e.forecast ?? "—"}</TableCell>
                           <TableCell className="text-right tabular-nums">{e.previous ?? "—"}</TableCell>
                           <TableCell><Button size="sm" variant="ghost" onClick={() => { setSelected(e); setAnalysis(""); }}>Details</Button></TableCell>
@@ -300,6 +326,7 @@ function NewsLab() {
                   <Stat label="Currency" value={selected.currency} />
                   <Stat label="Impact" value={selected.impact.toUpperCase()} />
                   <Stat label="When" value={`${w.date} ${selected.hasTime ? w.time : ""}`} />
+                  <Stat label="Actual" value={selected.actual ?? "—"} />
                   <Stat label="Forecast" value={selected.forecast ?? "—"} />
                   <Stat label="Previous" value={selected.previous ?? "—"} />
                   <Stat label="Volatility" value={meta.volatility} />
@@ -330,11 +357,16 @@ function NewsLab() {
   );
 }
 
+function ImpactDot({ impact }: { impact: CalendarEvent["impact"] }) {
+  const c = impact === "high" ? "bg-danger" : impact === "medium" ? "bg-impact-medium" : impact === "low" ? "bg-impact-low" : "bg-muted-foreground";
+  return <span className={`inline-block h-2.5 w-2.5 rounded-sm ${c}`} />;
+}
+
 function ImpactBadge({ impact }: { impact: CalendarEvent["impact"] }) {
-  if (impact === "high") return <Badge className="bg-danger/20 text-danger hover:bg-danger/20">High</Badge>;
-  if (impact === "medium") return <Badge className="bg-accent/20 text-accent hover:bg-accent/20">Medium</Badge>;
+  if (impact === "high") return <Badge className="gap-1 bg-danger/20 text-danger hover:bg-danger/20"><ImpactDot impact={impact} />High</Badge>;
+  if (impact === "medium") return <Badge className="gap-1 bg-impact-medium/20 text-impact-medium hover:bg-impact-medium/20"><ImpactDot impact={impact} />Medium</Badge>;
   if (impact === "holiday") return <Badge variant="outline">Holiday</Badge>;
-  return <Badge variant="outline">Low</Badge>;
+  return <Badge className="gap-1 bg-impact-low/15 text-impact-low hover:bg-impact-low/15"><ImpactDot impact={impact} />Low</Badge>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
