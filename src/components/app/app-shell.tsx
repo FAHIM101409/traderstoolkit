@@ -14,7 +14,6 @@ const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { section: "Calculators" as const },
   { to: "/lot-size", label: "Lot Size", icon: Calculator },
-  { to: "/prop-firm", label: "Prop Firm", icon: Building2, hidden: true },
   { to: "/sessions", label: "Sessions", icon: Clock },
   { section: "Journal" as const },
   { to: "/journal", label: "Trade Journal", icon: BookOpen },
