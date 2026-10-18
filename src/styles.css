@@ -51,7 +51,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Traders Toolkit — dark by default */
+/* Tradivo — dark by default */
 :root {
   --radius: 0.75rem;
   --background: oklch(0.21 0.034 264);

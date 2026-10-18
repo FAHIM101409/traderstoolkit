@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/use-profile";
 
 export const Route = createFileRoute("/_authenticated/news")({
-  head: () => ({ meta: [{ title: "Economic Calendar — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Economic Calendar — Tradivo" }] }),
   component: NewsLab,
 });
 

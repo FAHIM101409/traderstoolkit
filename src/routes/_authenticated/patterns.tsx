@@ -11,7 +11,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/patterns")({
-  head: () => ({ meta: [{ title: "Pattern Detection — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Pattern Detection — Tradivo" }] }),
   component: PatternsPage,
 });
 

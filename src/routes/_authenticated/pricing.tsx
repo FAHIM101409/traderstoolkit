@@ -8,7 +8,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/pricing")({
-  head: () => ({ meta: [{ title: "Pricing — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Pricing — Tradivo" }] }),
   component: PricingPage,
 });
 

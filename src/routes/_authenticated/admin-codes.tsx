@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Copy, KeyRound, ShieldCheck, Ban, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin-codes")({
-  head: () => ({ meta: [{ title: "Founder Access Codes — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Founder Access Codes — Tradivo" }] }),
   component: AdminCodesPage,
 });
 

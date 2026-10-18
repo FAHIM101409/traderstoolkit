@@ -13,9 +13,9 @@ import { SiteFooter } from "@/components/landing/site-footer";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Traders Toolkit — Everything a Trader Needs. One Toolkit." },
+      { title: "Tradivo — Everything a Trader Needs. One Toolkit." },
       { name: "description", content: "Risk Management, Journaling, Backtesting, Fundamentals and Prop Firm Analytics in one professional trading platform." },
-      { property: "og:title", content: "Traders Toolkit" },
+      { property: "og:title", content: "Tradivo" },
       { property: "og:description", content: "The all-in-one trading operating system for Forex, Gold, Crypto, Prop Firm and SMC traders." },
     ],
   }),

@@ -23,7 +23,7 @@ import { CURRENCIES, formatMoney } from "@/lib/currencies";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Tradivo" }] }),
   component: Dashboard,
 });
 

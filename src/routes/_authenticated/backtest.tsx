@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/backtest")({
   head: () => ({
     meta: [
-      { title: "Backtesting Lab — Bar Replay Workspace | Traders Toolkit" },
+      { title: "Backtesting Lab — Bar Replay Workspace | Tradivo" },
       { name: "description", content: "Blind bar-by-bar replay on real historical candles with MT5-style order execution, draggable stops, drawings and indicators." },
       { property: "og:title", content: "Backtesting Lab — Bar Replay Workspace" },
       { property: "og:description", content: "Practise real setups bar by bar with hidden future candles, full order execution and session-tracked results." },
