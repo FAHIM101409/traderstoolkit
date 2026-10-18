@@ -79,7 +79,14 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
           <Link key={item.to} to={item.to} className={cls}>
             <item.icon className="h-4 w-4 shrink-0" />
             <span className="flex-1 truncate">{item.label}</span>
-            {item.pro && !isPro && <Lock className="h-3 w-3 text-muted-foreground/70 shrink-0" />}
+            {item.comingSoon ? (
+              <span className="flex shrink-0 items-center gap-1.5">
+                <Lock className="h-3 w-3 text-muted-foreground/70" />
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Pro · Coming soon</span>
+              </span>
+            ) : (
+              item.pro && !isPro && <Lock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+            )}
           </Link>
         );
       })}
