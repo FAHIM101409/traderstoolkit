@@ -76,7 +76,12 @@ export const connectMt5 = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async () => {
+    // MT5 Integration is a Pro feature that is coming soon: hard-disabled on
+    // the server. Never call MetaApi or store credentials while locked.
+    throw new Error("MT5 Integration is a Pro feature coming soon.");
+    // eslint-disable-next-line no-unreachable
+    const { data, context } = { data: null as any, context: null as any };
     const { supabase, userId } = context;
     await assertPro(supabase, userId);
 
@@ -131,7 +136,10 @@ export const connectMt5 = createServerFn({ method: "POST" })
 // ---------- Disconnect ----------
 export const disconnectMt5 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async () => {
+    throw new Error("MT5 Integration is a Pro feature coming soon.");
+    // eslint-disable-next-line no-unreachable
+    const { context } = { context: null as any };
     const { supabase, userId } = context;
     const { data: acct } = await supabase.from("mt5_accounts").select("id,metaapi_account_id").eq("user_id", userId).maybeSingle();
     if (!acct) return { ok: true };
@@ -169,7 +177,10 @@ type Deal = {
 
 export const syncMt5 = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async () => {
+    throw new Error("MT5 Integration is a Pro feature coming soon.");
+    // eslint-disable-next-line no-unreachable
+    const { context } = { context: null as any };
     const { supabase, userId } = context;
     await assertPro(supabase, userId);
 
@@ -318,7 +329,10 @@ export const updateMt5Settings = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z.object({ sync_frequency_minutes: z.number().int().min(0).max(1440) }).parse(data),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async () => {
+    throw new Error("MT5 Integration is a Pro feature coming soon.");
+    // eslint-disable-next-line no-unreachable
+    const { data, context } = { data: null as any, context: null as any };
     const { supabase, userId } = context;
     const { error } = await supabase
       .from("mt5_accounts")
@@ -344,7 +358,10 @@ export type Mt5Phase =
 
 export const getMt5Status = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async () => {
+    throw new Error("MT5 Integration is a Pro feature coming soon.");
+    // eslint-disable-next-line no-unreachable
+    const { context } = { context: null as any };
     const { supabase, userId } = context;
     const { data: acct } = await supabase
       .from("mt5_accounts")
