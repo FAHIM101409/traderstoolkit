@@ -10,7 +10,7 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Analytics — Tradivo" }] }),
   component: AnalyticsPage,
 });
 

@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/replay")({
   head: () => ({ meta: [
-    { title: "Backtesting Station — Traders Toolkit" },
+    { title: "Backtesting Station — Tradivo" },
     { name: "description", content: "Every backtesting session with equity curves, drawdowns, breakdowns and full performance analytics." },
   ] }),
   component: BacktestStationList,

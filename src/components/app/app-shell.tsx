@@ -14,7 +14,6 @@ const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { section: "Calculators" as const },
   { to: "/lot-size", label: "Lot Size", icon: Calculator },
-  { to: "/prop-firm", label: "Prop Firm", icon: Building2 },
   { to: "/sessions", label: "Sessions", icon: Clock },
   { section: "Journal" as const },
   { to: "/journal", label: "Trade Journal", icon: BookOpen },
@@ -27,7 +26,7 @@ const nav = [
   { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical, hidden: true },
   { to: "/replay", label: "Backtesting Station", icon: Play, hidden: true },
   { to: "/news", label: "Economic Calendar", icon: CalendarClock },
-  { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true, hidden: true },
+  { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true, comingSoon: true },
 ];
 
 // Items flagged `hidden` keep their routes, pages and code — they just stay out of the sidebar.
@@ -80,7 +79,14 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
           <Link key={item.to} to={item.to} className={cls}>
             <item.icon className="h-4 w-4 shrink-0" />
             <span className="flex-1 truncate">{item.label}</span>
-            {item.pro && !isPro && <Lock className="h-3 w-3 text-muted-foreground/70 shrink-0" />}
+            {item.comingSoon ? (
+              <span className="flex shrink-0 items-center gap-1.5">
+                <Lock className="h-3 w-3 text-muted-foreground/70" />
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Pro · Coming soon</span>
+              </span>
+            ) : (
+              item.pro && !isPro && <Lock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+            )}
           </Link>
         );
       })}
@@ -145,7 +151,7 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
             <LineChart className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-sm font-semibold tracking-tight">Traders Toolkit</span>
+          <span className="text-sm font-semibold tracking-tight">Tradivo</span>
         </Link>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3 text-sm">{renderNavItems()}</nav>
         {renderFooter("desktop")}
@@ -167,7 +173,7 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
                     <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
                       <LineChart className="h-4 w-4 text-primary-foreground" />
                     </div>
-                    <span className="text-sm font-semibold tracking-tight">Traders Toolkit</span>
+                    <span className="text-sm font-semibold tracking-tight">Tradivo</span>
                   </Link>
                   <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close menu">
                     <X className="h-5 w-5" />

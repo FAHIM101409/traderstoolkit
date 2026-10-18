@@ -9,7 +9,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
-  head: () => ({ meta: [{ title: "Trading Sessions — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Trading Sessions — Tradivo" }] }),
   component: SessionsPage,
 });
 

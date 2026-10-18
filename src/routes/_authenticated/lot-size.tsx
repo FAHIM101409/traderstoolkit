@@ -16,7 +16,7 @@ import { INSTRUMENT_SPECS, getSpec, calculatePosition, convertCurrency, type Ins
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/lot-size")({
-  head: () => ({ meta: [{ title: "Lot Size Calculator — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Lot Size Calculator — Tradivo" }] }),
   component: LotSizePage,
 });
 

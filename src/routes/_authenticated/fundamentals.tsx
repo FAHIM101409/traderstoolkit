@@ -13,7 +13,7 @@ import { UpgradeDialog } from "@/components/app/upgrade-dialog";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/fundamentals")({
-  head: () => ({ meta: [{ title: "Fundamental Bot — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Fundamental Bot — Tradivo" }] }),
   component: FundPage,
 });
 

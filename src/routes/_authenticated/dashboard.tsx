@@ -23,13 +23,12 @@ import { CURRENCIES, formatMoney } from "@/lib/currencies";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Traders Toolkit" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Tradivo" }] }),
   component: Dashboard,
 });
 
 const tools = [
   { to: "/lot-size", icon: Calculator, t: "Lot Size", d: "Forex, gold, indices, crypto" },
-  { to: "/prop-firm", icon: Building2, t: "Prop Firm", d: "FTMO-style rules" },
   { to: "/sessions", icon: Clock, t: "Sessions", d: "London, NY, Tokyo, Sydney" },
 ];
 

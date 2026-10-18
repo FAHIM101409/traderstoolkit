@@ -10,7 +10,7 @@ export function SiteHeader() {
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
             <LineChart className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-sm font-semibold tracking-tight">Traders Toolkit</span>
+          <span className="text-sm font-semibold tracking-tight">Tradivo</span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
           <a href="#features" className="hover:text-foreground">Features</a>
