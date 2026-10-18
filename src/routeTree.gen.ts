@@ -25,7 +25,6 @@ import { Route as AuthenticatedMt5RouteImport } from './routes/_authenticated/mt
 import { Route as AuthenticatedNewsRouteImport } from './routes/_authenticated/news'
 import { Route as AuthenticatedPatternsRouteImport } from './routes/_authenticated/patterns'
 import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
-import { Route as AuthenticatedPropFirmRouteImport } from './routes/_authenticated/prop-firm'
 import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated/replay'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -113,11 +112,6 @@ const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPropFirmRoute = AuthenticatedPropFirmRouteImport.update({
-  id: '/prop-firm',
-  path: '/prop-firm',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedReplayRoute = AuthenticatedReplayRouteImport.update({
   id: '/replay',
   path: '/replay',
@@ -161,7 +155,6 @@ export interface FileRoutesByFullPath {
   '/news': typeof AuthenticatedNewsRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
-  '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -184,7 +177,6 @@ export interface FileRoutesByTo {
   '/news': typeof AuthenticatedNewsRoute
   '/patterns': typeof AuthenticatedPatternsRoute
   '/pricing': typeof AuthenticatedPricingRoute
-  '/prop-firm': typeof AuthenticatedPropFirmRoute
   '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -209,7 +201,6 @@ export interface FileRoutesById {
   '/_authenticated/news': typeof AuthenticatedNewsRoute
   '/_authenticated/patterns': typeof AuthenticatedPatternsRoute
   '/_authenticated/pricing': typeof AuthenticatedPricingRoute
-  '/_authenticated/prop-firm': typeof AuthenticatedPropFirmRoute
   '/_authenticated/replay': typeof AuthenticatedReplayRouteWithChildren
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -234,7 +225,6 @@ export interface FileRouteTypes {
     | '/news'
     | '/patterns'
     | '/pricing'
-    | '/prop-firm'
     | '/replay'
     | '/sessions'
     | '/settings'
@@ -257,7 +247,6 @@ export interface FileRouteTypes {
     | '/news'
     | '/patterns'
     | '/pricing'
-    | '/prop-firm'
     | '/replay'
     | '/sessions'
     | '/settings'
@@ -281,7 +270,6 @@ export interface FileRouteTypes {
     | '/_authenticated/news'
     | '/_authenticated/patterns'
     | '/_authenticated/pricing'
-    | '/_authenticated/prop-firm'
     | '/_authenticated/replay'
     | '/_authenticated/sessions'
     | '/_authenticated/settings'
@@ -411,13 +399,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPricingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/prop-firm': {
-      id: '/_authenticated/prop-firm'
-      path: '/prop-firm'
-      fullPath: '/prop-firm'
-      preLoaderRoute: typeof AuthenticatedPropFirmRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/replay': {
       id: '/_authenticated/replay'
       path: '/replay'
@@ -480,7 +461,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNewsRoute: typeof AuthenticatedNewsRoute
   AuthenticatedPatternsRoute: typeof AuthenticatedPatternsRoute
   AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
-  AuthenticatedPropFirmRoute: typeof AuthenticatedPropFirmRoute
   AuthenticatedReplayRoute: typeof AuthenticatedReplayRouteWithChildren
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -499,7 +479,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNewsRoute: AuthenticatedNewsRoute,
   AuthenticatedPatternsRoute: AuthenticatedPatternsRoute,
   AuthenticatedPricingRoute: AuthenticatedPricingRoute,
-  AuthenticatedPropFirmRoute: AuthenticatedPropFirmRoute,
   AuthenticatedReplayRoute: AuthenticatedReplayRouteWithChildren,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,

@@ -14,7 +14,7 @@ const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { section: "Calculators" as const },
   { to: "/lot-size", label: "Lot Size", icon: Calculator },
-  { to: "/prop-firm", label: "Prop Firm", icon: Building2 },
+  { to: "/prop-firm", label: "Prop Firm", icon: Building2, hidden: true },
   { to: "/sessions", label: "Sessions", icon: Clock },
   { section: "Journal" as const },
   { to: "/journal", label: "Trade Journal", icon: BookOpen },
@@ -27,7 +27,7 @@ const nav = [
   { to: "/backtest", label: "Backtesting Lab", icon: FlaskConical, hidden: true },
   { to: "/replay", label: "Backtesting Station", icon: Play, hidden: true },
   { to: "/news", label: "Economic Calendar", icon: CalendarClock },
-  { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true, hidden: true },
+  { to: "/mt5", label: "MT5 Integration", icon: Cable, pro: true, comingSoon: true },
 ];
 
 // Items flagged `hidden` keep their routes, pages and code — they just stay out of the sidebar.
