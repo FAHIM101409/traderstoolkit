@@ -183,7 +183,10 @@ export function getSpec(symbol: string): InstrumentSpec {
 /** Round `value` down to the nearest `step` (broker lot-step compliance). */
 export function roundToStep(value: number, step: number): number {
   if (step <= 0) return value;
-  return Math.floor(value / step) * step;
+  // Epsilon guards float error (e.g. 0.29/0.01 = 28.9999…).
+  const n = Math.floor(value / step + 1e-9);
+  const decimals = Math.max(0, Math.ceil(-Math.log10(step)));
+  return Number((n * step).toFixed(decimals));
 }
 
 /** Clamp a lot size to the broker's min/max range. */

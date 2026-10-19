@@ -94,3 +94,11 @@ export function formatMoney(amount: number, code: string): string {
   const formatted = abs.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   return sym ? `${sign}${sym}${formatted}` : `${sign}${formatted} ${c.code}`;
 }
+
+/** Overwrite the approximate rates with live market rates (1 USD = x units). */
+export function setLiveUsdRates(rates: Record<string, number>) {
+  for (const c of CURRENCIES) {
+    const r = rates[c.code];
+    if (typeof r === "number" && r > 0) c.usdRate = r;
+  }
+}
