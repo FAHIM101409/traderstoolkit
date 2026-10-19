@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { UpgradeDialog } from "./upgrade-dialog";
+import tradivoMark from "@/assets/tradivo-mark.png";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -148,9 +149,7 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
     <div className="flex min-h-screen w-full bg-background">
       <aside className="hidden w-64 flex-col border-r border-sidebar-border bg-sidebar md:flex">
         <Link to="/dashboard" className="flex items-center gap-2 border-b border-sidebar-border px-5 py-4">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
-            <LineChart className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src={tradivoMark} alt="Tradivo" className="h-8 w-8 rounded-lg shadow-glow" />
           <span className="text-sm font-semibold tracking-tight">Tradivo</span>
         </Link>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3 text-sm">{renderNavItems()}</nav>
@@ -170,9 +169,7 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-4">
                   <Link to="/dashboard" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                    <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
-                      <LineChart className="h-4 w-4 text-primary-foreground" />
-                    </div>
+                    <img src={tradivoMark} alt="Tradivo" className="h-8 w-8 rounded-lg shadow-glow" />
                     <span className="text-sm font-semibold tracking-tight">Tradivo</span>
                   </Link>
                   <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close menu">
