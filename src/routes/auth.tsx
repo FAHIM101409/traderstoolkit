@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { LineChart, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import tradivoMark from "@/assets/tradivo-mark.png";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — Tradivo" }] }),
