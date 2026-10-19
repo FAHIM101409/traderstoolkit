@@ -61,11 +61,10 @@ function AuthPage() {
       <div className="absolute inset-0 bg-gradient-hero" aria-hidden />
       <div className="relative w-full max-w-md">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary shadow-glow">
-            <LineChart className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src={tradivoMark} alt="Tradivo" className="h-9 w-9 rounded-lg shadow-glow" />
           <span className="text-sm font-semibold">Tradivo</span>
         </Link>
+        <p className="mb-6 -mt-4 text-center text-xs text-muted-foreground">Tools · Traders · Together</p>
         <Card className="border-border/60 bg-card/90 backdrop-blur">
           <CardContent className="p-6">
             <Tabs defaultValue="signin">
