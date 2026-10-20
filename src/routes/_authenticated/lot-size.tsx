@@ -109,7 +109,7 @@ function LotSizePage() {
   return (
     <AppShell title="Lot Size Calculator">
       <p className="mb-6 text-sm text-muted-foreground">
-        Institution-grade position sizing — Forex, metals, indices, commodities & crypto. Broker-accurate math, universal currency conversion, dual calculation modes.
+        Institution-grade position sizing — Forex, metals, indices, commodities & crypto. Broker-accurate math, universal currency conversion, dual calculation modes.{fxUpdated && <span className="block text-xs text-primary">Live exchange rates · updated {new Date(fxUpdated).toLocaleString()}</span>}
       </p>
 
       <div className="grid gap-6 lg:grid-cols-5">

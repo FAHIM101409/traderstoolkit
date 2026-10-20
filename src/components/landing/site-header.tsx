@@ -1,15 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { LineChart } from "lucide-react";
+import tradivoMark from "@/assets/tradivo-mark.png";
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-glow">
-            <LineChart className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src={tradivoMark} alt="Tradivo" className="h-8 w-8 rounded-lg" />
           <span className="text-sm font-semibold tracking-tight">Tradivo</span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
