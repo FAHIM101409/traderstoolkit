@@ -8,7 +8,6 @@ import { useIsAdmin } from "@/hooks/use-admin";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { UpgradeDialog } from "./upgrade-dialog";
 import tradivoMark from "@/assets/tradivo-mark.png";
 
 const nav = [
@@ -79,11 +78,11 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
         return (
           <Link key={item.to} to={item.to} className={cls}>
             <item.icon className="h-4 w-4 shrink-0" />
-            <span className="flex-1 truncate">{item.label}</span>
+            <span className="min-w-0 flex-1 whitespace-nowrap">{item.label}</span>
             {item.comingSoon ? (
-              <span className="flex shrink-0 items-center gap-1.5">
+              <span className="flex shrink-0 items-center gap-1">
                 <Lock className="h-3 w-3 text-muted-foreground/70" />
-                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Pro · Coming soon</span>
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Soon</span>
               </span>
             ) : (
               item.pro && !isPro && <Lock className="h-3 w-3 text-muted-foreground/70 shrink-0" />
@@ -97,12 +96,10 @@ export function AppShell({ children, title, fullBleed = false }: { children: Rea
   const renderFooter = (variant: "desktop" | "mobile") => (
     <div className={cn("border-t border-sidebar-border p-3", variant === "mobile" && "bg-sidebar")}>
       {!isPro && (
-        <UpgradeDialog>
-          <button className="mb-3 flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-primary to-accent px-3 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition hover:opacity-90">
-            <Sparkles className="h-3.5 w-3.5" />
-            Upgrade to Pro · $29/mo
-          </button>
-        </UpgradeDialog>
+        <button type="button" disabled aria-disabled="true" className="mb-3 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+          <Lock className="h-3.5 w-3.5" />
+          Pro · Coming soon
+        </button>
       )}
       <Link
         to="/pricing"

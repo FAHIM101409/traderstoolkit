@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Trophy, Target, Activity, Calendar, Calculator, Shield, Building2, Clock, ArrowRight, Flame, Cable, Pencil, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, Trophy, Target, Activity, Calendar, Calculator, Shield, Building2, Clock, ArrowRight, Flame, Cable, Pencil, RefreshCw, Lock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncMt5 } from "@/lib/mt5.functions";
 import { useAuth } from "@/hooks/use-auth";
