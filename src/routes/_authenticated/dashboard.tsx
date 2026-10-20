@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Trophy, Target, Activity, Calendar, Calculator, Shield, Building2, Clock, ArrowRight, Flame, Cable, Pencil, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, Trophy, Target, Activity, Calendar, Calculator, Shield, Building2, Clock, ArrowRight, Flame, Cable, Pencil, RefreshCw, Lock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { syncMt5 } from "@/lib/mt5.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -160,12 +160,12 @@ function Dashboard() {
 
   return (
     <AppShell title="Dashboard">
-      <div className="mb-6 flex items-end justify-between">
-        <div>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-sm text-muted-foreground">Welcome back,</p>
           <h2 className="text-2xl font-semibold tracking-tight">{name}</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className={hasMt5 ? "border-success/40 bg-success/10 text-success" : "border-border/60"}>
             {hasMt5 ? `Live MT5 · synced ${syncedRel}` : "Journal data"}
           </Badge>
@@ -229,17 +229,16 @@ function Dashboard() {
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/20 text-primary"><Cable className="h-6 w-6" /></div>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-lg font-semibold">Connect your MT5 account</p>
-                <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary text-[10px]">PRO</Badge>
+                <p className="text-lg font-semibold">MT5 sync · Coming soon (Pro)</p>
               </div>
-              <p className="text-sm text-muted-foreground">You're currently viewing statistics generated from your Trade Journal. Connect your MT5 account for automatic live account synchronization.</p>
+              <p className="text-sm text-muted-foreground">You're currently viewing statistics generated from your Trade Journal. Automatic MT5 account sync is coming soon for Pro.</p>
             </div>
-            <Button asChild size="lg" className="gap-2"><Link to="/mt5"><Cable className="h-4 w-4" /> Connect MT5</Link></Button>
+            <Button type="button" size="lg" variant="outline" className="gap-2" disabled aria-disabled="true"><Lock className="h-4 w-4" /> Coming soon</Button>
           </CardContent>
         </Card>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid auto-rows-fr gap-3 pb-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label={hasMt5 ? "Live Balance" : "Account Balance"} value={fmt(stats.balance)} sub={hasMt5 ? "Live MT5" : `Journal · ${liveCcy}`} icon={Activity} />
         {hasMt5 && <StatCard label="Live Equity" value={fmt(equity)} sub="Live MT5" icon={Activity} />}
         {hasMt5 && <StatCard label="Floating P/L" value={fmt(floating)} sub="Live MT5" icon={TrendingUp} accent={floating >= 0 ? "text-success" : "text-danger"} />}
@@ -281,7 +280,7 @@ function Dashboard() {
               </div>
             ) : (
               <div className="h-56 rounded-lg border border-border/60 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 grid place-items-center text-sm text-muted-foreground">
-                Connect MT5 or log trades to see your equity curve
+                Log trades in the journal to see your equity curve
               </div>
             )}
           </CardContent>
@@ -291,7 +290,7 @@ function Dashboard() {
             <h3 className="mb-4 font-semibold">Recent Trades</h3>
             {sourceTrades.length === 0 ? (
               <div className="grid h-56 place-items-center rounded-lg border border-dashed border-border/60 text-center text-sm text-muted-foreground">
-                {hasMt5 ? "No MT5 trades yet. Trades will appear after sync." : "No trades yet.\nAdd one from the journal or connect MT5."}
+                {hasMt5 ? "No MT5 trades yet. Trades will appear after sync." : "No trades yet. Log trades in the journal to see them here."}
               </div>
             ) : (
               <ul className="divide-y divide-border/60">
@@ -313,7 +312,7 @@ function Dashboard() {
       </div>
 
       <h3 className="mt-10 mb-3 text-sm font-medium text-muted-foreground">Quick tools</h3>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid auto-rows-fr gap-3 pb-1 sm:grid-cols-2 lg:grid-cols-4">
         {tools.map((t) => (
           <Link key={t.to} to={t.to} className="group">
             <Card className="border-border/60 bg-card transition hover:border-primary/40 hover:shadow-glow">
@@ -337,8 +336,8 @@ function Dashboard() {
 
 function StatCard({ label, value, sub, icon: Icon, accent = "text-foreground" }: { label: string; value: string; sub: string; icon: React.ComponentType<{ className?: string }>; accent?: string }) {
   return (
-    <Card className="border-border/60 bg-card shadow-card">
-      <CardContent className="p-5">
+    <Card className="h-full overflow-visible border-border/60 bg-card shadow-card">
+      <CardContent className="flex h-full flex-col p-5">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">{label}</p>
           <Icon className="h-4 w-4 text-muted-foreground" />
