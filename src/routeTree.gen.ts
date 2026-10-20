@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BestTradingJournalForMetatraderRouteImport } from './routes/best-trading-journal-for-metatrader'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminCodesRouteImport } from './routes/_authenticated/admin-codes'
 import { Route as AuthenticatedAiReviewerRouteImport } from './routes/_authenticated/ai-reviewer'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -51,6 +52,11 @@ const BestTradingJournalForMetatraderRoute =
     path: '/best-trading-journal-for-metatrader',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminCodesRoute = AuthenticatedAdminCodesRouteImport.update({
   id: '/admin-codes',
   path: '/admin-codes',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/best-trading-journal-for-metatrader': typeof BestTradingJournalForMetatraderRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/best-trading-journal-for-metatrader': typeof BestTradingJournalForMetatraderRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/best-trading-journal-for-metatrader': typeof BestTradingJournalForMetatraderRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin-codes': typeof AuthenticatedAdminCodesRoute
   '/_authenticated/ai-reviewer': typeof AuthenticatedAiReviewerRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/best-trading-journal-for-metatrader'
+    | '/reset-password'
     | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/best-trading-journal-for-metatrader'
+    | '/reset-password'
     | '/admin-codes'
     | '/ai-reviewer'
     | '/analytics'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/best-trading-journal-for-metatrader'
+    | '/reset-password'
     | '/_authenticated/admin-codes'
     | '/_authenticated/ai-reviewer'
     | '/_authenticated/analytics'
@@ -282,6 +294,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   BestTradingJournalForMetatraderRoute: typeof BestTradingJournalForMetatraderRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicMt5IngestRoute: typeof ApiPublicMt5IngestRoute
 }
 
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/best-trading-journal-for-metatrader'
       fullPath: '/best-trading-journal-for-metatrader'
       preLoaderRoute: typeof BestTradingJournalForMetatraderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin-codes': {
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   BestTradingJournalForMetatraderRoute: BestTradingJournalForMetatraderRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicMt5IngestRoute: ApiPublicMt5IngestRoute,
 }
 export const routeTree = rootRouteImport
