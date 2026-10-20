@@ -10,9 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import tradivoMark from "@/assets/tradivo-mark.png";
+import heroSummit from "@/assets/hero-summit.jpg";
+import { Calculator, BookOpen, BarChart3, CalendarClock } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Tradivo" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Tradivo" }, { name: "description", content: "Sign in to Tradivo — lot sizing, journal, analytics and economic calendar for traders." }, { property: "og:title", content: "Sign in — Tradivo" }, { property: "og:description", content: "Better Tools. Smarter Traders. Stronger Together." }] }),
   component: AuthPage,
 });
 
@@ -58,7 +60,30 @@ function AuthPage() {
   }
 
   return (
-    <div className="relative grid min-h-screen place-items-center px-4">
+    <div className="grid min-h-screen lg:grid-cols-2">
+      <aside className="relative hidden overflow-hidden lg:block">
+        <img src={heroSummit} alt="" className="absolute inset-0 h-full w-full object-cover object-right" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" aria-hidden />
+        <div className="relative flex h-full flex-col justify-between p-10">
+          <h2 className="text-4xl font-semibold leading-tight tracking-tight">
+            Better Tools.<br />Smarter Traders.<br /><span className="text-primary">Stronger Together.</span>
+          </h2>
+          <ul className="grid gap-4">
+            {[
+              { i: Calculator, t: "Precise lot sizing", d: "Every pair, metal, index and crypto — live FX rates." },
+              { i: BookOpen, t: "Trade journal", d: "Turn every trade into a lesson." },
+              { i: BarChart3, t: "Real analytics", d: "Win rate, profit factor and equity curve." },
+              { i: CalendarClock, t: "Economic calendar", d: "High-impact news in your timezone." },
+            ].map((f) => (
+              <li key={f.t} className="flex items-start gap-3 rounded-xl border border-border/60 bg-card/60 p-3 backdrop-blur">
+                <f.i className="mt-0.5 h-5 w-5 text-primary" />
+                <div><p className="text-sm font-semibold">{f.t}</p><p className="text-xs text-muted-foreground">{f.d}</p></div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+    <div className="relative grid place-items-center px-4 py-10">
       <div className="absolute inset-0 bg-gradient-hero" aria-hidden />
       <div className="relative w-full max-w-md">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
@@ -123,6 +148,7 @@ function AuthPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
     </div>
   );
 }

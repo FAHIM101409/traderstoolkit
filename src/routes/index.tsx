@@ -9,32 +9,35 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SiteHeader } from "@/components/landing/site-header";
 import { SiteFooter } from "@/components/landing/site-footer";
+import heroSummit from "@/assets/hero-summit.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tradivo — Everything a Trader Needs. One Toolkit." },
-      { name: "description", content: "Risk Management, Journaling, Backtesting, Fundamentals and Prop Firm Analytics in one professional trading platform." },
-      { property: "og:title", content: "Tradivo" },
-      { property: "og:description", content: "The all-in-one trading operating system for Forex, Gold, Crypto, Prop Firm and SMC traders." },
+      { title: "Tradivo — Better Tools. Smarter Traders. Stronger Together." },
+      { name: "description", content: "Better tools, smarter traders, stronger together. Lot sizing, journaling, analytics, sessions and an economic calendar in one trading workspace." },
+      { property: "og:title", content: "Tradivo — Better Tools. Smarter Traders." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:description", content: "Lot sizing, journaling, analytics, sessions and an economic calendar for Forex, Gold, Indices and Crypto traders." },
     ],
   }),
   component: Landing,
 });
 
 const features = [
-  { icon: Calculator, title: "Lot Size & Risk Calculators", desc: "Forex, gold, indices and crypto with precise position sizing and RR." },
-  { icon: Shield, title: "Prop Firm Drawdown Engine", desc: "Funding Traders, FundedNext, Goat, AquaFunded — custom rules supported." },
-  { icon: BookOpen, title: "Smart Trade Journal", desc: "Screenshots, SMC tags (BOS, FVG, OB), notes and full analytics." },
-  { icon: Brain, title: "AI Trade Reviewer", desc: "Upload your chart. Get entry, risk and psychology scoring instantly." },
-  { icon: BarChart3, title: "Fundamental Intelligence", desc: "CPI, NFP, rate decisions and AI-driven bias on gold and majors." },
-  { icon: Clock, title: "Backtesting Lab", desc: "Replay mode, prop-firm simulator and detailed strategy stats." },
+  { icon: Calculator, title: "Lot Size Calculator", desc: "Broker-accurate sizing for Forex, metals, indices, oil and crypto — with live exchange rates for any account currency." },
+  { icon: BookOpen, title: "Trade Journal", desc: "Log entries, exits, screenshots, setups and emotions so every trade becomes a lesson." },
+  { icon: BarChart3, title: "Performance Analytics", desc: "Win rate, profit factor, expectancy, equity curve and streaks — see your real edge." },
+  { icon: Clock, title: "Trading Sessions", desc: "Sydney, Tokyo, London and New York sessions and overlaps in your own timezone." },
+  { icon: Zap, title: "Economic Calendar", desc: "High, medium and low impact releases with forecasts, previous values and a live NOW marker." },
+  { icon: Shield, title: "MT5 Integration (Pro · soon)", desc: "Connect your MetaTrader 5 account to auto-sync trades straight into your journal." },
 ];
 
 const benefits = [
   "Built for SMC and prop firm traders",
   "Dark, TradingView-inspired interface",
-  "Auto-sync trades from MT5",
+  "Live FX rates for exact pip values",
   "Pattern detection on your weaknesses",
   "Multi-account & multi-currency",
   "Mobile responsive — trade anywhere",
@@ -47,47 +50,34 @@ function Landing() {
 
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero" aria-hidden />
-        <div className="container relative mx-auto px-4 py-24 md:py-32">
-          <div className="mx-auto max-w-3xl text-center">
+        <img src={heroSummit} alt="" width={1920} height={1088} className="absolute inset-0 h-full w-full object-cover object-right" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/10" aria-hidden />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" aria-hidden />
+        <div className="container relative mx-auto px-4 py-28 md:py-40">
+          <div className="max-w-2xl">
             <Badge variant="outline" className="mb-6 border-primary/30 bg-primary/10 text-primary">
-              <Sparkles className="mr-1 h-3 w-3" /> New: AI Trade Reviewer
+              <Sparkles className="mr-1 h-3 w-3" /> Tools · Traders · Together
             </Badge>
-            <h1 className="text-balance text-4xl font-semibold tracking-tight md:text-6xl">
-              Everything a Trader Needs.
-              <span className="block bg-gradient-primary bg-clip-text text-transparent">One Toolkit.</span>
+            <h1 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+              Better Tools.<br />Smarter Traders.
+              <span className="block text-primary">Stronger Together.</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-base text-muted-foreground md:text-lg">
-              Risk Management, Journaling, Backtesting, Fundamentals and Prop Firm Analytics in one professional platform — built for Forex, Gold, Crypto, SMC and prop firm traders.
+            <p className="mt-6 max-w-xl text-pretty text-base text-muted-foreground md:text-lg">
+              Size every position precisely, journal every trade, track every session and never miss a market-moving release — one calm workspace for Forex, Gold, Indices and Crypto traders.
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow">
                 <Link to="/auth">Get Started Free <ArrowRight className="ml-1 h-4 w-4" /></Link>
               </Button>
-              <Button size="lg" variant="outline">
-                <PlayCircle className="mr-2 h-4 w-4" /> Watch Demo
-              </Button>
+              <Button asChild size="lg" variant="outline"><a href="#features">Explore features</a></Button>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">Free forever plan • No credit card required</p>
-          </div>
-
-          {/* Mock dashboard preview */}
-          <div className="relative mx-auto mt-16 max-w-5xl">
-            <div className="rounded-2xl border border-border/80 bg-card p-2 shadow-card">
-              <div className="grid gap-2 rounded-xl bg-background/60 p-4 md:grid-cols-4">
-                {[
-                  { l: "Win Rate", v: "64.3%", c: "text-success" },
-                  { l: "Profit Factor", v: "2.18", c: "text-foreground" },
-                  { l: "Avg RR", v: "1:2.4", c: "text-foreground" },
-                  { l: "Drawdown", v: "-3.1%", c: "text-danger" },
-                ].map((s) => (
-                  <div key={s.l} className="rounded-lg border border-border/60 bg-card p-4">
-                    <p className="text-xs text-muted-foreground">{s.l}</p>
-                    <p className={`mt-2 text-2xl font-semibold ${s.c}`}>{s.v}</p>
-                  </div>
-                ))}
-                <div className="md:col-span-4 h-48 rounded-lg border border-border/60 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
-              </div>
+            <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
+              {[{ v: "70+", l: "Instruments" }, { v: "75+", l: "Account currencies" }, { v: "Live", l: "FX rates & calendar" }].map((s) => (
+                <div key={s.l} className="rounded-xl border border-border/60 bg-card/60 p-3 backdrop-blur">
+                  <p className="text-xl font-semibold text-primary">{s.v}</p>
+                  <p className="text-xs text-muted-foreground">{s.l}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -156,7 +146,7 @@ function Landing() {
         </div>
         <div className="mt-12 grid gap-4 md:grid-cols-3">
           {[
-            { n: "Marcus T.", r: "Funded — FTMO 200k", q: "The prop firm drawdown calculator alone saved my account twice." },
+            { n: "Marcus T.", r: "Funded — FTMO 200k", q: "The lot size calculator is spot on for gold and indices — no more guessing my risk." },
             { n: "Aisha K.", r: "SMC Trader", q: "Tagging BOS, FVG and OBs in the journal makes my reviews 10x sharper." },
             { n: "Daniel R.", r: "Gold Day Trader", q: "Fundamental bias on XAU and the AI reviewer changed how I prep my sessions." },
           ].map((t) => (
@@ -199,7 +189,7 @@ function Landing() {
                 <p className="text-sm text-primary">Pro</p>
                 <p className="mt-2 text-4xl font-semibold">$29<span className="text-base text-muted-foreground">/mo</span></p>
                 <ul className="mt-6 space-y-2 text-sm">
-                  {["Everything in Free","AI Trade Reviewer","Fundamental Bot","MT5 Auto-Sync","Backtesting Lab","Prop Firm Simulator"].map(i => (
+                  {["Everything in Free","AI Trade Reviewer","Fundamental Bot","MT5 Auto-Sync (soon)","Backtesting Lab","Priority support"].map(i => (
                     <li key={i} className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-success" /> {i}</li>
                   ))}
                 </ul>
@@ -216,8 +206,7 @@ function Landing() {
         <Accordion type="single" collapsible className="mt-10">
           {[
             { q: "Which markets does it support?", a: "Forex, gold, indices and crypto out of the box — with proper contract-size handling per asset class." },
-            { q: "Do you support prop firm rules?", a: "Yes — Funding Traders, FundedNext, Goat Funded Trader and AquaFunded are built-in. You can also add custom rules." },
-            { q: "Can I import trades from MT5?", a: "Pro accounts can connect MT5 to auto-sync entries, exits, lot sizes and P&L." },
+                        { q: "Can I import trades from MT5?", a: "MT5 auto-sync is a Pro feature coming soon. Until then you can log trades in the journal in seconds." },
             { q: "Is my data private?", a: "Your trades and screenshots stay tied to your account with row-level security on the backend." },
           ].map((f) => (
             <AccordionItem key={f.q} value={f.q} className="border-border/60">

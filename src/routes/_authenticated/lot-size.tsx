@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check, ChevronsUpDown, Calculator, Wallet, Target, Activity, AlertTriangle, Info, Cable } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CURRENCIES, formatMoney } from "@/lib/currencies";
+import { CURRENCIES, formatMoney, setLiveUsdRates } from "@/lib/currencies";
+import { getFxRates } from "@/lib/fx.functions";
 import { INSTRUMENT_SPECS, getSpec, calculatePosition, convertCurrency, type InstrumentGroup } from "@/lib/instruments";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,6 +44,15 @@ function LotSizePage() {
   const [mt5Balance, setMt5Balance] = useState<number | null>(null);
 
   const spec = getSpec(symbol);
+  const [fxTick, setFxTick] = useState(0);
+  const [fxUpdated, setFxUpdated] = useState("");
+
+  // Live exchange rates so cross-currency pip values match the market.
+  useEffect(() => {
+    getFxRates().then((r) => {
+      if (Object.keys(r.rates).length) { setLiveUsdRates(r.rates); setFxUpdated(r.updated); setFxTick((t) => t + 1); }
+    }).catch(() => {});
+  }, []);
 
   // Pull broker context if MT5 is connected — user can still override.
   useEffect(() => {
@@ -94,12 +104,12 @@ function LotSizePage() {
     const rr = priceDistance > 0 ? rewardPriceDistance / priceDistance : 0;
 
     return { riskInAccountCcy, priceDistance, calc, reward, rr, errors };
-  }, [balance, currency, riskMode, riskPct, riskAmt, calcMethod, slPips, tpPips, entryPrice, stopPrice, spec]);
+  }, [balance, currency, riskMode, riskPct, riskAmt, calcMethod, slPips, tpPips, entryPrice, stopPrice, spec, fxTick]);
 
   return (
     <AppShell title="Lot Size Calculator">
       <p className="mb-6 text-sm text-muted-foreground">
-        Institution-grade position sizing — Forex, metals, indices, commodities & crypto. Broker-accurate math, universal currency conversion, dual calculation modes.
+        Institution-grade position sizing — Forex, metals, indices, commodities & crypto. Broker-accurate math, universal currency conversion, dual calculation modes.{fxUpdated && <span className="block text-xs text-primary">Live exchange rates · updated {new Date(fxUpdated).toLocaleString()}</span>}
       </p>
 
       <div className="grid gap-6 lg:grid-cols-5">
