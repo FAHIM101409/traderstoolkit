@@ -364,44 +364,65 @@ export type Database = {
         Row: {
           account_currency: string
           avatar_url: string | null
+          bio: string | null
+          country: string | null
           created_at: string
           default_risk_pct: number
           display_name: string | null
+          experience_level: string | null
+          favorite_pairs: string[]
           id: string
           plan: string
           plan_renewal_at: string | null
           plan_status: string
+          show_stats_on_profile: boolean
           starting_balance: number
           timezone: string
+          trading_style: string[]
           updated_at: string
+          username: string | null
         }
         Insert: {
           account_currency?: string
           avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
           created_at?: string
           default_risk_pct?: number
           display_name?: string | null
+          experience_level?: string | null
+          favorite_pairs?: string[]
           id: string
           plan?: string
           plan_renewal_at?: string | null
           plan_status?: string
+          show_stats_on_profile?: boolean
           starting_balance?: number
           timezone?: string
+          trading_style?: string[]
           updated_at?: string
+          username?: string | null
         }
         Update: {
           account_currency?: string
           avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
           created_at?: string
           default_risk_pct?: number
           display_name?: string | null
+          experience_level?: string | null
+          favorite_pairs?: string[]
           id?: string
           plan?: string
           plan_renewal_at?: string | null
           plan_status?: string
+          show_stats_on_profile?: boolean
           starting_balance?: number
           timezone?: string
+          trading_style?: string[]
           updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }

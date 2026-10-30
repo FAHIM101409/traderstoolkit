@@ -15,6 +15,13 @@
       "when": 1792111609654,
       "tag": "0001_restore_smc_session_timeframe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793349067156,
+      "tag": "0002_social_profile_fields",
+      "breakpoints": true
     }
   ]
 }
