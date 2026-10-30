@@ -6,6 +6,13 @@ export type Profile = {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  username: string | null;
+  bio: string | null;
+  trading_style: string[];
+  experience_level: string | null;
+  favorite_pairs: string[];
+  country: string | null;
+  show_stats_on_profile: boolean;
   account_currency: string;
   default_risk_pct: number;
   starting_balance: number;

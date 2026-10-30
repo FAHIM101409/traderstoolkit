@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Calculator, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Cable, Settings as SettingsIcon, Play, CalendarClock, Lock, KeyRound, Menu, X, CreditCard } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, Clock, LineChart, LogOut, BookOpen, Brain, BarChart3, Newspaper, Sparkles, FlaskConical, Cable, Settings as SettingsIcon, Play, CalendarClock, Lock, KeyRound, Menu, X, CreditCard, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -18,6 +18,7 @@ const nav = [
   { section: "Journal" as const },
   { to: "/journal", label: "Trade Journal", icon: BookOpen },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/social", label: "Social", icon: Users },
   { section: "AI Tools" as const },
   { to: "/ai-reviewer", label: "AI Reviewer", icon: Brain, pro: true, hidden: true },
   { to: "/fundamentals", label: "Fundamentals Bot", icon: Newspaper, hidden: true },
