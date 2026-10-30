@@ -29,6 +29,7 @@ import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedReplayRouteImport } from './routes/_authenticated/replay'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
 import { Route as AuthenticatedReplaySessionIdRouteImport } from './routes/_authenticated/replay.$sessionId'
 import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
@@ -133,6 +134,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSocialRoute = AuthenticatedSocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReplaySessionIdRoute =
   AuthenticatedReplaySessionIdRouteImport.update({
     id: '/$sessionId',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/social': typeof AuthenticatedSocialRoute
   '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/social': typeof AuthenticatedSocialRoute
   '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/_authenticated/replay': typeof AuthenticatedReplayRouteWithChildren
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/social': typeof AuthenticatedSocialRoute
   '/_authenticated/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/replay'
     | '/sessions'
     | '/settings'
+    | '/social'
     | '/replay/$sessionId'
     | '/api/public/mt5/ingest'
   fileRoutesByTo: FileRoutesByTo
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/replay'
     | '/sessions'
     | '/settings'
+    | '/social'
     | '/replay/$sessionId'
     | '/api/public/mt5/ingest'
   id:
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/_authenticated/replay'
     | '/_authenticated/sessions'
     | '/_authenticated/settings'
+    | '/_authenticated/social'
     | '/_authenticated/replay/$sessionId'
     | '/api/public/mt5/ingest'
   fileRoutesById: FileRoutesById
@@ -440,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/social': {
+      id: '/_authenticated/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof AuthenticatedSocialRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/replay/$sessionId': {
       id: '/_authenticated/replay/$sessionId'
       path: '/$sessionId'
@@ -484,6 +503,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReplayRoute: typeof AuthenticatedReplayRouteWithChildren
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -502,6 +522,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReplayRoute: AuthenticatedReplayRouteWithChildren,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSocialRoute: AuthenticatedSocialRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
