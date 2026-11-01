@@ -6,3 +6,5 @@
 - [x] Validate replay boundaries and saved state
 - [x] Remove Risk Manager and Prop Simulator pages
 - [x] Hide AI Reviewer, Fundamentals Bot, Pattern Detection, MT5 Integration, Backtesting Lab and Backtesting Station from the sidebar (keep their code)
+- [x] Social foundation: single sidebar item + hub page with For You / Communities / Chat / Profile "coming soon" tabs
+- [x] Profile social fields (username, bio, trading style, experience, pairs, country, stats-visibility) with RLS and avatars storage
