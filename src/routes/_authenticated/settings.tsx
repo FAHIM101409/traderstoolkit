@@ -50,20 +50,75 @@ function SettingsPage() {
       setName(profile.display_name ?? "");
       setCurrency(profile.account_currency);
       setTimezone(profile.timezone);
+      setUsername(profile.username ?? "");
+      setShowStats(profile.show_stats_on_profile);
     }
   }, [profile]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!profile?.avatar_url) {
+      setAvatarSrc(null);
+      return;
+    }
+    getAvatarSignedUrl(profile.avatar_url).then((url) => {
+      if (!cancelled) setAvatarSrc(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.avatar_url]);
+
   async function saveProfile() {
     if (!user) return;
+    const uname = sanitizeUsername(username);
+    const unameErr = validateUsername(uname);
+    if (unameErr) return toast.error(unameErr);
     setSaving(true);
+    // Friendly availability check (case-insensitive uniqueness is enforced in the database too)
+    const { data: taken } = await supabase
+      .from("profiles")
+      .select("id")
+      .neq("id", user.id)
+      .ilike("username", uname)
+      .maybeSingle();
+    if (taken) {
+      setSaving(false);
+      return toast.error("That username is already taken");
+    }
     const { error } = await supabase.from("profiles").update({
       display_name: name,
+      username: uname,
       account_currency: currency,
       timezone,
+      show_stats_on_profile: showStats,
     }).eq("id", user.id);
     setSaving(false);
-    if (error) toast.error(error.message);
-    else { toast.success("Settings saved"); refresh(); }
+    if (error) {
+      if (error.code === "23514") toast.error("Invalid username — 3-20 characters: lowercase letters, numbers and underscores");
+      else toast.error(error.message);
+    } else { toast.success("Settings saved"); refresh(); }
+  }
+
+  async function uploadAvatar(file: File) {
+    if (!user) return;
+    if (!(AVATAR_MIME_TYPES as readonly string[]).includes(file.type)) {
+      return toast.error("Images only — PNG, JPEG, WebP or GIF");
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      return toast.error("Image must be 2MB or smaller");
+    }
+    setUploadingAvatar(true);
+    const path = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await uploadAvatarFile(path, file);
+    if (!upErr) {
+      const { error } = await supabase.from("profiles").update({ avatar_url: path }).eq("id", user.id);
+      if (error) toast.error(error.message);
+      else toast.success("Profile picture updated");
+    } else {
+      toast.error(upErr.message);
+    }
+    setUploadingAvatar(false);
   }
 
   async function changePassword() {
