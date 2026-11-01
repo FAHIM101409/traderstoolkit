@@ -10,13 +10,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty, CommandGroup } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { sanitizeUsername, validateUsername } from "@/lib/usernames";
+import { getAvatarSignedUrl, uploadAvatarFile, AVATAR_MIME_TYPES, AVATAR_MAX_BYTES } from "@/lib/avatar";
 import { CURRENCIES } from "@/lib/currencies";
 import { TIMEZONES } from "@/lib/timezones";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Cable, Check, ChevronsUpDown, KeyRound, Sparkles, User } from "lucide-react";
+import { Cable, Check, ChevronsUpDown, ImagePlus, KeyRound, Sparkles, User } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +40,10 @@ function SettingsPage() {
   const [redeemCode, setRedeemCode] = useState("");
   const [redeeming, setRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState<{ tone: "success" | "error"; message: string; expires?: string } | null>(null);
+  const [username, setUsername] = useState("");
+  const [showStats, setShowStats] = useState(false);
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -100,9 +107,43 @@ function SettingsPage() {
             <div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15"><User className="h-5 w-5 text-primary" /></div>
               <div><h2 className="font-semibold">Account profile</h2><p className="text-sm text-muted-foreground">How you show up across Tradivo.</p></div>
             </div>
+            <div className="flex items-center gap-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-muted">
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="Profile picture" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+              <label className={cn("inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium transition hover:bg-accent", uploadingAvatar && "pointer-events-none opacity-60")}>
+                <ImagePlus className="h-4 w-4" />
+                {uploadingAvatar ? "Uploading…" : "Upload photo"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadAvatar(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><Label>Username</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" /></div>
+              <div><Label>Display name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" /></div>
               <div><Label>Email</Label><Input value={user?.email ?? ""} disabled /></div>
+              <div className="sm:col-span-2">
+                <Label>Username</Label>
+                <Input
+                  value={username}
+                  onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
+                  placeholder="e.g. price_action_pro"
+                  className="font-mono"
+                  maxLength={20}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">3-20 characters: lowercase letters, numbers and underscores. Uniquely identifies you across the community.</p>
+              </div>
             </div>
             <Button onClick={saveProfile} disabled={saving}>Save profile</Button>
           </CardContent></Card>
@@ -212,6 +253,13 @@ function SettingsPage() {
               <div className="sm:col-span-2">
                 <Label>Theme</Label>
                 <p className="text-sm text-muted-foreground">Dark mode is locked in for the trading aesthetic — light mode coming soon.</p>
+              </div>
+              <div className="sm:col-span-2 flex flex-col gap-3 rounded-md border border-border/60 bg-card/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <Label className="text-sm">Show my trading stats on my profile</Label>
+                  <p className="text-sm text-muted-foreground">When on, other traders can see your win rate and P&L summary on your public profile.</p>
+                </div>
+                <Switch checked={showStats} onCheckedChange={setShowStats} aria-label="Show my trading stats on my profile" />
               </div>
             </div>
             <Button onClick={saveProfile} disabled={saving}>Save preferences</Button>
