@@ -360,6 +360,44 @@ export type Database = {
         }
         Relationships: []
       }
+      posts: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          images: Json
+          pair: string | null
+          topic: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          images?: Json
+          pair?: string | null
+          topic?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          images?: Json
+          pair?: string | null
+          topic?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_currency: string
