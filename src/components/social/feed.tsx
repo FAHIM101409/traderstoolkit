@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { Hourglass, Loader2, Newspaper, Plus } from "lucide-react";
+import { Loader2, Newspaper, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { Profile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
@@ -154,11 +154,6 @@ export function Feed({ profile }: { profile: Profile | null }) {
         <Lightbox images={lightbox.images} index={lightbox.index} onClose={() => setLightbox(null)} />
       )}
 
-      {/* keep FEED_PAGE_SIZE referenced for clarity of page size tuning */}
-      <span className="hidden">{FEED_PAGE_SIZE}</span>
     </div>
   );
 }
-
-// Unused placeholder to keep the Hourglass icon imported for future tabs parity
-void Hourglass;
