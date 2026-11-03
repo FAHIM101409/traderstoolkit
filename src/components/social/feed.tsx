@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Composer } from "./composer";
 import { PostCard } from "./post-card";
 import { Lightbox } from "./lightbox";
-import { FEED_PAGE_SIZE, TOPICS, fetchFeedPage } from "@/lib/posts";
+import { TOPICS, fetchFeedPage } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
 const FILTERS = ["All", ...TOPICS] as const;
