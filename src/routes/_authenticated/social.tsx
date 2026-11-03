@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/app/app-shell";
-import { Sparkles, Users, MessageCircle, UserCircle, Hourglass } from "lucide-react";
+import { Sparkles, Users, MessageCircle, UserCircle, Hourglass, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useProfile } from "@/hooks/use-profile";
+import { Feed } from "@/components/social/feed";
 
 export const Route = createFileRoute("/_authenticated/social")({
   head: () => ({ meta: [{ title: "Social — Tradivo" }] }),
@@ -11,10 +13,10 @@ export const Route = createFileRoute("/_authenticated/social")({
 
 const TABS = [
   {
-    id: "for-you",
-    label: "For You",
-    icon: Sparkles,
-    title: "For You",
+    id: "feed",
+    label: "Feed",
+    icon: Newspaper,
+    title: "Feed",
     blurb: "A personalized feed of trades, ideas and milestones from traders you follow.",
   },
   {
@@ -43,9 +45,10 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 function SocialPage() {
-  const [tab, setTab] = useState<TabId>("for-you");
+  const [tab, setTab] = useState<TabId>("feed");
   const active = TABS.find((t) => t.id === tab) ?? TABS[0];
   const ActiveIcon = active.icon;
+  const { profile } = useProfile();
 
   return (
     <AppShell title="Social">
@@ -77,20 +80,24 @@ function SocialPage() {
           </div>
         </div>
 
-        {/* Coming-soon placeholder for every tab */}
-        <div className="flex min-h-[380px] items-center justify-center">
-          <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 shadow-glow">
-              <ActiveIcon className="h-7 w-7 text-primary" />
-            </div>
-            <h2 className="text-lg font-semibold">{active.title}</h2>
-            <p className="text-sm text-muted-foreground">{active.blurb}</p>
-            <div className="mt-2 flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Hourglass className="h-3.5 w-3.5" />
-              Coming soon
+        {tab === "feed" ? (
+          <Feed profile={profile} />
+        ) : (
+          /* Coming-soon placeholder for the remaining tabs */
+          <div className="flex min-h-[380px] items-center justify-center">
+            <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 shadow-glow">
+                <ActiveIcon className="h-7 w-7 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold">{active.title}</h2>
+              <p className="text-sm text-muted-foreground">{active.blurb}</p>
+              <div className="mt-2 flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Hourglass className="h-3.5 w-3.5" />
+                Coming soon
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </AppShell>
   );
