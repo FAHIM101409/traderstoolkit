@@ -610,6 +610,32 @@ export type Database = {
         Returns: boolean
       }
       redeem_access_code: { Args: { p_code: string }; Returns: Json }
+      search_social_people: {
+        Args: { p_query: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
+      search_social_posts: {
+        Args: { p_query: string }
+        Returns: {
+          author_id: string
+          avatar_url: string
+          body: string
+          created_at: string
+          display_name: string
+          id: string
+          images: Json
+          pair: string
+          topic: string
+          user_id: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
