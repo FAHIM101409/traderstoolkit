@@ -29,6 +29,13 @@
       "when": 1793621850187,
       "tag": "0003_social_posts_table",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793867062414,
+      "tag": "0004_social_feed_search",
+      "breakpoints": true
     }
   ]
 }
