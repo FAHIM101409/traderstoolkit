@@ -28,6 +28,68 @@ export type Post = {
   profile: PostAuthor | null;
 };
 
+export type SocialPerson = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+};
+
+/** Search RPCs return only approved profile fields; email is never selected. */
+export async function searchSocialPeople(query: string): Promise<SocialPerson[]> {
+  const { data, error } = await supabase.rpc("search_social_people", { p_query: query });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((person) => ({
+    id: person.id,
+    username: person.username ?? "",
+    display_name: person.display_name,
+    avatar_url: person.avatar_url,
+    bio: person.bio,
+  }));
+}
+
+/** Search posts and their public author fields without exposing private profile data. */
+export async function searchSocialPosts(query: string): Promise<Post[]> {
+  const { data, error } = await supabase.rpc("search_social_posts", { p_query: query });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    user_id: row.user_id,
+    body: row.body,
+    topic: row.topic,
+    pair: row.pair,
+    images: Array.isArray(row.images) ? (row.images as string[]) : [],
+    created_at: row.created_at,
+    profile: {
+      id: row.author_id,
+      username: row.username,
+      display_name: row.display_name,
+      avatar_url: row.avatar_url,
+    },
+  }));
+}
+
+export async function fetchSocialPost(id: string): Promise<Post | null> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, user_id, body, topic, pair, images, created_at, profile:profiles!posts_user_id_fkey(id, username, display_name, avatar_url)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return {
+    id: data.id,
+    user_id: data.user_id,
+    body: data.body,
+    topic: data.topic,
+    pair: data.pair,
+    images: Array.isArray(data.images) ? (data.images as string[]) : [],
+    created_at: data.created_at,
+    profile: data.profile ?? null,
+  };
+}
+
 /** Fetch one page of the feed, newest first. topic=null means every topic. */
 export async function fetchFeedPage(topic: string | null, page: number): Promise<{ posts: Post[]; hasMore: boolean }> {
   let q = supabase
