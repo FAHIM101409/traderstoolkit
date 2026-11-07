@@ -1,37 +1,21 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { linkify, relTime, signedUrl, type Post } from "@/lib/posts";
-
-function Avatar({ path, name }: { path: string | null; name: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let on = true;
-    setUrl(null);
-    if (path) signedUrl("avatars", path).then((u) => on && setUrl(u));
-    return () => {
-      on = false;
-    };
-  }, [path]);
-  if (url) {
-    return <img src={url} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />;
-  }
-  return (
-    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-}
+import { SocialAvatar } from "./social-avatar";
 
 export function PostCard({
   post,
   currentUserId,
+  onOpen,
   onOpenImages,
   onDeleted,
 }: {
   post: Post;
   currentUserId: string | null | undefined;
+  onOpen?: () => void;
   onOpenImages: (images: string[], index: number) => void;
   onDeleted: () => void;
 }) {
@@ -81,12 +65,17 @@ export function PostCard({
     <article className="rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar path={author?.avatar_url ?? null} name={name} />
+          <SocialAvatar path={author?.avatar_url ?? null} name={name} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{name}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {author?.username ? `@${author.username}` : "Trader"} · {relTime(post.created_at)}
-            </p>
+            {author?.username ? (
+              <Link to="/social/profile/$username" params={{ username: author.username }} className="block truncate text-sm font-semibold hover:text-primary">
+                {name}
+              </Link>
+            ) : <p className="truncate text-sm font-semibold">{name}</p>}
+            <div className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+              {author?.username ? <Link to="/social/profile/$username" params={{ username: author.username }} className="truncate hover:text-primary">@{author.username}</Link> : <span>Trader</span>}
+              <span>· {relTime(post.created_at)}</span>
+            </div>
           </div>
         </div>
         {mine && (
@@ -107,23 +96,17 @@ export function PostCard({
         )}
       </div>
 
-      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed">
-        {linkify(post.body).map((piece, i) =>
-          piece.type === "link" ? (
-            <a
-              key={i}
-              href={piece.value.startsWith("www.") ? `https://${piece.value}` : piece.value}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-              className="text-primary underline underline-offset-2"
-            >
-              {piece.value}
-            </a>
-          ) : (
-            <span key={i}>{piece.value}</span>
-          ),
-        )}
-      </p>
+      {onOpen ? (
+        <button type="button" onClick={onOpen} className="mt-3 block min-h-11 w-full text-left whitespace-pre-wrap break-words text-sm leading-relaxed hover:text-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          {post.body}
+        </button>
+      ) : (
+        <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed">
+          {linkify(post.body).map((piece, i) => piece.type === "link" ? (
+            <a key={i} href={piece.value.startsWith("www.") ? `https://${piece.value}` : piece.value} target="_blank" rel="noopener noreferrer nofollow" className="text-primary underline underline-offset-2">{piece.value}</a>
+          ) : <span key={i}>{piece.value}</span>)}
+        </p>
+      )}
 
       {(post.topic || post.pair) && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
