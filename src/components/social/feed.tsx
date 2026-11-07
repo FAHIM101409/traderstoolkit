@@ -45,6 +45,7 @@ function SearchResults({
   setActiveTab,
   currentUserId,
   onOpenImages,
+  onOpenPost,
   onDeleted,
 }: {
   query: string;
@@ -52,6 +53,7 @@ function SearchResults({
   setActiveTab: (tab: SearchTab) => void;
   currentUserId: string | null;
   onOpenImages: (images: string[], index: number) => void;
+  onOpenPost: (post: Post) => void;
   onDeleted: () => void;
 }) {
   const peopleQuery = useQuery({
@@ -122,7 +124,7 @@ function SearchResults({
               key={post.id}
               post={post}
               currentUserId={currentUserId}
-              onOpen={() => window.history.pushState(null, "", `/social/post/${post.id}`)}
+              onOpen={() => onOpenPost(post)}
               onOpenImages={onOpenImages}
               onDeleted={onDeleted}
             />
@@ -170,6 +172,7 @@ export function Feed({ profile }: { profile: Profile | null }) {
       setActiveTab={setSearchTab}
       currentUserId={user?.id ?? null}
       onOpenImages={(images, index) => setLightbox({ images, index })}
+      onOpenPost={openPost}
       onDeleted={handleDeleted}
     />
   );
