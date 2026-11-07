@@ -31,6 +31,8 @@ import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
 import { Route as AuthenticatedReplaySessionIdRouteImport } from './routes/_authenticated/replay.$sessionId'
+import { Route as AuthenticatedSocialPostPostIdRouteImport } from './routes/_authenticated/social.post.$postId'
+import { Route as AuthenticatedSocialProfileUsernameRouteImport } from './routes/_authenticated/social.profile.$username'
 import { Route as ApiPublicMt5IngestRouteImport } from './routes/api/public/mt5/ingest'
 
 const IndexRoute = IndexRouteImport.update({
@@ -145,6 +147,18 @@ const AuthenticatedReplaySessionIdRoute =
     path: '/$sessionId',
     getParentRoute: () => AuthenticatedReplayRoute,
   } as any)
+const AuthenticatedSocialPostPostIdRoute =
+  AuthenticatedSocialPostPostIdRouteImport.update({
+    id: '/post/$postId',
+    path: '/post/$postId',
+    getParentRoute: () => AuthenticatedSocialRoute,
+  } as any)
+const AuthenticatedSocialProfileUsernameRoute =
+  AuthenticatedSocialProfileUsernameRouteImport.update({
+    id: '/profile/$username',
+    path: '/profile/$username',
+    getParentRoute: () => AuthenticatedSocialRoute,
+  } as any)
 const ApiPublicMt5IngestRoute = ApiPublicMt5IngestRouteImport.update({
   id: '/api/public/mt5/ingest',
   path: '/api/public/mt5/ingest',
@@ -171,8 +185,10 @@ export interface FileRoutesByFullPath {
   '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/social': typeof AuthenticatedSocialRoute
+  '/social': typeof AuthenticatedSocialRouteWithChildren
   '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
+  '/social/post/$postId': typeof AuthenticatedSocialPostPostIdRoute
+  '/social/profile/$username': typeof AuthenticatedSocialProfileUsernameRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRoutesByTo {
@@ -195,8 +211,10 @@ export interface FileRoutesByTo {
   '/replay': typeof AuthenticatedReplayRouteWithChildren
   '/sessions': typeof AuthenticatedSessionsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/social': typeof AuthenticatedSocialRoute
+  '/social': typeof AuthenticatedSocialRouteWithChildren
   '/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
+  '/social/post/$postId': typeof AuthenticatedSocialPostPostIdRoute
+  '/social/profile/$username': typeof AuthenticatedSocialProfileUsernameRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRoutesById {
@@ -221,8 +239,10 @@ export interface FileRoutesById {
   '/_authenticated/replay': typeof AuthenticatedReplayRouteWithChildren
   '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/social': typeof AuthenticatedSocialRoute
+  '/_authenticated/social': typeof AuthenticatedSocialRouteWithChildren
   '/_authenticated/replay/$sessionId': typeof AuthenticatedReplaySessionIdRoute
+  '/_authenticated/social/post/$postId': typeof AuthenticatedSocialPostPostIdRoute
+  '/_authenticated/social/profile/$username': typeof AuthenticatedSocialProfileUsernameRoute
   '/api/public/mt5/ingest': typeof ApiPublicMt5IngestRoute
 }
 export interface FileRouteTypes {
@@ -249,6 +269,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/replay/$sessionId'
+    | '/social/post/$postId'
+    | '/social/profile/$username'
     | '/api/public/mt5/ingest'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -273,6 +295,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/replay/$sessionId'
+    | '/social/post/$postId'
+    | '/social/profile/$username'
     | '/api/public/mt5/ingest'
   id:
     | '__root__'
@@ -298,6 +322,8 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/social'
     | '/_authenticated/replay/$sessionId'
+    | '/_authenticated/social/post/$postId'
+    | '/_authenticated/social/profile/$username'
     | '/api/public/mt5/ingest'
   fileRoutesById: FileRoutesById
 }
@@ -466,6 +492,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReplaySessionIdRouteImport
       parentRoute: typeof AuthenticatedReplayRoute
     }
+    '/_authenticated/social/post/$postId': {
+      id: '/_authenticated/social/post/$postId'
+      path: '/post/$postId'
+      fullPath: '/social/post/$postId'
+      preLoaderRoute: typeof AuthenticatedSocialPostPostIdRouteImport
+      parentRoute: typeof AuthenticatedSocialRoute
+    }
+    '/_authenticated/social/profile/$username': {
+      id: '/_authenticated/social/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/social/profile/$username'
+      preLoaderRoute: typeof AuthenticatedSocialProfileUsernameRouteImport
+      parentRoute: typeof AuthenticatedSocialRoute
+    }
     '/api/public/mt5/ingest': {
       id: '/api/public/mt5/ingest'
       path: '/api/public/mt5/ingest'
@@ -487,6 +527,20 @@ const AuthenticatedReplayRouteChildren: AuthenticatedReplayRouteChildren = {
 const AuthenticatedReplayRouteWithChildren =
   AuthenticatedReplayRoute._addFileChildren(AuthenticatedReplayRouteChildren)
 
+interface AuthenticatedSocialRouteChildren {
+  AuthenticatedSocialPostPostIdRoute: typeof AuthenticatedSocialPostPostIdRoute
+  AuthenticatedSocialProfileUsernameRoute: typeof AuthenticatedSocialProfileUsernameRoute
+}
+
+const AuthenticatedSocialRouteChildren: AuthenticatedSocialRouteChildren = {
+  AuthenticatedSocialPostPostIdRoute: AuthenticatedSocialPostPostIdRoute,
+  AuthenticatedSocialProfileUsernameRoute:
+    AuthenticatedSocialProfileUsernameRoute,
+}
+
+const AuthenticatedSocialRouteWithChildren =
+  AuthenticatedSocialRoute._addFileChildren(AuthenticatedSocialRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminCodesRoute: typeof AuthenticatedAdminCodesRoute
   AuthenticatedAiReviewerRoute: typeof AuthenticatedAiReviewerRoute
@@ -503,7 +557,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReplayRoute: typeof AuthenticatedReplayRouteWithChildren
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
+  AuthenticatedSocialRoute: typeof AuthenticatedSocialRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -522,7 +576,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReplayRoute: AuthenticatedReplayRouteWithChildren,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedSocialRoute: AuthenticatedSocialRoute,
+  AuthenticatedSocialRoute: AuthenticatedSocialRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
