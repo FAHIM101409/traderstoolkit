@@ -7,7 +7,6 @@ import type { Profile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Composer } from "./composer";
 import { PostCard } from "./post-card";
 import { Lightbox } from "./lightbox";
@@ -45,6 +44,7 @@ function SearchResults({
   setActiveTab,
   currentUserId,
   onOpenImages,
+  onOpenPost,
   onDeleted,
 }: {
   query: string;
@@ -52,6 +52,7 @@ function SearchResults({
   setActiveTab: (tab: SearchTab) => void;
   currentUserId: string | null;
   onOpenImages: (images: string[], index: number) => void;
+  onOpenPost: (post: Post) => void;
   onDeleted: () => void;
 }) {
   const peopleQuery = useQuery({
@@ -122,7 +123,7 @@ function SearchResults({
               key={post.id}
               post={post}
               currentUserId={currentUserId}
-              onOpen={() => window.history.pushState(null, "", `/social/post/${post.id}`)}
+              onOpen={() => onOpenPost(post)}
               onOpenImages={onOpenImages}
               onDeleted={onDeleted}
             />
@@ -163,13 +164,14 @@ export function Feed({ profile }: { profile: Profile | null }) {
     queryClient.invalidateQueries({ queryKey: ["social-search"] });
   }, [queryClient]);
 
-  const searchResults = (mobile = false) => (
+  const searchResults = () => (
     <SearchResults
       query={debouncedSearch}
       activeTab={searchTab}
       setActiveTab={setSearchTab}
       currentUserId={user?.id ?? null}
       onOpenImages={(images, index) => setLightbox({ images, index })}
+      onOpenPost={openPost}
       onDeleted={handleDeleted}
     />
   );
@@ -229,12 +231,17 @@ export function Feed({ profile }: { profile: Profile | null }) {
         </SheetContent>
       </Sheet>
 
-      <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
-        <DialogContent className="fixed inset-0 left-0 top-0 h-[100dvh] w-full max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-0 bg-background p-0 sm:hidden">
+      {mobileSearchOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search Tradivo"
+          className="fixed inset-0 z-50 h-[100dvh] overflow-hidden bg-background md:hidden"
+          onKeyDown={(event) => { if (event.key === "Escape") { setMobileSearchOpen(false); setSearchText(""); } }}
+        >
           <div className="flex h-full min-h-0 flex-col">
             <div className="border-b border-border px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] pr-16">
-              <DialogTitle className="mb-3 text-left text-base">Search Tradivo</DialogTitle>
-              <DialogDescription className="sr-only">Search public trader profiles and posts</DialogDescription>
+              <div className="mb-3 text-left text-base font-semibold">Search Tradivo</div>
               <div className="flex h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 focus-within:ring-2 focus-within:ring-ring">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <input autoFocus value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="People, pairs, posts" aria-label="Search people and posts" className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
@@ -242,11 +249,12 @@ export function Feed({ profile }: { profile: Profile | null }) {
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              {searchText.trim().length < 2 ? <p className="py-8 text-center text-sm text-muted-foreground">Enter at least 2 characters to search.</p> : searchResults(true)}
+              {searchText.trim().length < 2 ? <p className="py-8 text-center text-sm text-muted-foreground">Enter at least 2 characters to search.</p> : searchResults()}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+          <Button type="button" variant="ghost" aria-label="Close search" className="absolute right-3 top-3 h-11 w-11 p-0" onClick={() => { setMobileSearchOpen(false); setSearchText(""); }}><X /></Button>
+        </div>
+      )}
 
       {lightbox && <Lightbox images={lightbox.images} index={lightbox.index} onClose={() => setLightbox(null)} />}
     </div>
