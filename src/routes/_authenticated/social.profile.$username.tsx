@@ -28,7 +28,7 @@ function SocialProfilePage() {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, username, display_name, bio, avatar_url, trading_style, experience_level, favorite_pairs, country, created_at")
-        .ilike("username", username)
+        .eq("username", username.toLowerCase())
         .maybeSingle();
       if (error) throw new Error(error.message);
       return data;
