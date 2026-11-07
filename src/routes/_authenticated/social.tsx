@@ -7,7 +7,16 @@ import { useProfile } from "@/hooks/use-profile";
 import { Feed } from "@/components/social/feed";
 
 export const Route = createFileRoute("/_authenticated/social")({
-  head: () => ({ meta: [{ title: "Social — Tradivo" }] }),
+  head: () => ({
+    meta: [
+      { title: "Social — Tradivo" },
+      { name: "description", content: "Discover trader profiles and posts in the Tradivo Social hub." },
+      { property: "og:title", content: "Social — Tradivo" },
+      { property: "og:description", content: "Discover trader profiles and posts in the Tradivo Social hub." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: SocialPage,
 });
 

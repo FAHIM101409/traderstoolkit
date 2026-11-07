@@ -236,7 +236,7 @@ export function Feed({ profile }: { profile: Profile | null }) {
           role="dialog"
           aria-modal="true"
           aria-label="Search Tradivo"
-          className="fixed inset-0 z-50 h-[100dvh] overflow-hidden bg-background sm:hidden"
+          className="fixed inset-0 z-50 h-[100dvh] overflow-hidden bg-background md:hidden"
           onKeyDown={(event) => { if (event.key === "Escape") { setMobileSearchOpen(false); setSearchText(""); } }}
         >
           <div className="flex h-full min-h-0 flex-col">
@@ -249,7 +249,7 @@ export function Feed({ profile }: { profile: Profile | null }) {
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              {searchText.trim().length < 2 ? <p className="py-8 text-center text-sm text-muted-foreground">Enter at least 2 characters to search.</p> : searchResults(true)}
+              {searchText.trim().length < 2 ? <p className="py-8 text-center text-sm text-muted-foreground">Enter at least 2 characters to search.</p> : searchResults()}
             </div>
           </div>
           <Button type="button" variant="ghost" aria-label="Close search" className="absolute right-3 top-3 h-11 w-11 p-0" onClick={() => { setMobileSearchOpen(false); setSearchText(""); }}><X /></Button>
