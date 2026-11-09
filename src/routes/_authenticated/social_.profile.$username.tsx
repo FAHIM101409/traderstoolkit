@@ -6,7 +6,7 @@ import { SocialAvatar } from "@/components/social/social-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_authenticated/social/profile/$username")({
+export const Route = createFileRoute("/_authenticated/social_/profile/$username")({
   head: ({ params }) => ({
     meta: [
       { title: `@${params.username} — Tradivo Social` },

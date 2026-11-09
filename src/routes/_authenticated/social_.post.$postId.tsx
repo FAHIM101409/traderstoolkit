@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchSocialPost } from "@/lib/posts";
 
-export const Route = createFileRoute("/_authenticated/social/post/$postId")({
+export const Route = createFileRoute("/_authenticated/social_/post/$postId")({
   head: () => ({
     meta: [
       { title: "Social post — Tradivo" },
