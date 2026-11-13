@@ -217,7 +217,7 @@ export function Feed({ profile }: { profile: Profile | null }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {posts.map((post) => <PostCard key={post.id} post={post} currentUserId={user?.id ?? null} onOpen={() => openPost(post)} onOpenImages={(images, index) => setLightbox({ images, index })} onDeleted={handleDeleted} />)}
+          {posts.map((post) => <PostCard key={post.id} post={post} currentUserId={user?.id ?? null} onOpenImages={(images, index) => setLightbox({ images, index })} onDeleted={handleDeleted} />)}
         </div>
       )}
 
