@@ -62,18 +62,29 @@ export function PostCard({
   }
 
   return (
-    <article className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <article
+      className={cn("rounded-2xl border border-border bg-card p-4 sm:p-5", onOpen && "cursor-pointer transition hover:border-primary/50")}
+      role={onOpen ? "link" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (onOpen && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           <SocialAvatar path={author?.avatar_url ?? null} name={name} />
           <div className="min-w-0">
             {author?.username ? (
-              <Link to="/social/profile/$username" params={{ username: author.username }} className="block truncate text-sm font-semibold hover:text-primary">
+              <Link to="/social/profile/$username" params={{ username: author.username }} onClick={(event) => event.stopPropagation()} className="block truncate text-sm font-semibold hover:text-primary">
                 {name}
               </Link>
             ) : <p className="truncate text-sm font-semibold">{name}</p>}
             <div className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-              {author?.username ? <Link to="/social/profile/$username" params={{ username: author.username }} className="truncate hover:text-primary">@{author.username}</Link> : <span>Trader</span>}
+              {author?.username ? <Link to="/social/profile/$username" params={{ username: author.username }} onClick={(event) => event.stopPropagation()} className="truncate hover:text-primary">@{author.username}</Link> : <span>Trader</span>}
               <span>· {relTime(post.created_at)}</span>
             </div>
           </div>
@@ -82,6 +93,7 @@ export function PostCard({
           <button
             type="button"
             onClick={confirming ? remove : () => setConfirming(true)}
+            onKeyDown={(event) => event.stopPropagation()}
             className="-m-1 grid h-10 w-10 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-destructive"
             aria-label={confirming ? "Tap again to confirm delete" : "Delete post"}
           >
@@ -129,7 +141,7 @@ export function PostCard({
             <button
               key={url}
               type="button"
-              onClick={() => onOpenImages(imgUrls, i)}
+              onClick={(event) => { event.stopPropagation(); onOpenImages(imgUrls, i); }}
               className={cn("group relative overflow-hidden bg-muted", imgUrls.length === 3 && i === 0 && "col-span-2")}
               aria-label={`Open image ${i + 1}`}
             >
